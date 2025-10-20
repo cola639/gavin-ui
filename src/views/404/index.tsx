@@ -1,10 +1,9 @@
-import './index.css'
-import png404 from 'assets/images/404_images/404.png'
-import pngCloud from 'assets/images/404_images/404.png'
+import { default as png404, default as pngCloud } from 'assets/images/404_images/404.png';
+import './index.css';
 
 const NotFound = () => {
-  document.title = '页面未找到'
-  const message = 'The webmaster said that you can not enter this page...'
+  document.title = '页面未找到';
+  const message = 'Can not find this page...';
 
   return (
     <div className="wscn-http404-container">
@@ -39,7 +38,7 @@ const NotFound = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default NotFound
+export default NotFound;

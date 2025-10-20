@@ -1,4 +1,3 @@
-/// <reference types="vitest" />
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
@@ -53,7 +52,7 @@ export default defineConfig(({ command, mode }) => {
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: `@import "@/styles/variables.scss";`
+          additionalData: `@use "@/styles/variables" as *;`
         }
       }
     },

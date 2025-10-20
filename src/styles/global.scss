@@ -1,5 +1,5 @@
-@import url('./theme-dark.scss');
-@import url('./theme-light.scss');
+@use './theme-dark';
+@use './theme-light';
 
 @font-face {
   font-family: FZFont;
