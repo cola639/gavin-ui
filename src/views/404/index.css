@@ -1,0 +1,212 @@
+/* stylelint-disable keyframes-name-pattern */
+/* stylelint-disable number-max-precision */
+/* stylelint-disable selector-class-pattern */
+.wscn-http404-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.wscn-http404 {
+  position: relative;
+  width: 100%;
+  padding: 0 2.6042vw;
+  overflow: hidden;
+}
+
+.wscn-http404 .pic-404 {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  float: left;
+}
+
+.wscn-http404 .pic-404__parent {
+  width: 100%;
+}
+
+.wscn-http404 .pic-404__child {
+  position: absolute;
+}
+
+.wscn-http404 .pic-404__child.left,
+.wscn-http404 .pic-404__child.mid,
+.wscn-http404 .pic-404__child.right {
+  opacity: 0;
+  animation-duration: 2s;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.wscn-http404 .pic-404__child.left {
+  top: 0.8854vw;
+  left: 11.4583vw;
+  width: 4.1666vw;
+  animation-name: cloudLeft;
+  animation-delay: 1s;
+}
+
+.wscn-http404 .pic-404__child.mid {
+  top: 0.5208vw;
+  left: 21.875vw;
+  width: 2.3958vw;
+  animation-name: cloudMid;
+  animation-delay: 1.2s;
+}
+
+.wscn-http404 .pic-404__child.right {
+  top: 5.2083vw;
+  left: 26.0416vw;
+  width: 3.2291vw;
+  animation-name: cloudRight;
+  animation-delay: 1s;
+}
+
+@keyframes cloudLeft {
+  0% {
+    top: 0.8854vw;
+    left: 11.4583vw;
+    opacity: 0;
+  }
+
+  20% {
+    top: 1.718vw;
+    left: 9.7916vw;
+    opacity: 1;
+  }
+
+  80% {
+    top: 4.218vw;
+    left: 4.7916vw;
+    opacity: 1;
+  }
+
+  100% {
+    top: 5.052vw;
+    left: 3.125vw;
+    opacity: 0;
+  }
+}
+
+@keyframes cloudMid {
+  0% {
+    top: 0.5208vw;
+    left: 21.875vw;
+    opacity: 0;
+  }
+
+  20% {
+    top: 2.0833vw;
+    left: 18.75vw;
+    opacity: 1;
+  }
+
+  70% {
+    top: 6.7708vw;
+    left: 9.375vw;
+    opacity: 1;
+  }
+
+  100% {
+    top: 8.333vw;
+    left: 6.25vw;
+    opacity: 0;
+  }
+}
+
+@keyframes cloudRight {
+  0% {
+    top: 5.2083vw;
+    left: 26.0417vw;
+    opacity: 0;
+  }
+
+  20% {
+    top: 6.25vw;
+    left: 23.9583vw;
+    opacity: 1;
+  }
+
+  80% {
+    top: 9.375vw;
+    left: 17.708vw;
+    opacity: 1;
+  }
+
+  100% {
+    top: 10.416vw;
+    left: 15.625vw;
+    opacity: 0;
+  }
+}
+
+.wscn-http404 .bullshit {
+  position: relative;
+  width: 100%;
+  padding: 1.5625vw 0;
+  overflow: hidden;
+  float: left;
+}
+
+.wscn-http404 .bullshit__oops,
+.wscn-http404 .bullshit__headline,
+.wscn-http404 .bullshit__info,
+.wscn-http404 .bullshit__return-home {
+  opacity: 0;
+  animation-name: slideUp;
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+}
+
+.wscn-http404 .bullshit__oops {
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 30px;
+  color: #1482f0;
+  margin-bottom: 1.0416667vw;
+}
+
+.wscn-http404 .bullshit__headline {
+  font-size: 1.0416667vw;
+  font-weight: bold;
+  line-height: 1.25vw;
+  color: #222;
+  animation-delay: 0.1s;
+  margin-bottom: 0.5208333vw;
+}
+
+.wscn-http404 .bullshit__info {
+  font-size: 0.6770833vw;
+  line-height: 1.09375vw;
+  color: grey;
+  animation-delay: 0.2s;
+  margin-bottom: 1.5625vw;
+}
+
+.wscn-http404 .bullshit__return-home {
+  display: block;
+  width: 5.7291667vw;
+  height: 1.875vw;
+  border-radius: 100px;
+  font-size: 0.7291667vw;
+  line-height: 1.875vw;
+  text-align: center;
+  color: #fff;
+  background: #1482f0;
+  animation-delay: 0.3s;
+  cursor: pointer;
+  float: left;
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(3.125vw);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

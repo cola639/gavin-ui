@@ -1,0 +1,51 @@
+.custom_btn {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 35px;
+  border-radius: 5px;
+  font-family: Lato, sans-serif;
+  font-size: 10px;
+  line-height: 20px;
+  color: #fff;
+  background: transparent;
+  box-shadow:
+    inset 2px 2px 2px 0 rgb(255 255 255 / 50%),
+    7px 7px 20px 0 rgb(0 0 0 / 10%),
+    4px 4px 5px 0 rgb(0 0 0 / 10%);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  outline: none;
+}
+
+/* 15 */
+.btn_15 {
+  border: none;
+  background: #4b84ef;
+}
+.btn-15::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: -1;
+  width: 0;
+  height: 100%;
+  border-radius: 5px;
+  background-color: #663dff;
+  box-shadow:
+    inset 2px 2px 2px 0 rgb(255 255 255 / 50%),
+    7px 7px 20px 0 rgb(0 0 0 / 10%),
+    4px 4px 5px 0 rgb(0 0 0 / 10%);
+  transition: all 0.3s ease;
+  content: '';
+}
+.btn-15:hover {
+  color: #fff;
+}
+.btn-15:hover::after {
+  left: 0;
+  width: 100%;
+}
+.btn-15:active {
+  top: 2px;
+}

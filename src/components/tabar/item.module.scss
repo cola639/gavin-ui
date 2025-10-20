@@ -1,0 +1,133 @@
+/* Item.module.scss */
+$primary-color: #47a8f2;
+$secondary-color: #99a3ba;
+$background-color: #fff;
+$highlight-color: #fefefe;
+
+.item {
+  position: relative;
+  flex-grow: 1;
+}
+
+.link {
+  position: relative;
+  z-index: 1;
+  display: table;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: $highlight-color;
+}
+
+.link div,
+.link span,
+.link svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.link div {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -84%);
+}
+
+.link div span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  width: 20px;
+  background: $background-color;
+  animation: down 0.3s linear forwards;
+  overflow: hidden;
+  transform: scale(0.94);
+  transform-origin: 0 100%;
+}
+
+.link div span svg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.link div span:first-child {
+  height: 20px;
+}
+
+.link div span:first-child svg {
+  transition:
+    fill 0.3s ease,
+    stroke 0.3s ease;
+}
+
+.link div span:last-child {
+  z-index: 5;
+  height: 0;
+  transition: height 0.25s ease;
+}
+
+.link div span:last-child svg {
+  fill: $primary-color;
+  stroke: $primary-color;
+}
+
+.link strong {
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 28px;
+  color: $secondary-color;
+  transition: all 0.3s ease;
+}
+
+.active .link {
+  z-index: 5;
+}
+
+.active .link div span {
+  animation: high 0.35s linear forwards 0.05s;
+}
+
+.active .link div span:last-child {
+  height: 20px;
+  transition: height 0.3s ease 0.25s;
+}
+
+.active .link strong {
+  font-weight: 700;
+  color: $primary-color;
+}
+
+@keyframes high {
+  0% {
+    transform: rotate(0deg) scale(0.94);
+  }
+  33% {
+    transform: rotate(8deg);
+  }
+  66% {
+    transform: rotate(8deg) translateY(-1px);
+  }
+  100% {
+    transform: rotate(0deg) scale(1) translateY(-1px);
+  }
+}
+
+@keyframes down {
+  0% {
+    transform: rotate(0deg) scale(1) translateY(-1px);
+  }
+  33% {
+    transform: rotate(8deg);
+  }
+  66% {
+    transform: rotate(8deg) translateY(0);
+  }
+  100% {
+    transform: rotate(0deg) scale(0.94) translateY(0);
+  }
+}

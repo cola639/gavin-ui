@@ -1,0 +1,15 @@
+.container {
+  min-height: 100vh;
+  background-color: #f4f4f4;
+}
+
+.layout_content {
+  padding-bottom: $bottomBar;
+}
+
+.layout_footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #fff;
+}
