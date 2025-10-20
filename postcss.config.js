@@ -1,21 +1,15 @@
-module.exports = {
+export default {
   plugins: {
-    autoprefixer: {
-      overrideBrowserslist: ['Android 4.1', 'iOS 7.1', 'Chrome > 31', 'ff > 31', 'ie >= 8']
-    },
-    'postcss-px-to-viewport': {
-      unitToConvert: 'px',
+    "@tailwindcss/postcss": {}, // <-- v4 plugin
+    autoprefixer: {},
+    "postcss-px-to-viewport": {
       viewportWidth: 375,
-      unitPrecision: 4,
-      propList: ['*'],
-      viewportUnit: 'vw',
-      fontViewportUnit: 'vw',
-      selectorBlackList: [],
+      unitPrecision: 6,
+      viewportUnit: "vw",
+      propList: ["*"],
       minPixelValue: 1,
-      mediaQuery: true,
-      replace: true,
-      landscape: false,
-      exclude: [/node_modules/, /src\/tldraw/, /src\/components\/button/] // 使用正则表达式排除 node_modules 文件夹
-    }
-  }
-};
+      mediaQuery: false,
+      exclude: /node_modules|tailwind|@tailwindcss/i, // don't convert Tailwind/3rd libs
+    },
+  },
+}
