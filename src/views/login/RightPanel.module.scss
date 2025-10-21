@@ -1,0 +1,20 @@
+.panelBg {
+  position: relative;
+  width: 100%;
+  padding-top: calc(859 / 735 * 100%); /* keep aspect on small screens */
+  border-radius: 15px;
+  background: #000842;
+}
+
+.illustrationBox {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 500;
+  opacity: 0.85;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}

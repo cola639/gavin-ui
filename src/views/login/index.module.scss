@@ -1,0 +1,55 @@
+$page-bg: #f7fafb;
+$teal: #b9ece8;
+$teal-strong: #9fe2dc;
+
+.page {
+  background: $page-bg;
+}
+
+.illustration {
+  position: relative;
+  background: linear-gradient(180deg, #bfe9e5 0%, #bfe9e5 60%, #c7efea 100%);
+  border-top-right-radius: 48px;
+  border-bottom-right-radius: 48px;
+  overflow: hidden;
+  min-height: 640px;
+
+  // mimic floating glossy shapes from screenshot
+  .shapeStack {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.15));
+      backdrop-filter: blur(2px);
+    }
+
+    // big crescent
+    &::before {
+      left: 12%;
+      top: 28%;
+      width: 420px;
+      height: 280px;
+      background: radial-gradient(120% 100% at 20% 0%, #ffd0d9 0%, #f4a6b6 40%, transparent 60%), linear-gradient(145deg, #ffffff80, #ffffff10);
+      border-radius: 160px;
+      transform: rotate(-24deg);
+      opacity: 0.9;
+    }
+
+    // glossy plate
+    &::after {
+      left: 26%;
+      top: 52%;
+      width: 380px;
+      height: 24px;
+      background: linear-gradient(90deg, #e2e2e2 0%, #ffffff 45%, #d3d3d3 100%);
+      border-radius: 12px;
+      transform: rotate(-22deg);
+      opacity: 0.95;
+    }
+  }
+}
