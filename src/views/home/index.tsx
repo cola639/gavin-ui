@@ -1,4 +1,5 @@
-import Sidebar, { MenuItem } from '@/components/siderbar';
+import Header from '@/components/header';
+import Sidebar, { MenuItem } from '@/components/sidebar';
 import {
   Archive,
   BarChart3,
@@ -19,10 +20,10 @@ import {
   Users
 } from 'lucide-react';
 import { useState } from 'react';
-import Header from '../../components/header';
 
 export default function App() {
   const [showExpanded, setShowExpanded] = useState(true);
+  const [activeMenu, setActiveMenu] = useState('logout');
 
   // Define menu items array - this can be passed as props
   const menuItems: MenuItem[] = [
@@ -50,16 +51,14 @@ export default function App() {
 
   const handleMenuClick = (menuId: string) => {
     console.log('Menu clicked:', menuId);
+    setActiveMenu(menuId);
     // Handle navigation here
   };
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar - Expanded Version */}
-      {showExpanded && <Sidebar menuItems={menuItems} isExpanded={true} onMenuClick={handleMenuClick} />}
-
-      {/* Sidebar - Collapsed Version */}
-      {!showExpanded && <Sidebar menuItems={menuItems} isExpanded={false} onMenuClick={handleMenuClick} />}
+      {/* Sidebar */}
+      <Sidebar menuItems={menuItems} isExpanded={showExpanded} onMenuClick={handleMenuClick} activeMenuId={activeMenu} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -70,8 +69,10 @@ export default function App() {
         <main className="flex-1 overflow-auto p-6">
           {/* Simple placeholder content */}
           <div className="bg-white rounded-lg shadow p-8">
-            <h1 className="mb-4">Welcome to DashStack CRM</h1>
-            <p className="text-gray-600 mb-4">This is a demo CRM dashboard with a collapsible sidebar.</p>
+            <h1 className="mb-4">Main Content Area</h1>
+            <p className="text-gray-600 mb-4">
+              Currently viewing: <strong>{activeMenu}</strong>
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
               <div className="bg-blue-50 p-6 rounded-lg">
                 <h3 className="text-blue-700 mb-2">Total Sales</h3>
