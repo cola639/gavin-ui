@@ -55,7 +55,7 @@ export default function Sidebar({ menuItems, isExpanded = true, onMenuClick, act
   return (
     <aside className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${isExpanded ? 'w-56' : 'w-20'} ${className}`}>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-gray-100">
+      <div className="px-6 py-[22px] border-b border-gray-100">
         {isExpanded ? (
           <div className="flex items-center gap-1">
             <span className="text-blue-600">Dash</span>
