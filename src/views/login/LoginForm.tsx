@@ -37,9 +37,9 @@ const LoginForm: React.FC = () => {
 
       {/* Form */}
       <form className="grid gap-5">
-        <Input label="Full Name" placeholder="Jane Cooper" />
-        <Input label="Email Address" type="email" placeholder="jane@email.com" />
-        <Input label="Password" type={show ? 'text' : 'password'} placeholder="••••••••">
+        <Input label="Nick Name" type="text" placeholder="Input your nick name..." />
+        <Input label="Email Address" type="email" placeholder="Input your email..." />
+        <Input label="Password" type={show ? 'text' : 'password'} placeholder="Enter your password...">
           <button
             type="button"
             aria-label={show ? 'Hide password' : 'Show password'}
@@ -75,7 +75,7 @@ const LoginForm: React.FC = () => {
 
         <p className="mt-4 text-sm text-gray-500">
           Already have an account?
-          <a href="/login" className="font-medium text-teal-600 hover:underline">
+          <a href="/login" className="ml-[8px] font-medium text-teal-600 hover:underline">
             Log in
           </a>
         </p>

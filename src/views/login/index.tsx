@@ -1,5 +1,4 @@
 import React from 'react';
-import Illustration from './Illustration';
 import styles from './index.module.scss';
 import LoginForm from './LoginForm';
 import logo from './logo.png';
