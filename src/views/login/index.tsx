@@ -10,7 +10,7 @@ const LoginPage: React.FC = () => {
       <section
         className="
     grid grid-cols-1
-    lg:grid-cols-[45%_55%]
+    lg:grid-cols-[40%_60%]
     lg:grid-rows-[auto_1fr]
     items-stretch
     lg:gap-0
@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
   "
       >
         <div
-          className="fixed top-1/2 left-[40%] -translate-x-1/2 -translate-y-1/2  pointer-events-none z-0                
+          className="fixed top-1/2 left-[38%] -translate-x-1/2 -translate-y-1/2  pointer-events-none z-0                
   "
         >
           <img

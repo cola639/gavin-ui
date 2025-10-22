@@ -33,7 +33,7 @@ const SocialButton: React.FC<{ provider: Provider }> = ({ provider }) => {
   return (
     <button
       type="button"
-      className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
     >
       {icons[provider]}
       <span>{labels[provider]}</span>

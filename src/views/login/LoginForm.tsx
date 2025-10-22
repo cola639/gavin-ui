@@ -68,7 +68,7 @@ const LoginForm: React.FC = () => {
 
         <button
           type="submit"
-          className="mt-2 w-full rounded-xl bg-teal-300 px-6 py-3 text-center text-base font-semibold text-white transition hover:brightness-95 active:brightness-90"
+          className="cursor-pointer mt-2 w-full rounded-xl bg-teal-300 px-6 py-3 text-center text-base font-semibold text-white transition hover:brightness-95 active:brightness-90"
         >
           Create Account
         </button>
