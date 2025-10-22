@@ -125,6 +125,18 @@
   background: #fff !important;
 }
 
+/* ---- Disabled states: no hover tint at all ---- */
+:global(.ant-btn[disabled]),
+:global(.ant-btn[disabled]:hover),
+:global(.ant-btn[disabled]:focus),
+:global(.ant-btn[disabled]:active) {
+  color: rgba(0, 0, 0, 0.25) !important;
+  border-color: #d9d9d9 !important;
+  background: #f5f5f5 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
 /* ===== Reset Filter: explicit class to guarantee the look ===== */
 .resetBtn {
   border-radius: 12px;
@@ -135,4 +147,44 @@
   color: var(--primary);
   border-color: var(--primary);
   background: #fff;
+}
+
+/* --- Action bar --- */
+.actionBar {
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  padding: 10px 14px;
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actionSide {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.actionSpacer {
+  margin-left: auto;
+}
+
+/* Buttons in action bar inherit your primary hover/active from previous rules.
+   Add a bit of rounding for consistency. */
+:global(.ant-btn) {
+  border-radius: 10px;
+}
+
+/* Optional: compact on small screens */
+@media (max-width: 640px) {
+  .actionBar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .actionSpacer {
+    margin-left: 0;
+  }
 }
