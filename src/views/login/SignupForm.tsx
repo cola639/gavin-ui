@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import SocialButton from './SocialButton';
 
-type FieldErrors = { email?: string; pwd?: string };
+type FieldErrors = { nick?: string; email?: string; pwd?: string };
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 const hasLetter = /[A-Za-z]/;
 const hasNumber = /\d/;
@@ -40,21 +41,27 @@ const Input = ({
     </label>
   );
 };
-
-type LoginFormProps = { onSwitchToSignup?: () => void };
-const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
+type SignupFormProps = { onSwitchToLogin?: () => void };
+const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
   const [show, setShow] = useState(false);
 
-  // values
+  // form values
+  const [nick, setNick] = useState('');
   const [email, setEmail] = useState('');
   const [pwd, setPwd] = useState('');
 
-  // errors appear after submit; any edit clears its error
+  // errors only appear after submit; any edit clears that field’s error
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
 
-  function validate(values: { email: string; pwd: string }): FieldErrors {
+  function validate(values: { nick: string; email: string; pwd: string }): FieldErrors {
     const e: FieldErrors = {};
+    const n = values.nick.trim();
+    if (!n) e.nick = 'Please enter your nickname.';
+    else if (n.length < 2) e.nick = 'Nickname must be at least 2 characters.';
+    else if (n.length > 32) e.nick = 'Nickname must be 32 characters or fewer.';
+    else if (!/^[\w\- ]+$/.test(n)) e.nick = 'Only letters, numbers, space, _ and - allowed.';
+
     if (!values.email) e.email = 'Please enter your email address.';
     else if (!emailRegex.test(values.email)) e.email = 'Enter a valid email like you@example.com.';
 
@@ -67,21 +74,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const newErrors = validate({ email, pwd });
+    const newErrors = validate({ nick, email, pwd });
     setErrors(newErrors);
     const ok = Object.keys(newErrors).length === 0;
     if (!ok) return;
 
-    // placeholder: no API, just console
-    // eslint-disable-next-line no-console
-    console.log('LOGIN_FORM_SUBMIT', {
+    // no API call — console only
+    console.log('SIGNUP_FORM_SUBMIT', {
+      nickname: nick.trim(),
       email: email.trim(),
       passwordLength: pwd.length
     });
     setSubmitted(true);
   }
 
-  // clear a field’s error as soon as user edits
+  // per-field change handlers that clear that field’s error immediately
+  function onNickChange(v: string) {
+    setNick(v);
+    if (errors.nick) setErrors((e) => ({ ...e, nick: undefined }));
+  }
   function onEmailChange(v: string) {
     setEmail(v);
     if (errors.email) setErrors((e) => ({ ...e, email: undefined }));
@@ -93,7 +104,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
 
   return (
     <div className="rounded-2xl bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.05)] lg:p-10">
-      <h2 className="text-3xl font-semibold text-gray-900">Login</h2>
+      <h2 className="text-3xl font-semibold text-gray-900">Sign Up</h2>
 
       {/* Social */}
       <div className="mt-6 flex gap-3">
@@ -110,6 +121,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
 
       {/* Form */}
       <form className="grid gap-5" onSubmit={handleSubmit} noValidate>
+        {/* 1) Better placeholder copy + styling handled in Input */}
+        <Input
+          label="Nick Name"
+          type="text"
+          placeholder="e.g., Jane"
+          value={nick}
+          onChange={(e) => onNickChange(e.target.value)}
+          error={errors.nick}
+          autoComplete="nickname"
+        />
         <Input
           label="Email Address"
           type="email"
@@ -123,11 +144,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
         <Input
           label="Password"
           type={show ? 'text' : 'password'}
-          placeholder="Enter your password"
+          placeholder="At least 8 characters, letters & numbers"
           value={pwd}
           onChange={(e) => onPwdChange(e.target.value)}
           error={errors.pwd}
-          autoComplete="current-password"
+          autoComplete="new-password"
         >
           <button
             type="button"
@@ -148,17 +169,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
           </button>
         </Input>
 
+        {/* 2) Submit (console only) */}
+
         <button
           type="submit"
           className="cursor-pointer mt-2 w-full rounded-xl bg-teal-300 px-6 py-3 text-center text-base font-semibold text-white transition hover:brightness-95 active:scale-[.99] active:brightness-90"
         >
-          Log in
+          Create Account
         </button>
 
         <p className="mt-4 text-sm text-gray-500">
-          Don’t have an account?
-          <button type="button" onClick={onSwitchToSignup} className="cursor-pointer ml-[8px] font-medium text-teal-600 hover:underline">
-            Create one
+          Already have an account?
+          <button type="button" onClick={onSwitchToLogin} className="cursor-pointer ml-[8px] font-medium text-teal-600 hover:underline">
+            Log in
           </button>
         </p>
 
@@ -168,4 +191,4 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
   );
 };
 
-export default LoginForm;
+export default SignupForm;

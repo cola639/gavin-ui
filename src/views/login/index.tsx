@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './index.module.scss';
 import LoginForm from './LoginForm';
 import logo from './logo.png';
+import SignupForm from './SignupForm';
 
 const LoginPage: React.FC = () => {
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+
   return (
     <main className={`min-h-screen ${styles.page}`}>
       <section
@@ -58,7 +61,7 @@ const LoginPage: React.FC = () => {
     "
         >
           <div className="w-full max-w-[520px]">
-            <LoginForm />
+            {mode === 'login' ? <LoginForm onSwitchToSignup={() => setMode('signup')} /> : <SignupForm onSwitchToLogin={() => setMode('login')} />}
           </div>
         </div>
       </section>

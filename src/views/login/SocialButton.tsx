@@ -25,8 +25,8 @@ const icons: Record<Provider, JSX.Element> = {
 };
 
 const labels: Record<Provider, string> = {
-  google: 'Sign up with Google',
-  facebook: 'Sign up with Facebook'
+  google: 'Login with Google',
+  facebook: 'Login with Facebook'
 };
 
 const SocialButton: React.FC<{ provider: Provider }> = ({ provider }) => {
