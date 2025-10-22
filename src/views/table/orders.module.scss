@@ -1,0 +1,127 @@
+/* ===== Page layout ===== */
+.page {
+  min-height: 100vh;
+  background: var(--bg-page);
+  padding: 20px 20px 32px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 20px;
+}
+
+/* ===== Cards ===== */
+.filterCard,
+.tableCard {
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.filterCard {
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+.tableCard {
+  overflow: hidden;
+}
+
+/* ===== Filter row (no Tailwind) ===== */
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.filterPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.spacer {
+  margin-left: auto;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===== Status badges ===== */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 20px;
+  border: 1px solid transparent;
+}
+
+.badgeCompleted {
+  color: #1b806a;
+  background: rgba(159, 226, 220, 0.35);
+  border-color: var(--primary);
+}
+
+.badgeProcessing {
+  color: #5b3fc5;
+  background: rgba(132, 94, 247, 0.18);
+  border-color: rgba(132, 94, 247, 0.35);
+}
+
+.badgeRejected {
+  color: #b42318;
+  background: rgba(240, 68, 56, 0.18);
+  border-color: rgba(240, 68, 56, 0.35);
+}
+
+/* ===== AntD overrides to use your primary color ===== */
+:global(.ant-btn-primary) {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  border-radius: 12px !important;
+}
+:global(.ant-btn-primary:hover),
+:global(.ant-btn-primary:focus) {
+  background: var(--primary-strong) !important;
+  border-color: var(--primary-strong) !important;
+}
+
+:global(.ant-select-selector),
+:global(.ant-picker),
+:global(.ant-input) {
+  border-radius: 12px !important;
+}
+
+:global(.ant-select-focused .ant-select-selector),
+:global(.ant-picker-focused),
+:global(.ant-input:focus) {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 36%, transparent) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Compact spacing on small screens */
+@media (max-width: 640px) {
+  .page {
+    padding: 16px;
+  }
+  .title {
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+  .filterCard {
+    padding: 12px 14px;
+  }
+}

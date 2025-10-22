@@ -1,2 +1,10 @@
 /* src/index.css */
-@import "tailwindcss";
+@import 'tailwindcss';
+
+:root {
+  --primary: #9fe2dc;
+  --primary-strong: #86d6cf;
+  --bg-page: #f6f7fb;
+  --text-muted: #6b7280;
+  --card-border: #eeeeee;
+}

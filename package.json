@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.5",
+    "antd": "^5.27.6",
     "axios": "^1.7.2",
     "classnames": "^2.5.1",
+    "dayjs": "^1.11.18",
     "lodash": "^4.17.21",
     "lucide-react": "^0.546.0",
     "moment": "^2.30.1",

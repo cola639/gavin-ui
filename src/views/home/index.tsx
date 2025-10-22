@@ -1,5 +1,6 @@
 import Header from '@/components/header';
 import Sidebar, { MenuItem } from '@/components/sidebar';
+import ContentTable from '@/views/table';
 import {
   Archive,
   BarChart3,
@@ -67,27 +68,7 @@ export default function App() {
 
         {/* Content */}
         <main className="flex-1 overflow-auto p-6">
-          {/* Simple placeholder content */}
-          <div className="bg-white rounded-lg shadow p-8">
-            <h1 className="mb-4">Main Content Area</h1>
-            <p className="text-gray-600 mb-4">
-              Currently viewing: <strong>{activeMenu}</strong>
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <h3 className="text-blue-700 mb-2">Total Sales</h3>
-                <p className="text-gray-600">$45,231.89</p>
-              </div>
-              <div className="bg-green-50 p-6 rounded-lg">
-                <h3 className="text-green-700 mb-2">New Customers</h3>
-                <p className="text-gray-600">+2,350</p>
-              </div>
-              <div className="bg-purple-50 p-6 rounded-lg">
-                <h3 className="text-purple-700 mb-2">Active Orders</h3>
-                <p className="text-gray-600">573</p>
-              </div>
-            </div>
-          </div>
+          <ContentTable></ContentTable>
         </main>
       </div>
     </div>
