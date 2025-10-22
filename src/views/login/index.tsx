@@ -2,6 +2,7 @@ import React from 'react';
 import Illustration from './Illustration';
 import styles from './index.module.scss';
 import LoginForm from './LoginForm';
+import logo from './logo.png';
 
 const LoginPage: React.FC = () => {
   return (
@@ -9,14 +10,24 @@ const LoginPage: React.FC = () => {
       <section
         className="
     grid grid-cols-1
-    lg:grid-cols-[30%_1fr]
+    lg:grid-cols-[45%_55%]
     lg:grid-rows-[auto_1fr]
     items-stretch
     lg:gap-0
     min-h-[calc(100vh)]
   "
       >
-        {/* RIGHT: Top bar (placed in right column, row 1) */}
+        <div
+          className="fixed top-1/2 left-[40%] -translate-x-1/2 -translate-y-1/2  pointer-events-none z-0                
+  "
+        >
+          <img
+            src={typeof logo === 'string' ? logo : ''}
+            alt="Logo"
+            className="rotate-[10deg] object-contain max-w-[35vw] max-h-[35vw] drop-shadow-xl"
+          />
+        </div>
+        {/* RIGHT: Top bar (right col, row 1) */}
         <header
           className="
       col-start-1 lg:col-start-2
@@ -24,7 +35,6 @@ const LoginPage: React.FC = () => {
       bg-white
       px-6 py-4
       lg:rounded-tl-[48px]
-      /* keep edges flush with the block below */
     "
         >
           <div className="flex items-center justify-end">
@@ -37,6 +47,7 @@ const LoginPage: React.FC = () => {
           </div>
         </header>
 
+        {/* RIGHT: Form (right col, row 2) */}
         <div
           className="
       col-start-1 lg:col-start-2
@@ -44,10 +55,10 @@ const LoginPage: React.FC = () => {
       bg-white
       lg:rounded-bl-[48px]
       flex items-center justify-center
-      p-6 lg:p-12
+      p-6 lg:p-10
     "
         >
-          <div className="w-full max-w-[560px]">
+          <div className="w-full max-w-[520px]">
             <LoginForm />
           </div>
         </div>
