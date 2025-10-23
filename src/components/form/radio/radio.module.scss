@@ -1,0 +1,42 @@
+.group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+.wrap {
+  display: grid;
+  gap: 8px;
+}
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  cursor: pointer;
+}
+.input {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  display: grid;
+  place-items: center;
+  transition: 0.18s;
+}
+.input:checked {
+  border-color: var(--primary);
+}
+.input:checked::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+}

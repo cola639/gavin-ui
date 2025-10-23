@@ -1,0 +1,32 @@
+.field {
+  display: grid;
+  gap: 8px;
+}
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+.input {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  outline: none;
+  transition: 0.18s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+}
+.input::placeholder {
+  color: #9aa3af;
+}
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(159, 226, 220, 0.25);
+}
+.error {
+  color: #b42318;
+  font-size: 12px;
+}
+.inputError {
+  border-color: #fda4a1;
+}
