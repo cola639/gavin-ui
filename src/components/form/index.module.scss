@@ -7,7 +7,7 @@
 }
 
 .card {
-  width: min(980px, 100%);
+  width: min(500px, 100%);
   background: #fff;
   border-radius: 20px;
   border: 1px solid var(--border);
@@ -20,11 +20,6 @@
   place-items: center;
   row-gap: 10px;
   margin-bottom: 18px;
-}
-
-.title {
-  font-size: 22px;
-  font-weight: 700;
 }
 
 .grid {
@@ -123,4 +118,9 @@
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+.helper {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
 }

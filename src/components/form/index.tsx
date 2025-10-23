@@ -111,8 +111,6 @@ const UserFormPage: React.FC = () => {
             </div>
             <div className={styles.helper}>PNG/JPG up to 2MB</div>
           </div>
-
-          <div className={styles.title}>Avatar</div>
         </div>
 
         <div className={styles.grid}>
