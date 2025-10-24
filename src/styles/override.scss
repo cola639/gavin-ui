@@ -53,3 +53,79 @@
 .ant-table-wrapper .ant-table-tbody > tr:hover > td {
   background: color-mix(in oklab, var(--primary) 10%, transparent) !important;
 }
+
+/* Soft brand tint variables (optional) */
+:root {
+  --primary-soft-8: color-mix(in oklab, var(--primary) 8%, white);
+  --primary-soft-14: color-mix(in oklab, var(--primary) 14%, white);
+  --primary-soft-18: color-mix(in oklab, var(--primary) 18%, white);
+}
+
+/* Hover (non-selected) */
+.ant-table-wrapper .ant-table-tbody > tr:hover > td {
+  background: var(--primary-soft-8) !important;
+}
+
+/* Selected state from row selection checkbox */
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td {
+  background: var(--primary-soft-14) !important;
+}
+
+/* Selected + hover (slightly stronger) */
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected:hover > td {
+  background: var(--primary-soft-18) !important;
+}
+
+/* Optional: subtle zebra striping for readability (brand-tinted) */
+.ant-table-wrapper .ant-table-tbody > tr:nth-child(even):not(.ant-table-row-selected) > td {
+  background: color-mix(in oklab, var(--primary) 4%, white);
+}
+
+/* ===== Checkbox themed with --primary ===== */
+.ant-checkbox .ant-checkbox-inner {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border-color: var(--border);
+  transition: all 0.18s ease;
+}
+
+/* hover (wrapper & box) */
+.ant-checkbox-wrapper:hover .ant-checkbox-inner,
+.ant-checkbox:hover .ant-checkbox-inner {
+  border-color: var(--primary) !important;
+}
+
+/* focus ring */
+.ant-checkbox-input:focus-visible + .ant-checkbox-inner {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 36%, transparent);
+  border-color: var(--primary);
+}
+
+/* checked */
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+.ant-checkbox-checked::after {
+  /* the outline tick ring */
+  border: 1px solid var(--primary) !important;
+}
+
+/* indeterminate */
+.ant-checkbox-indeterminate .ant-checkbox-inner {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+.ant-checkbox-indeterminate .ant-checkbox-inner::after {
+  background-color: #fff; /* middle bar contrast */
+}
+
+/* disabled */
+.ant-checkbox-disabled .ant-checkbox-inner {
+  background-color: #f5f5f5 !important;
+  border-color: #d9d9d9 !important;
+}
+.ant-checkbox-disabled + span {
+  color: rgba(0, 0, 0, 0.25);
+}
