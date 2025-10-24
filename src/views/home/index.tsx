@@ -1,6 +1,6 @@
 import Header from '@/components/header';
 import Sidebar, { MenuItem } from '@/components/sidebar';
-import ContentTable from '@/views/table';
+import ContentTable from '@/views/user';
 import {
   Archive,
   BarChart3,
