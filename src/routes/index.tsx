@@ -7,8 +7,8 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { makeRoute } from './RouteFactory';
 
 // Lazy pages
-const LayoutComponent = Loadable(lazy(() => import('views/home')));
-const OrderPage = Loadable(lazy(() => import('views/table')));
+const LayoutComponent = Loadable(lazy(() => import('views/layout')));
+const OrderPage = Loadable(lazy(() => import('@/views/order')));
 const UserPage = Loadable(lazy(() => import('views/user')));
 
 // Build route tree using factory
