@@ -1,6 +1,5 @@
 import Header from '@/components/header';
 import Sidebar, { MenuItem } from '@/components/sidebar';
-import ContentTable from '@/views/user';
 import {
   Archive,
   BarChart3,
@@ -21,6 +20,7 @@ import {
   Users
 } from 'lucide-react';
 import { useState } from 'react';
+import { Outlet } from 'react-router-dom';
 
 export default function App() {
   const [showExpanded, setShowExpanded] = useState(true);
@@ -68,7 +68,7 @@ export default function App() {
 
         {/* Content */}
         <main className="flex-1 overflow-auto p-6">
-          <ContentTable></ContentTable>
+          <Outlet />
         </main>
       </div>
     </div>

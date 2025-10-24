@@ -1,17 +1,43 @@
-import { useRoutes } from 'react-router-dom';
-import { NotFound, RedirectNotFound } from './404';
-import { AuthRoutesMap, LayoutRoutesMap, NoLayoutRoutesMap, PublicRoutesMap } from './RoutesMap';
+import ErrorBoundary from '@/components/errorBoundary';
+import NotFoundPage from '@/views/404';
+import LoginPage from '@/views/login';
+import Loadable from 'components/progress/Loadable';
+import { lazy } from 'react';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { makeRoute } from './RouteFactory';
 
-const PublicRoutes = {
-  path: '/',
-  children: PublicRoutesMap
-};
+// Lazy pages
+const LayoutComponent = Loadable(lazy(() => import('views/home')));
+const OrderPage = Loadable(lazy(() => import('views/table')));
+const UserPage = Loadable(lazy(() => import('views/user')));
 
-const AuthRoutes = {
-  path: '/',
-  children: NoLayoutRoutesMap
-};
+// Build route tree using factory
+const routes = [
+  // Redirect root to /view
+  makeRoute('/', <Navigate to="/view" replace />),
 
-export default function Routes() {
-  return useRoutes([PublicRoutes, AuthRoutes, RedirectNotFound, NotFound]);
+  // /login (public)
+  makeRoute('/login', <LoginPage />, { title: 'login' }),
+
+  // /view (layout) with children
+  makeRoute('/view', <LayoutComponent />, {
+    title: 'dashboard',
+    auth: true, // <- enable if layout requires auth
+    children: [
+      { index: true, element: <Navigate to="order" replace />, errorElement: <ErrorBoundary /> },
+      makeRoute('order', <OrderPage />, { title: 'order' /*, auth: true*/ }),
+      makeRoute('user', <UserPage />, { title: 'user' /*, auth: true*/ })
+      // index route (optional): default child
+    ]
+  }),
+
+  // 404 (catch-all)
+  makeRoute('*', <NotFoundPage />)
+];
+
+// Create router ONCE at module scope
+export const router = createBrowserRouter(routes);
+
+export default function AppRouter() {
+  return <RouterProvider router={router} />;
 }
