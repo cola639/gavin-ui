@@ -22,7 +22,7 @@ const routes = [
   // /view (layout) with children
   makeRoute('/view', <LayoutComponent />, {
     title: 'dashboard',
-    auth: true, // <- enable if layout requires auth
+    auth: false, // <- enable if layout requires auth
     children: [
       { index: true, element: <Navigate to="order" replace />, errorElement: <ErrorBoundary /> },
       makeRoute('order', <OrderPage />, { title: 'order' /*, auth: true*/ }),
