@@ -1,43 +1,51 @@
-import ErrorBoundary from '@/components/errorBoundary';
-import NotFoundPage from '@/views/404';
-import LoginPage from '@/views/login';
-import Loadable from 'components/progress/Loadable';
-import { lazy } from 'react';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
-import { makeRoute } from './RouteFactory';
+// router.tsx
+import NotFound from '@/views/404';
+import React, { lazy } from 'react';
+import { createBrowserRouter } from 'react-router-dom';
+import { mergeRoute, RouteMeta, withSuspense } from './RouteFactory';
 
-// Lazy pages
-const LayoutComponent = Loadable(lazy(() => import('views/layout')));
-const OrderPage = Loadable(lazy(() => import('@/views/order')));
-const UserPage = Loadable(lazy(() => import('views/user')));
+// ---- whitelist ----
+const Login = lazy(() => import('@/views/login'));
 
-// Build route tree using factory
-const routes = [
-  // Redirect root to /view
-  makeRoute('/', <Navigate to="/view" replace />),
-
-  // /login (public)
-  makeRoute('/login', <LoginPage />, { title: 'login' }),
-
-  // /view (layout) with children
-  makeRoute('/view', <LayoutComponent />, {
-    title: 'dashboard',
-    auth: false, // <- enable if layout requires auth
-    children: [
-      { index: true, element: <Navigate to="order" replace />, errorElement: <ErrorBoundary /> },
-      makeRoute('order', <OrderPage />, { title: 'order' /*, auth: true*/ }),
-      makeRoute('user', <UserPage />, { title: 'user' /*, auth: true*/ })
-      // index route (optional): default child
-    ]
-  }),
-
-  // 404 (catch-all)
-  makeRoute('*', <NotFoundPage />)
+const whiteList = [
+  {
+    path: 'login',
+    element: withSuspense(<Login />),
+    handle: { meta: { title: 'Login', icon: 'login', hidden: false } as RouteMeta }
+  }
 ];
 
-// Create router ONCE at module scope
-export const router = createBrowserRouter(routes);
+// ---- fetched JSON ----
+const fetchJson = [
+  {
+    name: 'view',
+    path: '/view',
+    hidden: false,
+    redirect: 'noRedirect',
+    component: '@/views/layout',
+    alwaysShow: true,
+    meta: { title: 'monitor management', icon: 'monitor', link: null },
+    children: [
+      {
+        name: 'User',
+        path: 'user',
+        hidden: false,
+        component: '@/view/user',
+        meta: { title: 'monitor user', icon: 'user', link: null }
+      },
+      {
+        name: 'Order',
+        path: 'order',
+        hidden: false,
+        component: '@/view/order',
+        meta: { title: 'monitor order', icon: 'order', link: null }
+      }
+    ]
+  }
+];
 
-export default function AppRouter() {
-  return <RouterProvider router={router} />;
-}
+// ---- merge & build router ----
+const merged = mergeRoute(whiteList, fetchJson);
+
+const router = createBrowserRouter([...merged, { path: '*', element: <NotFound /> }]);
+export default router;

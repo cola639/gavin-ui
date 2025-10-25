@@ -1,51 +1,120 @@
-// RouteFactory.tsx. follow the same pattern to add loader or action later if needed
-import ErrorBoundary from '@/components/errorBoundary';
-import type { ReactElement } from 'react';
-import AuthGuard from './guards/AuthGuard';
+// routes/mergeRoute.tsx
+import SectionLayout from '@/views/layout';
+import React, { Suspense, lazy } from 'react';
+import type { RouteObject } from 'react-router-dom';
 
-type ChildDef =
-  | ReturnType<typeof makeRoute> // already built by factory
-  | { path?: string; index?: boolean; element: ReactElement; auth?: boolean; title?: string; children?: ChildDef[]; errorElement?: ReactElement };
-
-export type MakeRouteOptions = {
+// ---------- shared helpers ----------
+export type RouteMeta = {
   title?: string;
-  auth?: boolean; // if undefined, inherit from parent (default false)
-  children?: ChildDef[];
-  errorElement?: ReactElement;
+  icon?: string;
+  link?: string | null;
+  alwaysShow?: boolean;
+  hidden?: boolean;
 };
 
-export function makeRoute(path: string | undefined, element: ReactElement, opts: MakeRouteOptions = {}, parentAuth = false) {
-  const effectiveAuth = opts.auth ?? parentAuth;
-  const wrapped = effectiveAuth ? <AuthGuard>{element}</AuthGuard> : element;
+export const withSuspense = (node: React.ReactNode) => <Suspense fallback={<div>Loading…</div>}>{node}</Suspense>;
 
-  const route: any = {
-    ...(path ? { path } : { index: true }),
-    element: wrapped,
-    errorElement: opts.errorElement ?? <ErrorBoundary />,
-    handle: { title: opts.title }
+// ---------- backend schema ----------
+export type BackendRoute = {
+  name?: string;
+  path: string; // '/system' or 'user'
+  hidden?: boolean;
+  redirect?: string; // 'noRedirect' or actual path
+  component: string; // '@/components/layout' | '@/system/user' | ...
+  alwaysShow?: boolean;
+  meta?: {
+    title?: string;
+    icon?: string;
+    link?: string | null;
   };
+  children?: BackendRoute[];
+};
 
-  if (opts.children?.length) {
-    route.children = opts.children.map((child) => {
-      // If the child already came from makeRoute, just pass it through
-      if ('handle' in (child as any) || ('errorElement' in (child as any) && !('auth' in (child as any)))) {
-        return child;
-      }
-      // Rebuild child with inherited auth unless child.auth is provided
-      const c = child as any;
-      return makeRoute(
-        c.path, // undefined means index child
-        c.element,
-        {
-          title: c.title,
-          auth: c.auth ?? effectiveAuth,
-          children: c.children,
-          errorElement: c.errorElement
-        },
-        effectiveAuth
-      );
-    });
+// ---------- component resolver ----------
+// You can grow this map as needed. It resolves backend "component" strings to React components.
+type ResolvedElement = React.ReactNode;
+type ComponentResolver = (component: string, meta?: RouteMeta) => ResolvedElement;
+
+const defaultResolver: ComponentResolver = (component, meta) => {
+  // Layout node
+  if (component === '@/views/layout') {
+    return <SectionLayout />;
   }
 
+  // Page nodes — explicit map first
+  const map: Record<string, () => Promise<{ default: React.ComponentType<any> }>> = {
+    '@/view/user': () => import('../views/user'),
+    '@/view/order': () => import('../views/order')
+  };
+
+  const importer = map[component];
+  if (!importer) {
+    // Fallback heuristic: "@/a/b/c" -> "../pages/a/b/c"
+    const guessed = component.replace(/^@\/?/, '');
+    return withSuspense(React.createElement(lazy(() => import(`../views/${guessed}`))));
+  }
+
+  const LazyComp = lazy(importer);
+  return withSuspense(<LazyComp />);
+};
+
+// ---------- core transformer ----------
+function normalizePath(p?: string): string {
+  if (!p) return '';
+  return p.replace(/^\//, ''); // top-level array already; Router treats no leading slash as fine
+}
+
+function toRouteObject(node: BackendRoute, resolver: ComponentResolver): RouteObject {
+  const meta: RouteMeta = {
+    title: node.meta?.title,
+    icon: node.meta?.icon,
+    link: node.meta?.link ?? null,
+    alwaysShow: node.alwaysShow,
+    hidden: node.hidden
+  };
+
+  const element = resolver(node.component, meta);
+
+  const route: RouteObject = {
+    path: normalizePath(node.path),
+    element,
+    handle: { meta }
+  };
+
+  if (node.children?.length) {
+    route.children = node.children.map((child) => toRouteObject(child, resolver));
+  }
+
+  // Optional: if backend provides an actual redirect (not 'noRedirect'),
+  // you could add an index child that redirects.
+  // Example (uncomment if you use redirects):
+  // if (node.redirect && node.redirect !== 'noRedirect') {
+  //   route.children = route.children ?? []
+  //   route.children.unshift({
+  //     index: true,
+  //     loader: () => redirect(normalizePath(node.redirect)),
+  //   })
+  // }
+
   return route;
+}
+
+// ---------- public API ----------
+/**
+ * Merge whiteList (already-constructed RouteObject[]) with backend JSON route schema.
+ * @param whiteList predefined routes (e.g., login/register)
+ * @param backend backend JSON route list
+ * @param resolver optional custom resolver for component strings
+ */
+export function mergeRoute(whiteList: RouteObject[], backend: BackendRoute[], resolver: ComponentResolver = defaultResolver): RouteObject[] {
+  const backendRoutes = backend.map((node) => toRouteObject(node, resolver));
+
+  // Ensure top-level backend paths don’t accidentally keep leading '/'
+  backendRoutes.forEach((r) => {
+    if (typeof r.path === 'string' && r.path.startsWith('/')) {
+      r.path = r.path.slice(1);
+    }
+  });
+
+  return [...whiteList, ...backendRoutes];
 }
