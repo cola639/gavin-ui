@@ -1,6 +1,6 @@
+import { logoutUser } from '@/store/slice/userSlice';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { logoutUser } from 'store/slice/userReducer';
 import { getToken } from './auth';
 
 const isReLogin = {
@@ -56,7 +56,7 @@ service.interceptors.response.use(
         // to re login
         if (!isReLogin.show) {
           isReLogin.show = true;
-          // TODO: 
+          // TODO:
           // window.alert({
           //   content: 'Account login timeout requires re login',
           //   onConfirm: () => {

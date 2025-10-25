@@ -1,9 +1,9 @@
-// routes/mergeRoute.tsx
+// routes/RouteFactory.ts
 import SectionLayout from '@/views/layout';
 import React, { Suspense, lazy } from 'react';
 import type { RouteObject } from 'react-router-dom';
 
-// ---------- shared helpers ----------
+/** ---------- shared types & helpers ---------- */
 export type RouteMeta = {
   title?: string;
   icon?: string;
@@ -14,56 +14,65 @@ export type RouteMeta = {
 
 export const withSuspense = (node: React.ReactNode) => <Suspense fallback={<div>Loading…</div>}>{node}</Suspense>;
 
-// ---------- backend schema ----------
+/** ---------- backend schema ---------- */
 export type BackendRoute = {
   name?: string;
-  path: string; // '/system' or 'user'
+  path: string;
   hidden?: boolean;
-  redirect?: string; // 'noRedirect' or actual path
-  component: string; // '@/components/layout' | '@/system/user' | ...
+  redirect?: string;
+  component: string;
   alwaysShow?: boolean;
-  meta?: {
-    title?: string;
-    icon?: string;
-    link?: string | null;
-  };
+  meta?: { title?: string; icon?: string; link?: string | null };
   children?: BackendRoute[];
 };
 
-// ---------- component resolver ----------
-// You can grow this map as needed. It resolves backend "component" strings to React components.
+/** ---------- utils ---------- */
+const ensureRelative = (p = '') => p.replace(/^\//, '');
+const norm = (p = '') => ensureRelative(p).replace(/\/+$/, ''); // remove trailing
+
+function dedupeChildren(children: RouteObject[] | undefined): RouteObject[] | undefined {
+  if (!children?.length) return children;
+  const map = new Map<string, RouteObject>();
+  for (const r of children) {
+    const key = typeof r.path === 'string' ? norm(r.path) : r.index ? '__index__' : '';
+    if (!map.has(key)) {
+      // also dedupe recursively
+      if (r.children) r.children = dedupeChildren(r.children);
+      map.set(key, r);
+    }
+  }
+  return [...map.values()];
+}
+
+/** ---------- component resolver ---------- */
 type ResolvedElement = React.ReactNode;
 type ComponentResolver = (component: string, meta?: RouteMeta) => ResolvedElement;
 
 const defaultResolver: ComponentResolver = (component, meta) => {
-  // Layout node
   if (component === '@/views/layout') {
+    // You can pass meta to SectionLayout if needed
     return <SectionLayout />;
   }
 
-  // Page nodes — explicit map first
+  // Explicit map first (fast + tree-shakable)
   const map: Record<string, () => Promise<{ default: React.ComponentType<any> }>> = {
-    '@/view/user': () => import('../views/user'),
-    '@/view/order': () => import('../views/order')
+    '@/view/user': () => import('@/views/user'),
+    '@/view/order': () => import('@/views/order')
   };
 
   const importer = map[component];
-  if (!importer) {
-    // Fallback heuristic: "@/a/b/c" -> "../pages/a/b/c"
-    const guessed = component.replace(/^@\/?/, '');
-    return withSuspense(React.createElement(lazy(() => import(`../views/${guessed}`))));
+  if (importer) {
+    const Lazy = lazy(importer);
+    return withSuspense(<Lazy />);
   }
 
-  const LazyComp = lazy(importer);
-  return withSuspense(<LazyComp />);
+  // Fallback heuristic: "@/a/b" → "@/views/a/b"
+  const guessed = component.replace(/^@\/?/, '');
+  const Lazy = lazy(() => import(`@/views/${guessed}`));
+  return withSuspense(<Lazy />);
 };
 
-// ---------- core transformer ----------
-function normalizePath(p?: string): string {
-  if (!p) return '';
-  return p.replace(/^\//, ''); // top-level array already; Router treats no leading slash as fine
-}
-
+/** ---------- transformer ---------- */
 function toRouteObject(node: BackendRoute, resolver: ComponentResolver): RouteObject {
   const meta: RouteMeta = {
     title: node.meta?.title,
@@ -73,48 +82,47 @@ function toRouteObject(node: BackendRoute, resolver: ComponentResolver): RouteOb
     hidden: node.hidden
   };
 
-  const element = resolver(node.component, meta);
-
   const route: RouteObject = {
-    path: normalizePath(node.path),
-    element,
+    path: norm(node.path),
+    element: resolver(node.component, meta),
     handle: { meta }
   };
 
   if (node.children?.length) {
-    route.children = node.children.map((child) => toRouteObject(child, resolver));
+    route.children = dedupeChildren(node.children.map((child) => toRouteObject(child, resolver)));
   }
-
-  // Optional: if backend provides an actual redirect (not 'noRedirect'),
-  // you could add an index child that redirects.
-  // Example (uncomment if you use redirects):
-  // if (node.redirect && node.redirect !== 'noRedirect') {
-  //   route.children = route.children ?? []
-  //   route.children.unshift({
-  //     index: true,
-  //     loader: () => redirect(normalizePath(node.redirect)),
-  //   })
-  // }
 
   return route;
 }
 
-// ---------- public API ----------
-/**
- * Merge whiteList (already-constructed RouteObject[]) with backend JSON route schema.
- * @param whiteList predefined routes (e.g., login/register)
- * @param backend backend JSON route list
- * @param resolver optional custom resolver for component strings
- */
+/** ---------- public API ---------- */
 export function mergeRoute(whiteList: RouteObject[], backend: BackendRoute[], resolver: ComponentResolver = defaultResolver): RouteObject[] {
-  const backendRoutes = backend.map((node) => toRouteObject(node, resolver));
+  const backendRoutes = backend.map((n) => toRouteObject(n, resolver));
 
-  // Ensure top-level backend paths don’t accidentally keep leading '/'
-  backendRoutes.forEach((r) => {
-    if (typeof r.path === 'string' && r.path.startsWith('/')) {
-      r.path = r.path.slice(1);
+  // ensure top-level paths are relative & dedupe by path (whitelist wins)
+  const out: RouteObject[] = [];
+  const seen = new Set<string>();
+
+  // seed with whitelist first
+  for (const r of whiteList) {
+    const key = typeof r.path === 'string' ? norm(r.path) : r.index ? '__index__' : '';
+    if (!seen.has(key)) {
+      if (r.children) r.children = dedupeChildren(r.children);
+      out.push(r);
+      seen.add(key);
     }
-  });
+  }
 
-  return [...whiteList, ...backendRoutes];
+  // then backend (skip duplicates)
+  for (const r of backendRoutes) {
+    if (typeof r.path === 'string') r.path = norm(r.path);
+    const key = typeof r.path === 'string' ? r.path : r.index ? '__index__' : '';
+    if (!seen.has(key)) {
+      if (r.children) r.children = dedupeChildren(r.children);
+      out.push(r);
+      seen.add(key);
+    }
+  }
+
+  return out;
 }

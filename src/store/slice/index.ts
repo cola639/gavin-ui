@@ -1,9 +1,12 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import userReducer from './userReducer';
+import userSlice from './userSlice';
+
+import authSlice from './authSlice';
 
 // combine reducers
 const reducer = combineReducers({
-  user: userReducer
+  user: userSlice,
+  auth: authSlice
 });
 
 export default reducer;

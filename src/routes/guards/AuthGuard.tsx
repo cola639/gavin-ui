@@ -1,7 +1,7 @@
+import { getUserInfo } from '@/store/slice/userSlice';
 import { ReactElement, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'store';
-import { getUserInfo } from 'store/slice/userReducer';
 
 // ==============================|| AUTH GUARD ||============================== //
 type GuardProps = {
