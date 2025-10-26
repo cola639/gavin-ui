@@ -46,6 +46,21 @@ export async function buildAppRouter() {
  *  (If you need token gating, add a token check here and fall back to buildAuthRouter)
  */
 export async function createRouterForLocation(pathname: string) {
-  if (isInWhitelist(pathname)) return buildAuthRouter();
+  if (isInWhitelist(pathname)) {
+    return buildAuthRouter();
+  }
+  // const token = getToken();
+  // if (!token) {
+  //   return buildAuthRouter();
+  // }
   return buildAppRouter();
+}
+
+// ---- token helper (replace with your actual auth) ----
+export function getToken(): string | null {
+  try {
+    return localStorage.getItem('token');
+  } catch {
+    return null;
+  }
 }
