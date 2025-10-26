@@ -18,7 +18,7 @@ export const whiteList: RouteObject[] = [
 
 /** ---- small helpers ---- */
 const normalize = (p = '') => p.replace(/^\/+|\/+$/g, '');
-const isInWhitelist = (pathname: string) => {
+export const isInWhitelist = (pathname: string) => {
   const current = normalize(pathname);
   const paths = whiteList.map((r) => (typeof r.path === 'string' ? normalize(r.path) : ''));
   return new Set(paths).has(current);
