@@ -1,4 +1,7 @@
+import { authUserApi } from '@/apis/auth'; // << use the user API you asked for
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import SocialButton from './SocialButton';
 
 type FieldErrors = { email?: string; pwd?: string };
@@ -43,13 +46,13 @@ const Input = ({
 
 type LoginFormProps = { onSwitchToSignup?: () => void };
 const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
-  const [show, setShow] = useState(false);
+  const navigate = useNavigate();
 
-  // values
+  const [show, setShow] = useState(false);
   const [email, setEmail] = useState('');
   const [pwd, setPwd] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // errors appear after submit; any edit clears its error
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
 
@@ -65,23 +68,42 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
     return e;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const newErrors = validate({ email, pwd });
     setErrors(newErrors);
-    const ok = Object.keys(newErrors).length === 0;
-    if (!ok) return;
+    if (Object.keys(newErrors).length) return;
 
-    // placeholder: no API, just console
-    // eslint-disable-next-line no-console
-    console.log('LOGIN_FORM_SUBMIT', {
-      email: email.trim(),
-      passwordLength: pwd.length
-    });
-    setSubmitted(true);
+    try {
+      setLoading(true);
+
+      // API expects { username, password, code, uuid }
+      const res = await authUserApi({
+        email: email.trim(),
+        password: pwd
+      });
+
+      // Adjust to your backend shape if needed
+      const token = (res as any)?.token;
+      if (!token) {
+        throw new Error('Token missing in response');
+      }
+
+      localStorage.setItem('token', token);
+      toast.success('Logged in successfully', { autoClose: 1500 });
+
+      // Navigate to your default protected page
+      navigate('/view/user', { replace: true });
+
+      setSubmitted(true);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Login failed';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  // clear a field’s error as soon as user edits
   function onEmailChange(v: string) {
     setEmail(v);
     if (errors.email) setErrors((e) => ({ ...e, email: undefined }));
@@ -119,6 +141,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
           error={errors.email}
           autoComplete="email"
           inputMode="email"
+          disabled={loading}
         />
         <Input
           label="Password"
@@ -128,6 +151,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
           onChange={(e) => onPwdChange(e.target.value)}
           error={errors.pwd}
           autoComplete="current-password"
+          disabled={loading}
         >
           <button
             type="button"
@@ -150,19 +174,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
 
         <button
           type="submit"
-          className="cursor-pointer mt-2 w-full rounded-xl bg-teal-300 px-6 py-3 text-center text-base font-semibold text-white transition hover:brightness-95 active:scale-[.99] active:brightness-90"
+          disabled={loading}
+          className={`mt-2 w-full rounded-xl px-6 py-3 text-center text-base font-semibold text-white transition
+            ${loading ? 'bg-teal-200 cursor-not-allowed' : 'bg-teal-300 hover:brightness-95 active:scale-[.99] active:brightness-90'}`}
         >
-          Log in
+          {loading ? 'Logging in…' : 'Log in'}
         </button>
 
         <p className="mt-4 text-sm text-gray-500">
           Don’t have an account?
-          <button type="button" onClick={onSwitchToSignup} className="cursor-pointer ml-[8px] font-medium text-teal-600 hover:underline">
+          <button type="button" onClick={onSwitchToSignup} className="ml-2 font-medium text-teal-600 hover:underline">
             Create one
           </button>
         </p>
-
-        {submitted && <p className="mt-2 text-xs text-green-600">Submitted! Check the dev console for the payload.</p>}
       </form>
     </div>
   );
