@@ -13,6 +13,11 @@ export const whiteList: RouteObject[] = [
     path: 'login', // top-level data routes are relative
     element: withSuspense(<Login />),
     handle: { meta: { title: 'Login', icon: 'login', hidden: false } as RouteMeta }
+  },
+  {
+    path: '404', // top-level data routes are relative
+    element: withSuspense(<NotFound />),
+    handle: { meta: { title: 'NotFound', icon: 'lost', hidden: false } as RouteMeta }
   }
 ];
 
@@ -77,7 +82,9 @@ export async function buildAppRouter() {
   return createBrowserRouter([...merged, { path: '*', element: <NotFound /> }]);
 }
 
-export function initRoutes() {
+export async function initRoutes() {
+  console.log('Initializing routes for', window.location.pathname);
+
   if (isInWhitelist(window.location.pathname)) {
     // Whitelist: allow login/etc, but anything else -> /login?redirect=<original>
     return createBrowserRouter([...whiteList, { path: '*', loader: loginRedirectLoader }]);

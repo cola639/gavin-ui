@@ -1,40 +1,100 @@
-import { buildAppRouter, initRoutes } from '@/routes';
+// src/store/slice/routeSlice.tsx
+// Ensure this file is named routeSlice.tsx for JSX support
+import { isInWhitelist, whiteList } from '@/routes'; // export from your routes module
 import type { BackendRoute } from '@/routes/RouteFactory';
 import { mergeRoute } from '@/routes/RouteFactory';
 import { fetchRoutes } from '@/routes/routes';
-import { createSlice } from '@reduxjs/toolkit';
-import { getUserInfoApi, loginApi, logoutApi } from 'apis/user';
+import NotFound from '@/views/404'; // Make sure NotFound is a React component
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { createBrowserRouter, redirect, type LoaderFunctionArgs } from 'react-router-dom';
-import { getToken, removeToken, setToken } from 'utils/auth';
+import { getToken } from 'utils/auth';
 import { dispatch } from '../index';
 
-interface RouteProps {
-  token?: string;
-  routes?: any;
-}
+type RouteState = {
+  routes: any | null;
+  loading: boolean;
+  error?: string;
+};
 
-const initialState: RouteProps = {
-  token: getToken(),
-  routes: initRoutes()
+const initialState: RouteState = {
+  routes: null,
+  loading: true
 };
 
 const routeSlice = createSlice({
   name: 'routes',
   initialState,
   reducers: {
-    setRoutes(state, action) {}
+    setLoading(state, action: PayloadAction<boolean>) {
+      state.loading = action.payload;
+    },
+    setRoutes(state, action: PayloadAction<any | null>) {
+      state.routes = action.payload;
+    },
+    setError(state, action: PayloadAction<string | undefined>) {
+      state.error = action.payload;
+    }
   }
 });
 
-/**
- * async actions
- */
+export const { setLoading, setRoutes, setError } = routeSlice.actions;
+export default routeSlice.reducer;
 
-/** async await 写法 */
-// Full app router (fetch + merge; includes whitelist)
-export async function buildAppRoutes() {
-  return await buildAppRouter();
+// ---------- helpers ----------
+const toLogin = (from: string) => `/login?redirect=${encodeURIComponent(from)}`;
+const loginRedirectLoader = ({ request }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  const from = url.pathname + url.search;
+  if (url.pathname.startsWith('/login')) return redirect('/login');
+  return redirect(toLogin(from));
+};
+
+// ---------- async functions (no createAsyncThunk) ----------
+export async function buildAppRouter() {
+  const backend: BackendRoute[] = await fetchRoutes();
+  const merged = mergeRoute(whiteList, backend);
+  // @ts-ignore
+  return createBrowserRouter([...merged, { path: '*', element: NotFound }]);
 }
 
-export default routeSlice.reducer;
-export const { setRoutes } = routeSlice.actions;
+export async function initRoutes() {
+  const pathname = window.location.pathname;
+
+  if (isInWhitelist(pathname)) {
+    // only whitelist; everything else -> /login?redirect=...
+    return createBrowserRouter([...whiteList, { path: '*', loader: loginRedirectLoader }]);
+  }
+
+  if (getToken()) {
+    // authed: build full app routes (fetch backend)
+    return buildAppRouter();
+  }
+
+  // no token; index and everything -> /login?redirect=...
+  return createBrowserRouter([{ index: true, loader: loginRedirectLoader }, ...whiteList, { path: '*', loader: loginRedirectLoader }]);
+}
+
+// ---------- exported async actions you can call directly ----------
+export async function buildAppRoutes() {
+  dispatch(setLoading(true));
+  try {
+    const router = await buildAppRouter();
+    dispatch(setRoutes(router));
+  } catch (e: any) {
+    dispatch(setError(e?.message));
+  } finally {
+    dispatch(setLoading(false));
+  }
+}
+
+export async function buildFirstRoutes() {
+  dispatch(setLoading(true));
+  try {
+    const router = await initRoutes();
+    dispatch(setRoutes(router));
+  } catch (e: any) {
+    dispatch(setError(e?.message));
+  } finally {
+    dispatch(setLoading(false));
+  }
+}

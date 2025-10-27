@@ -1,26 +1,30 @@
-import type { Router as RemixRouter } from '@remix-run/router';
-import useDynamicRoutes from 'hooks/useDynamicRoutes';
+// src/App.tsx
+import type { RootState } from '@/store';
+import { buildFirstRoutes } from '@/store/slice/routeSlice';
+import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { RouterProvider } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
-  const router: RemixRouter | null = useDynamicRoutes();
+  const { routes, loading } = useSelector((state: RootState) => state.routes);
 
-  if (!router) {
-    return (
-      <>
-        <ToastContainer />
-        <div style={{ padding: 24 }}>Initializing…</div>
-      </>
-    );
+  useEffect(() => {
+    // call the plain async function (it internally dispatches updates)
+    buildFirstRoutes();
+  }, []);
+
+  if (loading || !routes) {
+    return <div style={{ padding: 24 }}>Initializing…</div>;
   }
 
   return (
     <>
       <ToastContainer />
-      <RouterProvider router={router} fallbackElement={<div>Loading…</div>} />
+      <RouterProvider router={routes} fallbackElement={<div>Loading…</div>} />
     </>
   );
 }
+
 export default App;
