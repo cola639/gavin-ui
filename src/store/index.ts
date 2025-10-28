@@ -4,7 +4,14 @@ import rootReducer from './slice';
 
 // 配置 Redux store
 const store = configureStore({
-  reducer: rootReducer
+  reducer: rootReducer,
+  middleware: (getDefault) =>
+    getDefault({
+      serializableCheck: {
+        ignoredPaths: ['routes.routes', 'routes.routes.state'],
+        ignoredActions: ['routes/setRoutes']
+      }
+    })
 });
 
 // 定义 RootState 类型

@@ -6,6 +6,7 @@ import { mergeRoute } from '@/routes/RouteFactory';
 import { fetchRoutes } from '@/routes/routes';
 import NotFound from '@/views/404'; // Make sure NotFound is a React component
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { Router as RemixRouter } from '@remix-run/router';
 import { createBrowserRouter, redirect, type LoaderFunctionArgs } from 'react-router-dom';
 import { getToken } from 'utils/auth';
 import { dispatch } from '../index';
@@ -50,7 +51,7 @@ const loginRedirectLoader = ({ request }: LoaderFunctionArgs) => {
 };
 
 // ---------- async functions (no createAsyncThunk) ----------
-export async function buildAppRouter() {
+export async function buildAppRouter(): Promise<RemixRouter> {
   const backend: BackendRoute[] = await fetchRoutes();
   const merged = mergeRoute(whiteList, backend);
   // @ts-ignore
@@ -75,11 +76,12 @@ export async function initRoutes() {
 }
 
 // ---------- exported async actions you can call directly ----------
-export async function buildAppRoutes() {
+export async function buildAppRoutes(): Promise<RemixRouter> {
   dispatch(setLoading(true));
   try {
     const router = await buildAppRouter();
     dispatch(setRoutes(router));
+    return router;
   } catch (e: any) {
     dispatch(setError(e?.message));
   } finally {
@@ -91,7 +93,9 @@ export async function buildFirstRoutes() {
   dispatch(setLoading(true));
   try {
     const router = await initRoutes();
-    dispatch(setRoutes(router));
+    try {
+      dispatch(setRoutes(router));
+    } catch (error) {}
   } catch (e: any) {
     dispatch(setError(e?.message));
   } finally {

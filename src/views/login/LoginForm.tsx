@@ -1,4 +1,5 @@
 import { authUserApi } from '@/apis/auth'; // << use the user API you asked for
+import { buildAppRoutes } from '@/store/slice/routeSlice';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -92,8 +93,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
       localStorage.setItem('token', token);
       toast.success('Logged in successfully', { autoClose: 1500 });
 
-      // Navigate to your default protected page
-      navigate('/view/user', { replace: true });
+      // after login success
+      const next = await buildAppRoutes(); // fetch backend & rebuild router (no reload)
+      next.navigate('/view/user', { replace: true }); // navigate using the new router instance
 
       setSubmitted(true);
     } catch (err: any) {
