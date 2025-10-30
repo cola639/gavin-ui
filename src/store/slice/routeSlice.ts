@@ -1,4 +1,4 @@
-// src/store/slice/routeSlice.tsx
+// src/store/slice/routeSlice.ts
 // Ensure this file is named routeSlice.tsx for JSX support
 import { isInWhitelist, whiteList } from '@/routes'; // export from your routes module
 import type { BackendRoute } from '@/routes/RouteFactory';
@@ -7,6 +7,7 @@ import { fetchRoutes } from '@/routes/routes';
 import NotFound from '@/views/404'; // Make sure NotFound is a React component
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { Router as RemixRouter } from '@remix-run/router';
+import * as React from 'react';
 import { createBrowserRouter, redirect, type LoaderFunctionArgs } from 'react-router-dom';
 import { getToken } from 'utils/auth';
 import { dispatch } from '../index';
@@ -94,7 +95,7 @@ export async function buildAppRouter(): Promise<RemixRouter> {
   // 5) Put menu into Redux (serializable), router into Redux (non-serializable)
   dispatch(setMenus(menuItems));
   // @ts-ignore
-  return createBrowserRouter([...merged, { path: '*', element: NotFound }]);
+  return createBrowserRouter([...merged, { path: '*', element: React.createElement(NotFound) }]);
 }
 
 export async function initRoutes() {
