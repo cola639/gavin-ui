@@ -8,8 +8,14 @@ const store = configureStore({
   middleware: (getDefault) =>
     getDefault({
       serializableCheck: {
-        ignoredPaths: ['routes.routes', 'routes.routes.state'],
-        ignoredActions: ['routes/setRoutes']
+        // 1) ignore state paths that contain non-serializable values
+        ignoredPaths: [
+          'routes.routes', // Remix router instance
+          'routes.routes.state', // internal router state
+          'routes.menu' // array of items with icon components
+        ],
+        // 2) ignore actions that carry non-serializable payloads
+        ignoredActions: ['routes/setRoutes', 'routes/setMenus']
       }
     })
 });

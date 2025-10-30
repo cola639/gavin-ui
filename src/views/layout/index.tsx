@@ -20,35 +20,31 @@ import {
   Users
 } from 'lucide-react';
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Outlet } from 'react-router-dom';
 
-export default function App() {
+export default function Layout() {
+  const menuItems: MenuItem[] = useSelector((state: any) => state.routes.menu);
   const [showExpanded, setShowExpanded] = useState(true);
   const [activeMenu, setActiveMenu] = useState('logout');
 
   // Define menu items array - this can be passed as props
-  const menuItems: MenuItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'products', label: 'Products', icon: Package },
-    { id: 'favorites', label: 'Favorites', icon: Heart },
-    { id: 'inbox', label: 'Inbox', icon: Inbox },
-    { id: 'order-lists', label: 'Order Lists', icon: List },
-    { id: 'product-stock', label: 'Product Stock', icon: Archive },
+  // const menuItems: MenuItem[] = [
+  //   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  //   { id: 'products', label: 'Products', icon: Package },
+  //   { id: 'favorites', label: 'Favorites', icon: Heart },
 
-    // PAGES section
-    { id: 'pricing', label: 'Pricing', icon: DollarSign, section: 'PAGES' },
-    { id: 'calendar', label: 'Calendar', icon: Calendar },
-    { id: 'to-do', label: 'To-Do', icon: CheckSquare },
-    { id: 'contact', label: 'Contact', icon: Users },
-    { id: 'invoice', label: 'Invoice', icon: FileText },
-    { id: 'ui-elements', label: 'UI Elements', icon: BarChart3 },
-    { id: 'team', label: 'Team', icon: UserPlus },
-    { id: 'table', label: 'Table', icon: Table },
+  //   // PAGES section
+  //   { id: 'pricing', label: 'Pricing', icon: DollarSign, section: 'PAGES' },
+  //   { id: 'calendar', label: 'Calendar', icon: Calendar },
+  //   { id: 'to-do', label: 'To-Do', icon: CheckSquare },
+  //   { id: 'contact', label: 'Contact', icon: Users },
+  //   { id: 'invoice', label: 'Invoice', icon: FileText },
+  //   { id: 'ui-elements', label: 'UI Elements', icon: BarChart3 },
+  //   { id: 'team', label: 'Team', icon: UserPlus },
+  //   { id: 'table', label: 'Table', icon: Table },
 
-    // Bottom items
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'logout', label: 'Logout', icon: LogOut }
-  ];
+  // ];
 
   const handleMenuClick = (menuId: string) => {
     console.log('Menu clicked:', menuId);

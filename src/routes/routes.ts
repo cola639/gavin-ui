@@ -6,13 +6,13 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
 
   return [
     {
-      name: 'view',
+      name: 'System Management',
       path: '/view',
       hidden: false,
       redirect: 'noRedirect',
       component: '@/views/layout',
       alwaysShow: true,
-      meta: { title: 'monitor management', icon: 'monitor', link: null },
+      meta: { title: 'system management', icon: 'monitor', link: null },
       children: [
         {
           name: 'User',

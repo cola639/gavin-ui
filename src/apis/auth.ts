@@ -7,3 +7,17 @@ export function authUserApi(data) {
     data: data
   });
 }
+
+export function getRoutesApi() {
+  return request({
+    url: '/auth/getInfo',
+    method: 'get'
+  });
+}
+
+export function getInfoApi() {
+  return request({
+    url: '/auth/login',
+    method: 'get'
+  });
+}

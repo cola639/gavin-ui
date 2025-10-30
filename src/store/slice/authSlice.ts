@@ -1,5 +1,13 @@
 // store/authSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+type BackendRoute = {
+  name?: string;
+  path: string;
+  hidden?: boolean;
+  component?: string;
+  meta?: { title?: string; icon?: string | null; link?: string | null };
+  children?: BackendRoute[];
+};
 
 type AuthState = {
   token: string | null;
