@@ -55,7 +55,7 @@ export default function Layout() {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar menuItems={menuItems} isExpanded={showExpanded} onMenuClick={handleMenuClick} activeMenuId={activeMenu} />
+      <Sidebar menuItems={menuItems} isExpanded={showExpanded} onMenuClick={handleMenuClick} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
