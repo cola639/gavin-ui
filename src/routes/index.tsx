@@ -1,8 +1,10 @@
 // routes/index.ts
 import NotFound from '@/views/404';
+import Dashboard from '@/views/dashboard';
+import Layout from '@/views/layout';
 import React, { lazy } from 'react';
 import { createBrowserRouter, redirect, type LoaderFunctionArgs, type RouteObject } from 'react-router-dom';
-import { mergeRoute, RouteMeta, withSuspense, type BackendRoute } from './RouteFactory';
+import { mergeRoutes, RouteMeta, withSuspense, type BackendRoute } from './RouteFactory';
 import { fetchRoutes } from './routes'; // your API mock or real call
 
 /** ---- whitelist (no fetch needed for these) ---- */
@@ -18,6 +20,20 @@ export const whiteList: RouteObject[] = [
     path: '404', // top-level data routes are relative
     element: withSuspense(<NotFound />),
     handle: { meta: { title: 'NotFound', icon: 'lost', hidden: false } as RouteMeta }
+  }
+];
+
+export const constRoutes: RouteObject[] = [
+  {
+    path: '/dashboard',
+    element: withSuspense(<Layout />),
+    children: [
+      {
+        index: true,
+        element: withSuspense(<Dashboard />),
+        handle: { meta: { title: 'Dashboard', icon: 'dashboard', hidden: false } as RouteMeta }
+      }
+    ]
   }
 ];
 
@@ -77,9 +93,9 @@ export function getToken(): string | null {
 
 // Full app router (fetch + merge; includes whitelist)
 export async function buildAppRouter() {
-  const backend: BackendRoute[] = await fetchRoutes();
-  const merged = mergeRoute(whiteList, backend);
-  return createBrowserRouter([...merged, { path: '*', element: <NotFound /> }]);
+  // const backend: BackendRoute[] = await fetchRoutes();
+  // const merged = mergeRoute(whiteList, backend);
+  // return createBrowserRouter([...merged, { path: '*', element: <NotFound /> }]);
 }
 
 export async function initRoutes() {

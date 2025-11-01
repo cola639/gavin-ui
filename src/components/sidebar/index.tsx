@@ -44,6 +44,7 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 export interface MenuItem {
+  onClick: () => void;
   id?: string;
   label: string;
   icon?: LucideIcon; // Component form
@@ -87,9 +88,28 @@ export default function Sidebar({ menuItems, isExpanded = true, onMenuClick, act
     const key = itemKey(item);
     setInternalActive(key);
     onMenuClick?.(key);
-    navigate(item.path);
-  };
 
+    // 1) custom action (e.g., logout)
+    if (typeof item.onClick === 'function') {
+      item.onClick();
+      return;
+    }
+
+    // 2) no path → nothing to do
+    const p = item.path;
+    if (!p) return;
+
+    // 3) external link support
+    if (/^https?:\/\//i.test(p)) {
+      window.open(p, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    // 4) avoid redundant navigation
+    if (location.pathname !== p) {
+      navigate(p);
+    }
+  };
   const grouped = useMemo(() => {
     const out: { section: string | null; items: MenuItem[] }[] = [];
     let currentSection: string | null = null;

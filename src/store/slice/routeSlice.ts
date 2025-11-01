@@ -1,8 +1,8 @@
 // src/store/slice/routeSlice.ts
 // Ensure this file is named routeSlice.tsx for JSX support
-import { isInWhitelist, whiteList } from '@/routes'; // export from your routes module
+import { constRoutes, isInWhitelist, whiteList } from '@/routes'; // export from your routes module
 import type { BackendRoute } from '@/routes/RouteFactory';
-import { mergeRoute } from '@/routes/RouteFactory';
+import { mergeRoutes } from '@/routes/RouteFactory';
 import { fetchRoutes } from '@/routes/routes';
 import NotFound from '@/views/404'; // Make sure NotFound is a React component
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -83,18 +83,26 @@ const loginRedirectLoader = ({ request }: LoaderFunctionArgs) => {
 // ---------- async functions (no createAsyncThunk) ----------
 export async function buildAppRouter(): Promise<RemixRouter> {
   const backend: BackendRoute[] = await fetchRoutes();
-  const merged = mergeRoute(whiteList, backend);
-
   const menuItems = routesToMenuItems(backend, {
     labelFrom: 'name',
     useRelativePath: false,
     sectionMode: 'first' // <= only the first child gets section
   });
-  console.log('🚀 >> buildAppRouter >> menuItems:', menuItems);
 
-  // 5) Put menu into Redux (serializable), router into Redux (non-serializable)
+  menuItems.unshift({ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' });
+  menuItems.push({
+    id: 'logout',
+    label: 'Logout',
+    icon: LogOut,
+    path: '',
+    onClick: () => {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+  });
   dispatch(setMenus(menuItems));
-  // @ts-ignore
+
+  const merged = mergeRoutes(whiteList, constRoutes, backend);
   return createBrowserRouter([...merged, { path: '*', element: React.createElement(NotFound) }]);
 }
 
@@ -149,6 +157,7 @@ export type MenuItem = {
   icon?: LucideIcon;
   path: string;
   section?: string;
+  onClick?: () => void;
 };
 
 const iconMap: Record<string, LucideIcon> = {

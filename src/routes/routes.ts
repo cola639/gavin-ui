@@ -22,11 +22,57 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
           meta: { title: 'monitor user', icon: 'user', link: null }
         },
         {
-          name: 'Order',
-          path: 'order',
+          name: 'Dept',
+          path: 'dept',
           hidden: false,
           component: '@/view/order',
-          meta: { title: 'monitor order', icon: 'order', link: null }
+          meta: { title: 'monitor dept', icon: 'dept', link: null }
+        },
+        {
+          name: 'Role',
+          path: 'role',
+          hidden: false,
+          component: '@/view/user',
+          meta: { title: 'monitor user', icon: 'user', link: null }
+        },
+        {
+          name: 'Menu',
+          path: 'configure',
+          hidden: false,
+          component: '@/view/user',
+          meta: { title: 'monitor user', icon: 'user', link: null }
+        },
+        {
+          name: 'Configure',
+          path: 'configure',
+          hidden: false,
+          component: '@/view/user',
+          meta: { title: 'monitor user', icon: 'user', link: null }
+        }
+      ]
+    },
+    {
+      name: 'System Monitor',
+      path: '/monitor',
+      hidden: false,
+      redirect: 'noRedirect',
+      component: '@/views/layout',
+      alwaysShow: true,
+      meta: { title: 'system mnitor', icon: 'monitor', link: null },
+      children: [
+        {
+          name: 'Monitor',
+          path: 'user',
+          hidden: false,
+          component: '@/view/user',
+          meta: { title: 'monitor user', icon: 'user', link: null }
+        },
+        {
+          name: 'Quartz',
+          path: 'user',
+          hidden: false,
+          component: '@/view/user',
+          meta: { title: 'monitor user', icon: 'user', link: null }
         }
       ]
     }

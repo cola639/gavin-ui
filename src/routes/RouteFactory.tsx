@@ -96,25 +96,18 @@ function toRouteObject(node: BackendRoute, resolver: ComponentResolver): RouteOb
 }
 
 /** ---------- public API ---------- */
-export function mergeRoute(whiteList: RouteObject[], backend: BackendRoute[], resolver: ComponentResolver = defaultResolver): RouteObject[] {
+export function mergeRoutes(
+  whiteList: RouteObject[],
+  constant: RouteObject[],
+  backend: BackendRoute[],
+  resolver: ComponentResolver = defaultResolver
+): RouteObject[] {
   const backendRoutes = backend.map((n) => toRouteObject(n, resolver));
 
-  // ensure top-level paths are relative & dedupe by path (whitelist wins)
   const out: RouteObject[] = [];
   const seen = new Set<string>();
 
-  // seed with whitelist first
-  for (const r of whiteList) {
-    const key = typeof r.path === 'string' ? norm(r.path) : r.index ? '__index__' : '';
-    if (!seen.has(key)) {
-      if (r.children) r.children = dedupeChildren(r.children);
-      out.push(r);
-      seen.add(key);
-    }
-  }
-
-  // then backend (skip duplicates)
-  for (const r of backendRoutes) {
+  const push = (r: RouteObject) => {
     if (typeof r.path === 'string') r.path = norm(r.path);
     const key = typeof r.path === 'string' ? r.path : r.index ? '__index__' : '';
     if (!seen.has(key)) {
@@ -122,7 +115,12 @@ export function mergeRoute(whiteList: RouteObject[], backend: BackendRoute[], re
       out.push(r);
       seen.add(key);
     }
-  }
+  };
+
+  // priority: whitelist → constant → backend
+  whiteList.forEach(push);
+  constant.forEach(push);
+  backendRoutes.forEach(push);
 
   return out;
 }
