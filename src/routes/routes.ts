@@ -33,14 +33,14 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
           path: 'role',
           hidden: false,
           component: '@/view/user',
-          meta: { title: 'monitor user', icon: 'user', link: null }
+          meta: { title: 'monitor user', icon: 'role', link: null }
         },
         {
           name: 'Menu',
           path: 'configure',
           hidden: false,
           component: '@/view/user',
-          meta: { title: 'monitor user', icon: 'user', link: null }
+          meta: { title: 'monitor user', icon: 'menu', link: null }
         },
         {
           name: 'Configure',
@@ -62,17 +62,17 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
       children: [
         {
           name: 'Monitor',
-          path: 'user',
+          path: 'online-user',
           hidden: false,
           component: '@/view/user',
-          meta: { title: 'monitor user', icon: 'user', link: null }
+          meta: { title: 'monitor user', icon: 'monitor', link: null }
         },
         {
           name: 'Quartz',
-          path: 'user',
+          path: 'quartz',
           hidden: false,
           component: '@/view/user',
-          meta: { title: 'monitor user', icon: 'user', link: null }
+          meta: { title: 'monitor user', icon: 'quartz', link: null }
         }
       ]
     }

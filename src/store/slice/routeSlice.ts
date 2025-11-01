@@ -15,6 +15,7 @@ import { dispatch } from '../index';
 import { set } from 'lodash';
 import type { LucideIcon } from 'lucide-react';
 import {
+  AlarmClockCheck,
   Archive,
   BarChart3,
   Calendar,
@@ -89,11 +90,16 @@ export async function buildAppRouter(): Promise<RemixRouter> {
     sectionMode: 'first' // <= only the first child gets section
   });
 
-  menuItems.unshift({ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' });
+  menuItems.unshift({
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: 'dashboard', // string, matches assets/icons/dashboard.svg
+    path: '/dashboard'
+  });
   menuItems.push({
     id: 'logout',
     label: 'Logout',
-    icon: LogOut,
+    icon: 'logout',
     path: '',
     onClick: () => {
       localStorage.removeItem('token');
@@ -154,7 +160,7 @@ export async function buildFirstRoutes() {
 export type MenuItem = {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: string | LucideIcon;
   path: string;
   section?: string;
   onClick?: () => void;
@@ -184,6 +190,8 @@ const iconMap: Record<string, LucideIcon> = {
   logout: LogOut
 };
 
+const normalizeIcon = (s?: string | null) => (s || '').trim().toLowerCase() || undefined;
+
 export function routesToMenuItems(
   routes: BackendRoute[],
   opts?: {
@@ -198,31 +206,43 @@ export function routesToMenuItems(
   const sectionMode = opts?.sectionMode ?? 'first';
 
   const out: MenuItem[] = [];
+  const seen = new Set<string>(); // dedupe by full path
 
   for (const parent of routes ?? []) {
     const parentSection = parent.name ?? '';
-    if (!parent.children?.length) continue;
-
+    const children = parent.children ?? [];
     let isFirst = true;
-    for (const child of parent.children) {
+
+    for (const child of children) {
       if (child.hidden) continue;
 
-      const id = child.path;
+      const id = child.path; // or child.name
       const label = labelFrom === 'meta.title' ? child.meta?.title ?? child.path : labelFrom === 'name' ? child.name ?? child.path : child.path;
 
-      const icon = iconMap[(child.meta?.icon || '').toLowerCase()];
-      const path = useRelativePath ? child.path : joinFullPath(parent.path, child.path);
+      const icon = normalizeIcon(child.meta?.icon);
+      const fullPath = joinFullPath(parent.path, child.path);
+      const path = useRelativePath ? child.path : fullPath;
+
+      // dedupe duplicates (e.g., repeated 'configure' or 'user')
+      if (seen.has(fullPath)) continue;
+      seen.add(fullPath);
 
       const section = sectionMode === 'all' ? parentSection : sectionMode === 'first' ? (isFirst ? parentSection : undefined) : undefined;
 
-      out.push({ id, label, icon, path, ...(section ? ({ section } as const) : {}) });
+      out.push({
+        id,
+        label,
+        path,
+        ...(icon ? ({ icon } as const) : {}),
+        ...(section ? ({ section } as const) : {})
+      });
+
       isFirst = false;
     }
   }
 
   return out;
 }
-
 function joinFullPath(parent: string, child: string) {
   const p = parent?.endsWith('/') ? parent.slice(0, -1) : parent;
   const c = child?.startsWith('/') ? child.slice(1) : child;

@@ -1,3 +1,4 @@
+import Icon from '@/components/Icons';
 import { LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -47,7 +48,7 @@ export interface MenuItem {
   onClick: () => void;
   id?: string;
   label: string;
-  icon?: LucideIcon; // Component form
+  icon?: string; // Component form
   iconKey?: string; // Optional string key form, e.g. 'user'
   path: string;
   section?: string;
@@ -66,6 +67,7 @@ export default function Sidebar({ menuItems, isExpanded = true, onMenuClick, act
   const location = useLocation();
 
   const itemKey = (m: MenuItem) => m.id ?? m.path;
+  console.log('🚀 >> Sidebar >> menuItems:', menuItems);
 
   const urlActiveKey = useMemo(() => {
     const hit = menuItems.find((m) => location.pathname.startsWith(m.path));
@@ -127,6 +129,11 @@ export default function Sidebar({ menuItems, isExpanded = true, onMenuClick, act
     return out;
   }, [menuItems]);
 
+  function RenderItemIcon({ item }: { item: MenuItem }, isActive: boolean) {
+    if (item.icon) return <Icon fill={isActive ? '#fafafa' : '#707070'} name={item.icon} size={20} className="w-5 h-5 flex-shrink-0" />;
+    return <span className="w-5 h-5" />;
+  }
+
   return (
     <aside className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${isExpanded ? 'w-56' : 'w-20'} ${className}`}>
       <div className="px-6 py-[22px] border-b border-gray-100">
@@ -150,9 +157,6 @@ export default function Sidebar({ menuItems, isExpanded = true, onMenuClick, act
                 const key = itemKey(item);
                 const isActive = activeKey === key;
 
-                // Prefer component prop; else map iconKey -> component; else undefined
-                const IconComp: LucideIcon | undefined = item.icon ?? (item.iconKey ? iconMap[item.iconKey] : undefined);
-
                 return (
                   <div key={key} className="px-3 py-1">
                     <button
@@ -163,8 +167,8 @@ export default function Sidebar({ menuItems, isExpanded = true, onMenuClick, act
                       `}
                       title={!isExpanded ? item.label : undefined}
                     >
-                      {IconComp ? <IconComp className="w-5 h-5 flex-shrink-0" /> : <span className="w-5 h-5" />}
-                      {isExpanded && <span>{item.label}</span>}
+                      {RenderItemIcon({ item }, isActive)}
+                      {isExpanded && <span className="ml-[3px]">{item.label}</span>}
                     </button>
                   </div>
                 );
