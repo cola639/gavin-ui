@@ -1,5 +1,37 @@
 import request from 'utils/request';
 
+export function getUsersApi(params) {
+  return request({
+    url: '/system/user/list',
+    method: 'get',
+    params
+  });
+}
+
+export function addUserApi(data) {
+  return request({
+    url: '/login',
+    method: 'post',
+    data
+  });
+}
+
+export function deleteUserApi(data) {
+  return request({
+    url: '/login',
+    method: 'delete',
+    data
+  });
+}
+
+export function updateUserApi(data) {
+  return request({
+    url: '/login',
+    method: 'post',
+    data
+  });
+}
+
 export function loginApi(data) {
   return request({
     url: '/login',

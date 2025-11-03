@@ -30,7 +30,7 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
           placeholder="Search username / phone"
           value={filters.keyword}
           onChange={(e) => onFilters({ ...filters, keyword: e.target.value })}
-          className="w-[220px]"
+          style={{ width: 220 }}
         />
 
         <DatePicker

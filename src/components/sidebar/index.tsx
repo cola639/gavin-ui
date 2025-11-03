@@ -162,7 +162,7 @@ export default function Sidebar({ menuItems, isExpanded = true, onMenuClick, act
                     <button
                       onClick={() => handleClick(item)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all
-                        ${isActive ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'}
+                        ${isActive ? 'bg-[var(--primary-strong)] text-white' : 'text-gray-700 hover:bg-gray-100'}
                         ${!isExpanded ? 'justify-center' : ''}
                       `}
                       title={!isExpanded ? item.label : undefined}
