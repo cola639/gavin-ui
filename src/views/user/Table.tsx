@@ -1,3 +1,4 @@
+import AvatarCell from '@/components/avatarCell';
 import { DeleteOutlined, EditOutlined, EyeInvisibleOutlined, EyeOutlined, KeyOutlined, MoreOutlined, TeamOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -18,14 +19,13 @@ type Props = {
 const UsersTable: React.FC<Props> = ({ data, rowSelection, onModify, onDelete, onToggleVisible, onResetPass, onAssignRole }) => {
   const columns: ColumnsType<UserRow> = useMemo(
     () => [
-      { title: 'ID', dataIndex: 'id', key: 'id', width: 110 },
       { title: 'USERNAME', dataIndex: 'username', key: 'username', render: (v: string) => <span className="font-medium">{v}</span> },
       {
         title: 'AVATAR',
         dataIndex: 'avatar',
         key: 'avatar',
         width: 90,
-        render: (src: string) => <img src={src} alt="avatar" className="h-10 w-10 rounded-full object-cover shadow" />
+        render: (src: string | null, row: UserRow) => <AvatarCell src={src} name={row.username} />
       },
       { title: 'DEPARTMENT', dataIndex: 'department', key: 'department' },
       { title: 'PHONE', dataIndex: 'phone', key: 'phone', width: 160 },

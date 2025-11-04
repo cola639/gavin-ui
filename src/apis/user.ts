@@ -10,24 +10,24 @@ export function getUsersApi(params) {
 
 export function addUserApi(data) {
   return request({
-    url: '/login',
+    url: '/system/user',
     method: 'post',
     data
   });
 }
 
-export function deleteUserApi(data) {
+export function deleteUserApi(params) {
   return request({
-    url: '/login',
+    url: '/system/user',
     method: 'delete',
-    data
+    params
   });
 }
 
 export function updateUserApi(data) {
   return request({
     url: '/login',
-    method: 'post',
+    method: 'put',
     data
   });
 }
