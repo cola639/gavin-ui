@@ -26,7 +26,7 @@ export function deleteUserApi(params) {
 
 export function updateUserApi(data) {
   return request({
-    url: '/login',
+    url: '/system/user',
     method: 'put',
     data
   });

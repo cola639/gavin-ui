@@ -5,41 +5,45 @@ import TextInput from './input/TextInput';
 import RadioGroup from './radio/RadioGroup';
 
 type Errors = Partial<Record<'nick' | 'dept' | 'post' | 'role' | 'phone' | 'email' | 'sex' | 'status', string>>;
+const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
 const DEPARTMENTS = ['Design', 'Engineering', 'Finance', 'HR', 'Marketing'].map((x) => ({ label: x, value: x }));
 const ROLES = ['IC', 'Lead', 'Manager', 'Director'].map((x) => ({ label: x, value: x }));
 const POSTS = ['Full-time', 'Part-time', 'Contractor', 'Intern'].map((x) => ({ label: x, value: x }));
 const SEXES = ['Male', 'Female', 'Other', 'Prefer not to say'].map((x) => ({ label: x, value: x }));
 
-const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+export type UserFormValues = {
+  avatar?: string | null;
+  nick: string;
+  dept: string;
+  post: string;
+  role: string;
+  phone: string;
+  email: string;
+  sex: string;
+  status: 'Enable' | 'Disable';
+};
 
-const UserFormPage: React.FC = () => {
-  // values
-  const [avatar, setAvatar] = useState<string | null>(null);
-  const [nick, setNick] = useState('Alex Smith');
-  const [dept, setDept] = useState<string>('');
-  const [post, setPost] = useState<string>('');
-  const [role, setRole] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [sex, setSex] = useState<string>('');
-  const [status, setStatus] = useState<string>('Disable');
+export type UserFormProps = {
+  initial?: Partial<UserFormValues>;
+  submitLabel?: string;
+  onSubmit: (values: UserFormValues) => void;
+  onCancel?: () => void;
+};
 
-  // errors (only set on submit; clear when editing)
+const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', onSubmit }) => {
+  const [avatar, setAvatar] = useState<string | null>(initial?.avatar ?? null);
+  const [nick, setNick] = useState(initial?.nick ?? 'Alex Smith');
+  const [dept, setDept] = useState(initial?.dept ?? '');
+  const [post, setPost] = useState(initial?.post ?? '');
+  const [role, setRole] = useState(initial?.role ?? '');
+  const [phone, setPhone] = useState(initial?.phone ?? '');
+  const [email, setEmail] = useState(initial?.email ?? '');
+  const [sex, setSex] = useState(initial?.sex ?? '');
+  const [status, setStatus] = useState<UserFormValues['status']>(initial?.status ?? 'Disable');
+
   const [errors, setErrors] = useState<Errors>({});
-
   const fileRef = useRef<HTMLInputElement>(null);
-
-  function onPickAvatar() {
-    fileRef.current?.click();
-  }
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) return;
-    const url = URL.createObjectURL(file);
-    setAvatar(url);
-  }
 
   function validate(): Errors {
     const e: Errors = {};
@@ -55,141 +59,121 @@ const UserFormPage: React.FC = () => {
     return e;
   }
 
+  const clear = (k: keyof Errors) => setErrors((prev) => ({ ...prev, [k]: undefined }));
+  const onPickAvatar = () => fileRef.current?.click();
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f || !f.type.startsWith('image/')) return;
+    setAvatar(URL.createObjectURL(f));
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const eMap = validate();
     setErrors(eMap);
     if (Object.keys(eMap).length) return;
-
-    // Placeholder — log only
-    console.log('ADD_USER', {
-      avatar: avatar ? '(image selected)' : null,
-      nick,
-      dept,
-      post,
-      role,
-      phone,
-      email,
-      sex,
-      status
-    });
-    alert('Submitted! Check console for payload.');
+    onSubmit({ avatar, nick, dept, post, role, phone, email, sex, status });
   }
 
-  // helpers to clear error on edit
-  const clear = (k: keyof Errors) => setErrors((prev) => ({ ...prev, [k]: undefined }));
-
   return (
-    <main className={styles.wrap}>
-      <form className={styles.card} onSubmit={submit} noValidate>
-        <div className={styles.header}>
-          <div className={styles.avatarWrap}>
-            <div className={styles.avatar} onClick={onPickAvatar}>
-              {avatar ? (
-                <>
-                  <img src={avatar} alt="Avatar" />
-                  {/* show a small badge to change image when one exists */}
-                  <button
-                    type="button"
-                    className={styles.uploadBadge}
-                    title="Change photo"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onPickAvatar();
-                    }}
-                  >
-                    +
-                  </button>
-                </>
-              ) : (
-                // Default: big "+" placeholder
-                <div className={styles.avatarPlaceholder}>+</div>
-              )}
-
-              {/* Full clickable layer to open file picker */}
-              <input ref={fileRef} className={styles.hiddenInput} type="file" accept="image/*" onChange={onFileChange} />
-            </div>
-            <div className={styles.helper}>PNG/JPG up to 2MB</div>
-          </div>
+    <form onSubmit={submit} noValidate>
+      {/* avatar */}
+      <div className="flex flex-col items-center mb-4">
+        <div className={`${styles.avatar} cursor-pointer`} onClick={onPickAvatar}>
+          {avatar ? (
+            <>
+              <img src={avatar} alt="Avatar" />
+              <button type="button" className={styles.uploadBadge} onClick={onPickAvatar}>
+                +
+              </button>
+            </>
+          ) : (
+            <div className={styles.avatarPlaceholder}>+</div>
+          )}
+          <input ref={fileRef} className={styles.hiddenInput} type="file" accept="image/*" onChange={onFileChange} />
         </div>
+        <div className={styles.helper}>PNG/JPG up to 2MB</div>
+      </div>
 
-        <div className={styles.grid}>
-          {/* left col */}
-          <TextInput
-            label="Nick Name"
-            value={nick}
-            onChange={(e) => {
-              setNick(e.target.value);
-              clear('nick');
-            }}
-            error={errors.nick}
-          />
+      {/* fields grid (tailwind layout wrapper only) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TextInput
+          label="Nick Name"
+          value={nick}
+          onChange={(e) => {
+            setNick(e.target.value);
+            clear('nick');
+          }}
+          error={errors.nick}
+        />
+        <TextInput
+          label="Phone"
+          value={phone}
+          onChange={(e) => {
+            setPhone(e.target.value);
+            clear('phone');
+          }}
+          error={errors.phone}
+          placeholder="e.g., +1 555 0123"
+        />
+        <TextInput
+          label="Email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            clear('email');
+          }}
+          error={errors.email}
+          placeholder="you@example.com"
+        />
 
-          <TextInput
-            label="Phone"
-            value={phone}
-            onChange={(e) => {
-              setPhone(e.target.value);
-              clear('phone');
-            }}
-            error={errors.phone}
-            placeholder="e.g., +1 555 0123"
-          />
-          <TextInput
-            label="Email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              clear('email');
-            }}
-            error={errors.email}
-            placeholder="you@example.com"
-          />
-          <Dropdown
-            label="Department"
-            value={dept}
-            onChange={(v) => {
-              setDept(v);
-              clear('dept');
-            }}
-            error={errors.dept}
-            options={DEPARTMENTS}
-          />
-          <Dropdown
-            label="Role"
-            value={role}
-            onChange={(v) => {
-              setRole(v);
-              clear('role');
-            }}
-            error={errors.role}
-            options={ROLES}
-          />
-          <Dropdown
-            label="Post"
-            value={post}
-            onChange={(v) => {
-              setPost(v);
-              clear('post');
-            }}
-            error={errors.post}
-            options={POSTS}
-          />
-          <Dropdown
-            label="Sex"
-            value={sex}
-            onChange={(v) => {
-              setSex(v);
-              clear('sex');
-            }}
-            error={errors.sex}
-            options={SEXES}
-          />
+        <Dropdown
+          label="Department"
+          value={dept}
+          onChange={(v) => {
+            setDept(v);
+            clear('dept');
+          }}
+          options={DEPARTMENTS}
+          error={errors.dept}
+        />
+        <Dropdown
+          label="Role"
+          value={role}
+          onChange={(v) => {
+            setRole(v);
+            clear('role');
+          }}
+          options={ROLES}
+          error={errors.role}
+        />
+        <Dropdown
+          label="Post"
+          value={post}
+          onChange={(v) => {
+            setPost(v);
+            clear('post');
+          }}
+          options={POSTS}
+          error={errors.post}
+        />
+        <Dropdown
+          label="Sex"
+          value={sex}
+          onChange={(v) => {
+            setSex(v);
+            clear('sex');
+          }}
+          options={SEXES}
+          error={errors.sex}
+        />
+
+        <div className="md:col-span-2">
           <RadioGroup
             label="Status"
             value={status}
             onChange={(v) => {
-              setStatus(v);
+              setStatus(v as any);
               clear('status');
             }}
             options={[
@@ -198,15 +182,15 @@ const UserFormPage: React.FC = () => {
             ]}
           />
         </div>
+      </div>
 
-        <div className={styles.controls}>
-          <button type="submit" className={styles.btn}>
-            Add User
-          </button>
-        </div>
-      </form>
-    </main>
+      <div className="mt-5">
+        <button type="submit" className="w-full rounded-xl px-4 py-3 bg-[var(--primary)] hover:bg-[var(--primary-strong)] text-white font-semibold">
+          {submitLabel}
+        </button>
+      </div>
+    </form>
   );
 };
 
-export default UserFormPage;
+export default UserForm;
