@@ -1,10 +1,13 @@
 import request from 'utils/request';
 
-export function getUsersApi(params) {
+// @/apis/user
+export function getUsersApi(payload) {
+  const { pageNum, pageSize, ...filters } = payload;
   return request({
     url: '/system/user/list',
-    method: 'get',
-    params
+    method: 'post',
+    params: { pageNum, pageSize },
+    data: filters
   });
 }
 

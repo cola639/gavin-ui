@@ -33,7 +33,7 @@ export type UserFormProps = {
 
 const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', onSubmit }) => {
   const [avatar, setAvatar] = useState<string | null>(initial?.avatar ?? null);
-  const [nick, setNick] = useState(initial?.nick ?? 'Alex Smith');
+  const [nick, setNick] = useState(initial?.nick ?? '');
   const [dept, setDept] = useState(initial?.dept ?? '');
   const [post, setPost] = useState(initial?.post ?? '');
   const [role, setRole] = useState(initial?.role ?? '');
@@ -105,6 +105,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
             clear('nick');
           }}
           error={errors.nick}
+          placeholder="e.g., +1 555 0123"
         />
         <TextInput
           label="Phone"

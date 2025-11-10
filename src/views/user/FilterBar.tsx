@@ -2,12 +2,18 @@ import { DeleteOutlined, FileExcelOutlined, FilterOutlined, PlusOutlined, Reload
 import { Button, DatePicker, Input, Select } from 'antd';
 import React from 'react';
 
-type Props = {
-  filters: { date?: string | null; dept?: string | null; status?: string | null; keyword?: string };
-  onFilters: (next: Props['filters']) => void;
-  onReset: () => void;
+type Filters = {
+  date?: string | null;
+  dept?: string | null; // dropdown value
+  status?: string | null;
+  username?: string;
+  phonenumber?: string;
+};
 
-  // actions
+type Props = {
+  filters: Filters;
+  onFilters: (next: Filters) => void;
+  onReset: () => void;
   selectedCount: number;
   onAdd: () => void;
   onDelete: () => void;
@@ -15,8 +21,11 @@ type Props = {
 };
 
 const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount, onAdd, onDelete, onExport }) => {
-  const deptOptions = ['Design', 'Engineering', 'Finance', 'HR', 'Medicine', 'Mobile', 'Watch'].map((v) => ({ value: v, label: v }));
   const statusOptions = ['Enabled', 'Disabled'].map((v) => ({ value: v, label: v }));
+  const deptOptions = ['Design', 'Engineering', 'Finance', 'HR', 'Medicine', 'Mobile', 'Watch'].map((v) => ({
+    value: v,
+    label: v
+  }));
 
   return (
     <div className="rounded-xl border border-[var(--card-border)] bg-white shadow-[var(--shadow)] p-4 mb-5">
@@ -26,29 +35,41 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
           <span className="text-sm font-medium">Filter By</span>
         </div>
 
+        {/* Username */}
         <Input
-          placeholder="Search username / phone"
-          value={filters.keyword}
-          onChange={(e) => onFilters({ ...filters, keyword: e.target.value })}
-          style={{ width: 220 }}
+          placeholder="Username"
+          value={filters.username}
+          onChange={(e) => onFilters({ ...filters, username: e.target.value })}
+          style={{ width: 200 }}
+          allowClear
+        />
+        <Input
+          placeholder="Phone"
+          value={filters.phonenumber}
+          onChange={(e) => onFilters({ ...filters, phonenumber: e.target.value })}
+          inputMode="tel" // mobile keypad
+          style={{ width: 160 }}
+          allowClear
         />
 
+        {/* Date */}
         <DatePicker
           value={filters.date ? (window as any).dayjs?.(filters.date) : undefined}
           onChange={(d) => onFilters({ ...filters, date: d ? d.format('YYYY-MM-DD') : null })}
           allowClear
-          className="min-w-[160px]"
+          className="min-w-[150px]"
         />
 
-        <Select
-          value={filters.dept ?? undefined}
-          onChange={(v) => onFilters({ ...filters, dept: v ?? null })}
-          options={deptOptions}
+        {/*  Department */}
+        <Input
           placeholder="Department"
+          value={filters.dept}
+          onChange={(e) => onFilters({ ...filters, dept: e.target.value })}
+          style={{ width: 200 }}
           allowClear
-          className="min-w-[160px]"
         />
 
+        {/* Status */}
         <Select
           value={filters.status ?? undefined}
           onChange={(v) => onFilters({ ...filters, status: v ?? null })}
@@ -58,11 +79,10 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
           className="min-w-[140px]"
         />
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Button icon={<ReloadOutlined />} onClick={onReset}>
             Reset
           </Button>
-
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -73,7 +93,6 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
           >
             Add
           </Button>
-
           <Button
             danger
             icon={<DeleteOutlined />}
@@ -85,7 +104,6 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
           >
             Delete
           </Button>
-
           <Button
             type="primary"
             icon={<FileExcelOutlined />}

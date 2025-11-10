@@ -1,5 +1,4 @@
 import { addUserApi, deleteUserApi, getUsersApi, updateUserApi } from '@/apis/user';
-import AvatarCell from '@/components/avatarCell';
 import UserForm, { UserFormValues } from '@/components/form';
 import { Modal, message } from 'antd';
 import dayjs from 'dayjs';
@@ -15,58 +14,63 @@ type ApiUser = {
   email: string;
   phonenumber: string;
   status: '0' | '1';
-  loginDate: string; // using as createTime
+  createTime: string;
   deptId: number;
   deptName: string;
 };
 
 const toRow = (u: ApiUser): UserRow => ({
-  id: String(u.userId),
-  username: u.userName,
-  avatar: '', // backend sample has no avatar field
-  department: u.deptName,
-  phone: u.phonenumber,
+  id: String(u.userId ?? ''),
+  username: u.userName ?? '',
+  avatar: '',
+  department: u.deptName ?? '',
+  phone: String(u.phonenumber ?? ''), // ← ensure string
   status: u.status === '0' ? 'Enabled' : 'Disabled',
-  createTime: u.loginDate,
+  createTime: u.createTime ?? '',
   visible: true
 });
 
+type Filters = {
+  date?: string | null;
+  dept?: string | null;
+  status?: string | null;
+  username?: string;
+  phonenumber?: string;
+};
+
 const UsersPage: React.FC = () => {
-  // source of truth
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // filters
-  const [filters, setFilters] = useState<{ date?: string | null; dept?: string | null; status?: string | null; keyword?: string }>({
+  const [filters, setFilters] = useState<Filters>({
     date: null,
     dept: null,
     status: null,
-    keyword: ''
+    username: '',
+    phonenumber: ''
   });
 
-  // selection
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
-
-  // modal state
   const [openAdd, setOpenAdd] = useState(false);
   const [openEdit, setOpenEdit] = useState<null | UserRow>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
+      const d = dayjs(filters.date);
+
       const params = {
         pageNum: 1,
         pageSize: 20,
-        userName: filters.keyword || undefined,
-        phonenumber: undefined,
-        deptId: undefined,
+        userName: filters.username || undefined,
+        phonenumber: filters.phonenumber || undefined,
+        deptName: filters.dept || undefined, // use name text search
         status: filters.status === 'Enabled' ? '0' : filters.status === 'Disabled' ? '1' : undefined,
-        beginTime: filters.date || undefined,
-        endTime: filters.date || undefined
+        createTime: d.isValid() ? d.startOf('day').format('YYYY-MM-DD HH:mm:ss') : undefined
       };
+
       const res: any = await getUsersApi(params);
-      // expecting res.data.rows based on Axios response structure
-      const list: ApiUser[] = res.rows ?? [];
+      const list: ApiUser[] = res?.rows ?? [];
       setRows(list.map(toRow));
       console.log('GET_USERS', params, res);
     } catch (e) {
@@ -81,23 +85,39 @@ const UsersPage: React.FC = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  const filtered = useMemo(() => {
-    // if backend already filtered, just return rows; keep client-side safety for keyword
-    if (!filters.keyword) return rows;
-    return rows.filter((r) => r.username.includes(filters.keyword!));
-  }, [rows, filters.keyword]);
+  // helpers
+  const ci = (s?: string | null) => (s ?? '').toLowerCase();
+  const digits = (s?: string | null) => (s ?? '').replace(/\D/g, '');
 
-  // actions
+  const filtered = useMemo(() => {
+    return rows.filter((r) => {
+      if (filters.username && !ci(r.username).includes(ci(filters.username))) return false;
+
+      // digits-only phone match: "158-8888-8888" matches "1588888"
+      if (filters.phonenumber) {
+        if (!digits(r.phone).includes(digits(filters.phonenumber))) return false;
+      }
+
+      if (filters.dept && !ci(r.department).includes(ci(filters.dept))) return false;
+      if (filters.status && r.status !== filters.status) return false;
+
+      if (filters.date) {
+        const dStr = r.createTime ? dayjs(r.createTime).format('YYYY-MM-DD') : '';
+        if (dStr !== filters.date) return false;
+      }
+      return true;
+    });
+  }, [rows, filters]);
+
   const handleAdd = async (values: UserFormValues) => {
     try {
-      // Map to backend payload
       const payload = {
-        userName: values.nick, // adjust mapping if needed
+        userName: values.nick,
         nickName: values.nick,
         email: values.email,
         phonenumber: values.phone,
         status: values.status === 'Enable' ? '0' : '1',
-        deptId: values.dept ? 1 : undefined // map properly in your real API
+        deptName: values.dept || undefined
       };
       await addUserApi(payload);
       message.success('User added');
@@ -118,7 +138,7 @@ const UsersPage: React.FC = () => {
         email: values.email,
         phonenumber: values.phone,
         status: values.status === 'Enable' ? '0' : '1',
-        deptId: values.dept ? 1 : undefined
+        deptName: values.dept || undefined
       };
       await updateUserApi(payload);
       message.success('User updated');
@@ -152,12 +172,8 @@ const UsersPage: React.FC = () => {
     console.log('TOGGLE_VISIBLE (client-only)', row.id);
     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, visible: !r.visible } : r)));
   };
-  const onResetPass = (row: UserRow) => {
-    console.log('RESET_PASSCODE (placeholder)', row.id);
-  };
-  const onAssignRole = (row: UserRow) => {
-    console.log('ASSIGN_ROLE (placeholder)', row.id);
-  };
+  const onResetPass = (row: UserRow) => console.log('RESET_PASSCODE (placeholder)', row.id);
+  const onAssignRole = (row: UserRow) => console.log('ASSIGN_ROLE (placeholder)', row.id);
 
   return (
     <main className="min-h-screen bg-[var(--bg-page)] p-5 lg:p-8">
@@ -165,12 +181,12 @@ const UsersPage: React.FC = () => {
 
       <FilterBar
         filters={filters}
-        onFilters={(f) => setFilters(f)}
-        onReset={() => setFilters({ date: null, dept: null, status: null, keyword: '' })}
+        onFilters={setFilters}
+        onReset={() => setFilters({ date: null, dept: null, status: null, username: '', phonenumber: '' })}
         selectedCount={selectedKeys.length}
         onAdd={() => setOpenAdd(true)}
         onDelete={handleDeleteSelected}
-        onExport={() => console.log('EXPORT users (implement CSV if needed)')}
+        onExport={() => console.log('EXPORT users (CSV to be added if needed)')}
       />
 
       <UsersTable
@@ -196,7 +212,7 @@ const UsersPage: React.FC = () => {
             initial={{
               nick: openEdit.username,
               phone: openEdit.phone,
-              email: '', // map if you fetch it
+              email: '',
               dept: openEdit.department,
               status: openEdit.status === 'Enabled' ? 'Enable' : 'Disable'
             }}
