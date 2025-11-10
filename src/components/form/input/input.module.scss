@@ -16,9 +16,7 @@
   transition: 0.18s ease;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
 }
-.input::placeholder {
-  color: #9aa3af;
-}
+
 .input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(159, 226, 220, 0.25);

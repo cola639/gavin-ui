@@ -218,3 +218,7 @@ html,
 .pointer {
   cursor: pointer;
 }
+
+input::placeholder {
+  color: #9aa3af;
+}
