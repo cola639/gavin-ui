@@ -3,7 +3,7 @@ import NotFound from '@/views/404';
 import Dashboard from '@/views/dashboard';
 import Layout from '@/views/layout';
 import React, { lazy } from 'react';
-import { createBrowserRouter, redirect, type LoaderFunctionArgs, type RouteObject } from 'react-router-dom';
+import { createBrowserRouter, Navigate, redirect, type LoaderFunctionArgs, type RouteObject } from 'react-router-dom';
 import { mergeRoutes, RouteMeta, withSuspense, type BackendRoute } from './RouteFactory';
 import { fetchRoutes } from './routes'; // your API mock or real call
 
@@ -24,6 +24,10 @@ export const whiteList: RouteObject[] = [
 ];
 
 export const constRoutes: RouteObject[] = [
+  {
+    path: '/',
+    element: <Navigate to="/dashboard" replace />
+  },
   {
     path: '/dashboard',
     element: withSuspense(<Layout />),
