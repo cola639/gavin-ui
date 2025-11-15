@@ -169,7 +169,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           error={errors.sex}
         />
 
-        <div className="md:col-span-2">
+        <div className="col-span-1">
           <RadioGroup
             label="Status"
             value={status}
