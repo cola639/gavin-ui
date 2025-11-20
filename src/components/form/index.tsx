@@ -1,13 +1,14 @@
+import type { DeptNode } from '@/views/user/depTypes';
 import React, { useRef, useState } from 'react';
 import Dropdown from './dropdown/Dropdown';
 import styles from './index.module.scss';
 import TextInput from './input/TextInput';
 import RadioGroup from './radio/RadioGroup';
+import DeptTreeDropdown from './treeDropdown';
 
-type Errors = Partial<Record<'nick' | 'dept' | 'post' | 'role' | 'phone' | 'email' | 'sex' | 'status', string>>;
+type Errors = Partial<Record<'nick' | 'deptId' | 'post' | 'role' | 'phone' | 'email' | 'sex' | 'status', string>>;
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
-const DEPARTMENTS = ['Design', 'Engineering', 'Finance', 'HR', 'Marketing'].map((x) => ({ label: x, value: x }));
 const ROLES = ['IC', 'Lead', 'Manager', 'Director'].map((x) => ({ label: x, value: x }));
 const POSTS = ['Full-time', 'Part-time', 'Contractor', 'Intern'].map((x) => ({ label: x, value: x }));
 const SEXES = ['Male', 'Female', 'Other', 'Prefer not to say'].map((x) => ({ label: x, value: x }));
@@ -15,7 +16,7 @@ const SEXES = ['Male', 'Female', 'Other', 'Prefer not to say'].map((x) => ({ lab
 export type UserFormValues = {
   avatar?: string | null;
   nick: string;
-  dept: string;
+  deptId?: string;
   post: string;
   role: string;
   phone: string;
@@ -29,12 +30,13 @@ export type UserFormProps = {
   submitLabel?: string;
   onSubmit: (values: UserFormValues) => void;
   onCancel?: () => void;
+  deptTree?: DeptNode[];
 };
 
-const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', onSubmit }) => {
+const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', onSubmit, deptTree = [] }) => {
   const [avatar, setAvatar] = useState<string | null>(initial?.avatar ?? null);
   const [nick, setNick] = useState(initial?.nick ?? '');
-  const [dept, setDept] = useState(initial?.dept ?? '');
+  const [deptId, setDeptId] = useState<string | undefined>(initial?.deptId);
   const [post, setPost] = useState(initial?.post ?? '');
   const [role, setRole] = useState(initial?.role ?? '');
   const [phone, setPhone] = useState(initial?.phone ?? '');
@@ -48,7 +50,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
   function validate(): Errors {
     const e: Errors = {};
     if (!nick.trim()) e.nick = 'Please enter a nickname.';
-    if (!dept) e.dept = 'Please select a department.';
+    if (!deptId) e.deptId = 'Please select a department.';
     if (!post) e.post = 'Please select a post.';
     if (!role) e.role = 'Please select a role.';
     if (!phone.trim()) e.phone = 'Please enter a phone number.';
@@ -60,6 +62,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
   }
 
   const clear = (k: keyof Errors) => setErrors((prev) => ({ ...prev, [k]: undefined }));
+
   const onPickAvatar = () => fileRef.current?.click();
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -72,7 +75,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
     const eMap = validate();
     setErrors(eMap);
     if (Object.keys(eMap).length) return;
-    onSubmit({ avatar, nick, dept, post, role, phone, email, sex, status });
+    onSubmit({ avatar, nick, deptId, post, role, phone, email, sex, status });
   }
 
   return (
@@ -95,7 +98,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
         <div className={styles.helper}>PNG/JPG up to 2MB</div>
       </div>
 
-      {/* fields grid (tailwind layout wrapper only) */}
+      {/* fields grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TextInput
           label="Nick Name"
@@ -105,8 +108,9 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
             clear('nick');
           }}
           error={errors.nick}
-          placeholder="e.g., +1 555 0123"
+          placeholder="e.g., John Doe"
         />
+
         <TextInput
           label="Phone"
           value={phone}
@@ -117,6 +121,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           error={errors.phone}
           placeholder="e.g., +1 555 0123"
         />
+
         <TextInput
           label="Email"
           value={email}
@@ -128,16 +133,18 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           placeholder="you@example.com"
         />
 
-        <Dropdown
-          label="Department"
-          value={dept}
+        {/* NEW: Department component */}
+        <DeptTreeDropdown
+          value={deptId}
+          tree={deptTree}
           onChange={(v) => {
-            setDept(v);
-            clear('dept');
+            setDeptId(v);
+            clear('deptId');
           }}
-          options={DEPARTMENTS}
-          error={errors.dept}
+          error={errors.deptId}
+          placeholder="Please select"
         />
+
         <Dropdown
           label="Role"
           value={role}
@@ -148,6 +155,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           options={ROLES}
           error={errors.role}
         />
+
         <Dropdown
           label="Post"
           value={post}
@@ -158,6 +166,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           options={POSTS}
           error={errors.post}
         />
+
         <Dropdown
           label="Sex"
           value={sex}

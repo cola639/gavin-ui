@@ -185,3 +185,57 @@
 .ant-input-search .ant-input-group .ant-input-group-addon .ant-btn {
   border-radius: 10px !important;
 }
+
+.form-tree-dropdown {
+  .ant-select {
+    width: 100%;
+    height: 48px;
+  }
+
+  /* selector shell: border, radius, padding, shadow */
+  .ant-select .ant-select-selector {
+    border-radius: 12px !important;
+    border: 1px solid #e5e7eb !important;
+    padding: 12px 14px !important;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+  }
+
+  /* placeholder text */
+  .ant-select-selection-placeholder {
+    color: #9aa3af !important;
+  }
+
+  /* selected text */
+  .ant-select-selection-item {
+    color: #111827 !important;
+  }
+
+  /* hover */
+  .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+    border-color: var(--primary) !important;
+  }
+
+  /* focus */
+  .ant-select-focused .ant-select-selector {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(159, 226, 220, 0.25) !important;
+  }
+
+  /* error */
+  .ant-select-status-error .ant-select-selector {
+    border-color: #fda4a1 !important;
+  }
+
+  /* clear icon */
+  .ant-select-clear {
+    color: #9aa3af !important;
+    transition: color 0.18s ease;
+  }
+  .ant-select-clear:hover {
+    color: var(--primary) !important;
+  }
+}

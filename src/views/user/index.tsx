@@ -1,8 +1,11 @@
+// page/user/index.tsx
+import { getDeptApi } from '@/apis/dept';
 import { addUserApi, deleteUserApi, getUsersApi, updateUserApi } from '@/apis/user';
 import UserForm, { UserFormValues } from '@/components/form';
 import { Modal, message } from 'antd';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { DeptNode, findDeptIdByLabel, findDeptLabelById, toAntTreeData } from './depTypes';
 import FilterBar from './FilterBar';
 import UsersTable from './Table';
 import { UserRow } from './types';
@@ -15,8 +18,8 @@ type ApiUser = {
   phonenumber: string;
   status: '0' | '1';
   createTime: string;
-  deptId: number;
-  deptName: string;
+  deptId?: number;
+  deptName?: string;
 };
 
 const toRow = (u: ApiUser): UserRow => ({
@@ -24,7 +27,7 @@ const toRow = (u: ApiUser): UserRow => ({
   username: u.userName ?? '',
   avatar: '',
   department: u.deptName ?? '',
-  phone: String(u.phonenumber ?? ''), // ← ensure string
+  phone: String(u.phonenumber ?? ''),
   status: u.status === '0' ? 'Enabled' : 'Disabled',
   createTime: u.createTime ?? '',
   visible: true
@@ -42,33 +45,43 @@ const UsersPage: React.FC = () => {
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [filters, setFilters] = useState<Filters>({
-    date: null,
-    dept: null,
-    status: null,
-    username: '',
-    phonenumber: ''
-  });
+  const [filters, setFilters] = useState<Filters>({ date: null, dept: null, status: null, username: '', phonenumber: '' });
 
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [openAdd, setOpenAdd] = useState(false);
   const [openEdit, setOpenEdit] = useState<null | UserRow>(null);
 
+  // NEW: dept tree
+  const [deptTree, setDeptTree] = useState<DeptNode[]>([]);
+
+  // load depts once
+  useEffect(() => {
+    (async () => {
+      try {
+        const res: any = await getDeptApi();
+        // expect { data: DeptNode[] } based on your sample
+        const list: DeptNode[] = res?.data ?? [];
+        setDeptTree(list);
+        console.log('GET_DEPTS', list);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, []);
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const d = dayjs(filters.date);
-
       const params = {
         pageNum: 1,
         pageSize: 20,
         userName: filters.username || undefined,
         phonenumber: filters.phonenumber || undefined,
-        deptName: filters.dept || undefined, // use name text search
+        deptName: filters.dept || undefined,
         status: filters.status === 'Enabled' ? '0' : filters.status === 'Disabled' ? '1' : undefined,
         createTime: d.isValid() ? d.startOf('day').format('YYYY-MM-DD HH:mm:ss') : undefined
       };
-
       const res: any = await getUsersApi(params);
       const list: ApiUser[] = res?.rows ?? [];
       setRows(list.map(toRow));
@@ -92,15 +105,9 @@ const UsersPage: React.FC = () => {
   const filtered = useMemo(() => {
     return rows.filter((r) => {
       if (filters.username && !ci(r.username).includes(ci(filters.username))) return false;
-
-      // digits-only phone match: "158-8888-8888" matches "1588888"
-      if (filters.phonenumber) {
-        if (!digits(r.phone).includes(digits(filters.phonenumber))) return false;
-      }
-
+      if (filters.phonenumber && !digits(r.phone).includes(digits(filters.phonenumber))) return false;
       if (filters.dept && !ci(r.department).includes(ci(filters.dept))) return false;
       if (filters.status && r.status !== filters.status) return false;
-
       if (filters.date) {
         const dStr = r.createTime ? dayjs(r.createTime).format('YYYY-MM-DD') : '';
         if (dStr !== filters.date) return false;
@@ -111,13 +118,15 @@ const UsersPage: React.FC = () => {
 
   const handleAdd = async (values: UserFormValues) => {
     try {
+      const deptLabel = findDeptLabelById(deptTree, values.deptId);
       const payload = {
         userName: values.nick,
         nickName: values.nick,
         email: values.email,
         phonenumber: values.phone,
         status: values.status === 'Enable' ? '0' : '1',
-        deptName: values.dept || undefined
+        deptId: values.deptId ? Number(values.deptId) : undefined,
+        deptName: deptLabel
       };
       await addUserApi(payload);
       message.success('User added');
@@ -131,6 +140,7 @@ const UsersPage: React.FC = () => {
 
   const handleEdit = async (row: UserRow, values: UserFormValues) => {
     try {
+      const deptLabel = findDeptLabelById(deptTree, values.deptId);
       const payload = {
         userId: Number(row.id),
         userName: values.nick,
@@ -138,7 +148,8 @@ const UsersPage: React.FC = () => {
         email: values.email,
         phonenumber: values.phone,
         status: values.status === 'Enable' ? '0' : '1',
-        deptName: values.dept || undefined
+        deptId: values.deptId ? Number(values.deptId) : undefined,
+        deptName: deptLabel
       };
       await updateUserApi(payload);
       message.success('User updated');
@@ -175,6 +186,9 @@ const UsersPage: React.FC = () => {
   const onResetPass = (row: UserRow) => console.log('RESET_PASSCODE (placeholder)', row.id);
   const onAssignRole = (row: UserRow) => console.log('ASSIGN_ROLE (placeholder)', row.id);
 
+  // derive initial deptId for edit modal from row.department (name) if possible
+  const deptTreeData = useMemo(() => toAntTreeData(deptTree), [deptTree]);
+
   return (
     <main className="min-h-screen bg-[var(--bg-page)] p-5 lg:p-8">
       <h1 className="text-3xl font-semibold text-gray-900 mb-5">User Lists</h1>
@@ -201,7 +215,7 @@ const UsersPage: React.FC = () => {
 
       {/* ADD */}
       <Modal title="Add User" open={openAdd} footer={null} onCancel={() => setOpenAdd(false)} destroyOnClose>
-        <UserForm submitLabel="Add User" onSubmit={handleAdd} />
+        <UserForm submitLabel="Add User" onSubmit={handleAdd} deptTree={deptTree} />
       </Modal>
 
       {/* EDIT */}
@@ -213,10 +227,12 @@ const UsersPage: React.FC = () => {
               nick: openEdit.username,
               phone: openEdit.phone,
               email: '',
-              dept: openEdit.department,
+              // try to resolve id by label if possible
+              deptId: findDeptIdByLabel(deptTree, openEdit.department),
               status: openEdit.status === 'Enabled' ? 'Enable' : 'Disable'
             }}
             onSubmit={(v) => handleEdit(openEdit, v)}
+            deptTree={deptTree}
           />
         )}
       </Modal>
