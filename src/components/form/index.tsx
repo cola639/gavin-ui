@@ -82,7 +82,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
     <form onSubmit={submit} noValidate>
       {/* avatar */}
       <div className="flex flex-col items-center mb-4">
-        <div className={`${styles.avatar} cursor-pointer`} onClick={onPickAvatar}>
+        <div className={`${styles.avatar} cursor-pointer`}>
           {avatar ? (
             <>
               <img src={avatar} alt="Avatar" />
