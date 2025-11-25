@@ -56,3 +56,10 @@ export function getUserInfoApi() {
     method: 'get'
   });
 }
+
+export function getRolePost() {
+  return request({
+    url: '/system/user/',
+    method: 'get'
+  });
+}
