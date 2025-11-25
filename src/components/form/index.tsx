@@ -9,21 +9,22 @@ import DeptTreeDropdown from './treeDropdown';
 type Errors = Partial<Record<'nick' | 'deptId' | 'post' | 'role' | 'phone' | 'email' | 'sex' | 'status', string>>;
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
-const ROLES = ['IC', 'Lead', 'Manager', 'Director'].map((x) => ({ label: x, value: x }));
-const POSTS = ['Full-time', 'Part-time', 'Contractor', 'Intern'].map((x) => ({ label: x, value: x }));
+// sex options stay static
 const SEXES = ['Male', 'Female', 'Other', 'Prefer not to say'].map((x) => ({ label: x, value: x }));
 
 export type UserFormValues = {
   avatar?: string | null;
   nick: string;
   deptId?: string;
-  post: string;
-  role: string;
+  post: string; // will hold backend postId as string
+  role: string; // will hold backend roleId as string
   phone: string;
   email: string;
   sex: string;
   status: 'Enable' | 'Disable';
 };
+
+export type SimpleOption = { label: string; value: string };
 
 export type UserFormProps = {
   initial?: Partial<UserFormValues>;
@@ -31,9 +32,11 @@ export type UserFormProps = {
   onSubmit: (values: UserFormValues) => void;
   onCancel?: () => void;
   deptTree?: DeptNode[];
+  roles?: SimpleOption[]; // NEW: backend role options
+  posts?: SimpleOption[]; // NEW: backend post options
 };
 
-const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', onSubmit, deptTree = [] }) => {
+const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', onSubmit, deptTree = [], roles = [], posts = [] }) => {
   const [avatar, setAvatar] = useState<string | null>(initial?.avatar ?? null);
   const [nick, setNick] = useState(initial?.nick ?? '');
   const [deptId, setDeptId] = useState<string | undefined>(initial?.deptId);
@@ -86,7 +89,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           {avatar ? (
             <>
               <img src={avatar} alt="Avatar" />
-              <button type="button" className={styles.uploadBadge} onClick={onPickAvatar}>
+              <button type="button" onClick={onPickAvatar}>
                 +
               </button>
             </>
@@ -133,7 +136,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           placeholder="you@example.com"
         />
 
-        {/* NEW: Department component */}
+        {/* Department (TreeSelect) */}
         <DeptTreeDropdown
           value={deptId}
           tree={deptTree}
@@ -145,6 +148,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           placeholder="Please select"
         />
 
+        {/* Role from backend */}
         <Dropdown
           label="Role"
           value={role}
@@ -152,10 +156,11 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
             setRole(v);
             clear('role');
           }}
-          options={ROLES}
+          options={roles}
           error={errors.role}
         />
 
+        {/* Post from backend */}
         <Dropdown
           label="Post"
           value={post}
@@ -163,10 +168,11 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
             setPost(v);
             clear('post');
           }}
-          options={POSTS}
+          options={posts}
           error={errors.post}
         />
 
+        {/* Sex (static) */}
         <Dropdown
           label="Sex"
           value={sex}

@@ -1,6 +1,6 @@
 // page/user/index.tsx
 import { getDeptApi } from '@/apis/dept';
-import { addUserApi, deleteUserApi, getUsersApi, updateUserApi } from '@/apis/user';
+import { addUserApi, deleteUserApi, getRolePost, getUsersApi, updateUserApi } from '@/apis/user';
 import UserForm, { UserFormValues } from '@/components/form';
 import { Modal, message } from 'antd';
 import dayjs from 'dayjs';
@@ -41,28 +41,68 @@ type Filters = {
   phonenumber?: string;
 };
 
+type Option = { label: string; value: string };
+
 const UsersPage: React.FC = () => {
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [filters, setFilters] = useState<Filters>({ date: null, dept: null, status: null, username: '', phonenumber: '' });
+  const [filters, setFilters] = useState<Filters>({
+    date: null,
+    dept: null,
+    status: null,
+    username: '',
+    phonenumber: ''
+  });
 
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [openAdd, setOpenAdd] = useState(false);
   const [openEdit, setOpenEdit] = useState<null | UserRow>(null);
 
-  // NEW: dept tree
+  // dept tree
   const [deptTree, setDeptTree] = useState<DeptNode[]>([]);
 
-  // load depts once
+  // NEW: role & post options from backend
+  const [roleOptions, setRoleOptions] = useState<Option[]>([]);
+  const [postOptions, setPostOptions] = useState<Option[]>([]);
+
+  // ---- load department tree once ----
   useEffect(() => {
     (async () => {
       try {
         const res: any = await getDeptApi();
-        // expect { data: DeptNode[] } based on your sample
         const list: DeptNode[] = res?.data ?? [];
         setDeptTree(list);
         console.log('GET_DEPTS', list);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, []);
+
+  // ---- load roles / posts once ----
+  useEffect(() => {
+    (async () => {
+      try {
+        const res: any = await getRolePost();
+        const roles = (res?.roles ?? []).filter((r: any) => r.status === '0' && r.delFlag !== '2');
+        const posts = (res?.posts ?? []).filter((p: any) => p.status === '0');
+
+        setRoleOptions(
+          roles.map((r: any) => ({
+            label: r.roleName,
+            value: String(r.roleId)
+          }))
+        );
+
+        setPostOptions(
+          posts.map((p: any) => ({
+            label: p.postName,
+            value: String(p.postId)
+          }))
+        );
+
+        console.log('GET_ROLE_POST', res);
       } catch (e) {
         console.error(e);
       }
@@ -102,19 +142,21 @@ const UsersPage: React.FC = () => {
   const ci = (s?: string | null) => (s ?? '').toLowerCase();
   const digits = (s?: string | null) => (s ?? '').replace(/\D/g, '');
 
-  const filtered = useMemo(() => {
-    return rows.filter((r) => {
-      if (filters.username && !ci(r.username).includes(ci(filters.username))) return false;
-      if (filters.phonenumber && !digits(r.phone).includes(digits(filters.phonenumber))) return false;
-      if (filters.dept && !ci(r.department).includes(ci(filters.dept))) return false;
-      if (filters.status && r.status !== filters.status) return false;
-      if (filters.date) {
-        const dStr = r.createTime ? dayjs(r.createTime).format('YYYY-MM-DD') : '';
-        if (dStr !== filters.date) return false;
-      }
-      return true;
-    });
-  }, [rows, filters]);
+  const filtered = useMemo(
+    () =>
+      rows.filter((r) => {
+        if (filters.username && !ci(r.username).includes(ci(filters.username))) return false;
+        if (filters.phonenumber && !digits(r.phone).includes(digits(filters.phonenumber))) return false;
+        if (filters.dept && !ci(r.department).includes(ci(filters.dept))) return false;
+        if (filters.status && r.status !== filters.status) return false;
+        if (filters.date) {
+          const dStr = r.createTime ? dayjs(r.createTime).format('YYYY-MM-DD') : '';
+          if (dStr !== filters.date) return false;
+        }
+        return true;
+      }),
+    [rows, filters]
+  );
 
   const handleAdd = async (values: UserFormValues) => {
     try {
@@ -127,6 +169,9 @@ const UsersPage: React.FC = () => {
         status: values.status === 'Enable' ? '0' : '1',
         deptId: values.deptId ? Number(values.deptId) : undefined,
         deptName: deptLabel
+        // TODO: hook role/post IDs into payload when your backend expects them
+        // roleIds: values.role ? [Number(values.role)] : [],
+        // postIds: values.post ? [Number(values.post)] : []
       };
       await addUserApi(payload);
       message.success('User added');
@@ -150,6 +195,8 @@ const UsersPage: React.FC = () => {
         status: values.status === 'Enable' ? '0' : '1',
         deptId: values.deptId ? Number(values.deptId) : undefined,
         deptName: deptLabel
+        // roleIds: values.role ? [Number(values.role)] : [],
+        // postIds: values.post ? [Number(values.post)] : []
       };
       await updateUserApi(payload);
       message.success('User updated');
@@ -186,9 +233,6 @@ const UsersPage: React.FC = () => {
   const onResetPass = (row: UserRow) => console.log('RESET_PASSCODE (placeholder)', row.id);
   const onAssignRole = (row: UserRow) => console.log('ASSIGN_ROLE (placeholder)', row.id);
 
-  // derive initial deptId for edit modal from row.department (name) if possible
-  const deptTreeData = useMemo(() => toAntTreeData(deptTree), [deptTree]);
-
   return (
     <main className="min-h-screen bg-[var(--bg-page)] p-5 lg:p-8">
       <h1 className="text-3xl font-semibold text-gray-900 mb-5">User Lists</h1>
@@ -215,7 +259,7 @@ const UsersPage: React.FC = () => {
 
       {/* ADD */}
       <Modal title="Add User" open={openAdd} footer={null} onCancel={() => setOpenAdd(false)} destroyOnClose>
-        <UserForm submitLabel="Add User" onSubmit={handleAdd} deptTree={deptTree} />
+        <UserForm submitLabel="Add User" onSubmit={handleAdd} deptTree={deptTree} roles={roleOptions} posts={postOptions} />
       </Modal>
 
       {/* EDIT */}
@@ -227,12 +271,14 @@ const UsersPage: React.FC = () => {
               nick: openEdit.username,
               phone: openEdit.phone,
               email: '',
-              // try to resolve id by label if possible
               deptId: findDeptIdByLabel(deptTree, openEdit.department),
               status: openEdit.status === 'Enabled' ? 'Enable' : 'Disable'
+              // role / post IDs would be filled here once you fetch user detail
             }}
             onSubmit={(v) => handleEdit(openEdit, v)}
             deptTree={deptTree}
+            roles={roleOptions}
+            posts={postOptions}
           />
         )}
       </Modal>
