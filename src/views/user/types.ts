@@ -4,6 +4,7 @@ export interface UserRow {
   id: string;
   username: string;
   avatar: string; // URL
+  email: string;
   department: string;
   phone: string;
   status: UserStatus;

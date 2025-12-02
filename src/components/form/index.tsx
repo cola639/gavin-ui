@@ -1,3 +1,5 @@
+// src/components/form/index.tsx
+import { SEXES, STATUS } from '@/utils/dict';
 import type { DeptNode } from '@/views/user/depTypes';
 import React, { useRef, useState } from 'react';
 import Dropdown from './dropdown/Dropdown';
@@ -9,15 +11,16 @@ import DeptTreeDropdown from './treeDropdown';
 type Errors = Partial<Record<'nick' | 'deptId' | 'post' | 'role' | 'phone' | 'email' | 'sex' | 'status', string>>;
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
-// sex options stay static
-const SEXES = ['Male', 'Female', 'Other', 'Prefer not to say'].map((x) => ({ label: x, value: x }));
-
 export type UserFormValues = {
+  /** existing avatar url (when editing) */
   avatar?: string | null;
+  /** newly picked file (for upload) */
+  avatarFile?: File | null;
+
   nick: string;
   deptId?: string;
-  post: string; // will hold backend postId as string
-  role: string; // will hold backend roleId as string
+  post: string; // backend postId as string
+  role: string; // backend roleId as string
   phone: string;
   email: string;
   sex: string;
@@ -32,12 +35,16 @@ export type UserFormProps = {
   onSubmit: (values: UserFormValues) => void;
   onCancel?: () => void;
   deptTree?: DeptNode[];
-  roles?: SimpleOption[]; // NEW: backend role options
-  posts?: SimpleOption[]; // NEW: backend post options
+  roles?: SimpleOption[];
+  posts?: SimpleOption[];
 };
 
 const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', onSubmit, deptTree = [], roles = [], posts = [] }) => {
-  const [avatar, setAvatar] = useState<string | null>(initial?.avatar ?? null);
+  // preview (can be backend url or local object url)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(initial?.avatar ?? null);
+  // file to actually upload
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
   const [nick, setNick] = useState(initial?.nick ?? '');
   const [deptId, setDeptId] = useState<string | undefined>(initial?.deptId);
   const [post, setPost] = useState(initial?.post ?? '');
@@ -66,11 +73,16 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
 
   const clear = (k: keyof Errors) => setErrors((prev) => ({ ...prev, [k]: undefined }));
 
-  const onPickAvatar = () => fileRef.current?.click();
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f || !f.type.startsWith('image/')) return;
-    setAvatar(URL.createObjectURL(f));
+
+    // keep file for upload
+    setAvatarFile(f);
+
+    // local preview
+    const url = URL.createObjectURL(f);
+    setAvatarPreview(url);
   }
 
   function submit(e: React.FormEvent) {
@@ -78,7 +90,19 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
     const eMap = validate();
     setErrors(eMap);
     if (Object.keys(eMap).length) return;
-    onSubmit({ avatar, nick, deptId, post, role, phone, email, sex, status });
+
+    onSubmit({
+      avatar: initial?.avatar ?? null, // existing url (if any)
+      avatarFile,
+      nick,
+      deptId,
+      post,
+      role,
+      phone,
+      email,
+      sex,
+      status
+    });
   }
 
   return (
@@ -86,10 +110,10 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
       {/* avatar */}
       <div className="flex flex-col items-center mb-4">
         <div className={`${styles.avatar} cursor-pointer`}>
-          {avatar ? (
+          {avatarPreview ? (
             <>
-              <img src={avatar} alt="Avatar" />
-              <button type="button" onClick={onPickAvatar}>
+              <img src={avatarPreview} alt="Avatar" />
+              <button type="button" className={styles.uploadBadge}>
                 +
               </button>
             </>
@@ -136,7 +160,6 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           placeholder="you@example.com"
         />
 
-        {/* Department (TreeSelect) */}
         <DeptTreeDropdown
           value={deptId}
           tree={deptTree}
@@ -148,7 +171,6 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           placeholder="Please select"
         />
 
-        {/* Role from backend */}
         <Dropdown
           label="Role"
           value={role}
@@ -160,7 +182,6 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           error={errors.role}
         />
 
-        {/* Post from backend */}
         <Dropdown
           label="Post"
           value={post}
@@ -172,7 +193,6 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
           error={errors.post}
         />
 
-        {/* Sex (static) */}
         <Dropdown
           label="Sex"
           value={sex}
@@ -192,10 +212,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
               setStatus(v as any);
               clear('status');
             }}
-            options={[
-              { label: 'Enable', value: 'Enable' },
-              { label: 'Disable', value: 'Disable' }
-            ]}
+            options={STATUS}
           />
         </div>
       </div>

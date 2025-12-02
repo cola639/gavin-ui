@@ -1,4 +1,5 @@
 // page/user/index.tsx
+import { uploadAvatar } from '@/apis/common';
 import { getDeptApi } from '@/apis/dept';
 import { addUserApi, deleteUserApi, getRolePost, getUsersApi, updateUserApi } from '@/apis/user';
 import UserForm, { UserFormValues } from '@/components/form';
@@ -25,6 +26,7 @@ type ApiUser = {
 const toRow = (u: ApiUser): UserRow => ({
   id: String(u.userId ?? ''),
   username: u.userName ?? '',
+  email: u.email ?? '',
   avatar: '',
   department: u.deptName ?? '',
   phone: String(u.phonenumber ?? ''),
@@ -160,19 +162,33 @@ const UsersPage: React.FC = () => {
 
   const handleAdd = async (values: UserFormValues) => {
     try {
-      const deptLabel = findDeptLabelById(deptTree, values.deptId);
+      let avatarUrl: string | null = values.avatar ?? null;
+
+      // 1) if user picked a file, upload it first
+      if (values.avatarFile) {
+        const fd = new FormData();
+        fd.append('file', values.avatarFile);
+
+        const res: any = await uploadAvatar(fd);
+        // based on your screenshot response
+        avatarUrl = res.url || res.fileName || res.data?.url || null;
+        console.log('UPLOAD_AVATAR_RESULT', res, 'chosenUrl=', avatarUrl);
+      }
+
+      // 2) now call user API with avatar url
       const payload = {
-        userName: values.nick,
         nickName: values.nick,
         email: values.email,
         phonenumber: values.phone,
-        status: values.status === 'Enable' ? '0' : '1',
+        status: values.status,
+        sex: values.sex,
         deptId: values.deptId ? Number(values.deptId) : undefined,
-        deptName: deptLabel
-        // TODO: hook role/post IDs into payload when your backend expects them
-        // roleIds: values.role ? [Number(values.role)] : [],
-        // postIds: values.post ? [Number(values.post)] : []
+        roleId: values.role ? Number(values.role) : undefined,
+        postId: values.post ? Number(values.post) : undefined,
+        avatar: avatarUrl ?? undefined,
+        password: '123456' // default password for new user
       };
+
       await addUserApi(payload);
       message.success('User added');
       setOpenAdd(false);
@@ -185,7 +201,15 @@ const UsersPage: React.FC = () => {
 
   const handleEdit = async (row: UserRow, values: UserFormValues) => {
     try {
-      const deptLabel = findDeptLabelById(deptTree, values.deptId);
+      let avatarUrl: string | null = values.avatar ?? row.avatar ?? null;
+
+      if (values.avatarFile) {
+        const fd = new FormData();
+        fd.append('file', values.avatarFile);
+        const res: any = await uploadAvatar(fd);
+        avatarUrl = res.url || res.fileName || res.data?.url || null;
+      }
+
       const payload = {
         userId: Number(row.id),
         userName: values.nick,
@@ -194,10 +218,11 @@ const UsersPage: React.FC = () => {
         phonenumber: values.phone,
         status: values.status === 'Enable' ? '0' : '1',
         deptId: values.deptId ? Number(values.deptId) : undefined,
-        deptName: deptLabel
-        // roleIds: values.role ? [Number(values.role)] : [],
-        // postIds: values.post ? [Number(values.post)] : []
+        roleId: values.role ? Number(values.role) : undefined,
+        postId: values.post ? Number(values.post) : undefined,
+        avatar: avatarUrl ?? undefined
       };
+
       await updateUserApi(payload);
       message.success('User updated');
       setOpenEdit(null);
@@ -258,22 +283,22 @@ const UsersPage: React.FC = () => {
       />
 
       {/* ADD */}
-      <Modal title="Add User" open={openAdd} footer={null} onCancel={() => setOpenAdd(false)} destroyOnClose>
+      <Modal title="Add User" open={openAdd} footer={null} onCancel={() => setOpenAdd(false)}>
         <UserForm submitLabel="Add User" onSubmit={handleAdd} deptTree={deptTree} roles={roleOptions} posts={postOptions} />
       </Modal>
 
       {/* EDIT */}
-      <Modal title="Edit User" open={!!openEdit} footer={null} onCancel={() => setOpenEdit(null)} destroyOnClose>
+      <Modal title="Edit User" open={!!openEdit} footer={null} onCancel={() => setOpenEdit(null)}>
         {openEdit && (
           <UserForm
             submitLabel="Save Changes"
             initial={{
+              avatar: openEdit.avatar, // <— existing avatar url from row
               nick: openEdit.username,
               phone: openEdit.phone,
-              email: '',
+              email: openEdit.email ?? '',
               deptId: findDeptIdByLabel(deptTree, openEdit.department),
               status: openEdit.status === 'Enabled' ? 'Enable' : 'Disable'
-              // role / post IDs would be filled here once you fetch user detail
             }}
             onSubmit={(v) => handleEdit(openEdit, v)}
             deptTree={deptTree}
