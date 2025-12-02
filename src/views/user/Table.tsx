@@ -41,7 +41,7 @@ const UsersTable: React.FC<Props> = ({ data, rowSelection, onModify, onDelete, o
             </Tag>
           ) : (
             <Tag color="#fde68a" className="text-[#92400e] font-semibold rounded-full px-3 py-[2px]">
-              Disabled
+              {s}
             </Tag>
           )
       },

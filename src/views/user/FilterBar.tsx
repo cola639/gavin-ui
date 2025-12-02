@@ -52,15 +52,6 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
           allowClear
         />
 
-        {/* Date */}
-        <DatePicker
-          value={filters.date ? (window as any).dayjs?.(filters.date) : undefined}
-          onChange={(d) => onFilters({ ...filters, date: d ? d.format('YYYY-MM-DD') : null })}
-          allowClear
-          className="min-w-[150px]"
-        />
-
-        {/*  Department */}
         <Input
           placeholder="Department"
           value={filters.dept}

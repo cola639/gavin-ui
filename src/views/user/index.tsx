@@ -17,7 +17,7 @@ type ApiUser = {
   nickName: string;
   email: string;
   phonenumber: string;
-  status: '0' | '1';
+  status: 'Enabled' | 'Disabled';
   createTime: string;
   deptId?: number;
   deptName?: string;
@@ -30,7 +30,7 @@ const toRow = (u: ApiUser): UserRow => ({
   avatar: '',
   department: u.deptName ?? '',
   phone: String(u.phonenumber ?? ''),
-  status: u.status === '0' ? 'Enabled' : 'Disabled',
+  status: u.status,
   createTime: u.createTime ?? '',
   visible: true
 });
@@ -121,7 +121,7 @@ const UsersPage: React.FC = () => {
         userName: filters.username || undefined,
         phonenumber: filters.phonenumber || undefined,
         deptName: filters.dept || undefined,
-        status: filters.status === 'Enabled' ? '0' : filters.status === 'Disabled' ? '1' : undefined,
+        status: filters.status,
         createTime: d.isValid() ? d.startOf('day').format('YYYY-MM-DD HH:mm:ss') : undefined
       };
       const res: any = await getUsersApi(params);
