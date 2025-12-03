@@ -57,9 +57,9 @@ export function getUserInfoApi() {
   });
 }
 
-export function getRolePost() {
+export function getUserDetailApi(userId?: string | number) {
   return request({
-    url: '/system/user/',
+    url: '/system/user/' + (userId ? userId : ''),
     method: 'get'
   });
 }

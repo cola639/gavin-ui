@@ -1,12 +1,12 @@
-// page/user/index.tsx
+// pages/user/index.tsx
 import { uploadAvatar } from '@/apis/common';
 import { getDeptApi } from '@/apis/dept';
-import { addUserApi, deleteUserApi, getRolePost, getUsersApi, updateUserApi } from '@/apis/user';
+import { addUserApi, deleteUserApi, getUserDetailApi, getUsersApi, updateUserApi } from '@/apis/user';
 import UserForm, { UserFormValues } from '@/components/form';
 import { Modal, message } from 'antd';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { DeptNode, findDeptIdByLabel, findDeptLabelById, toAntTreeData } from './depTypes';
+import { DeptNode } from './depTypes';
 import FilterBar from './FilterBar';
 import UsersTable from './Table';
 import { UserRow } from './types';
@@ -59,12 +59,16 @@ const UsersPage: React.FC = () => {
 
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [openAdd, setOpenAdd] = useState(false);
-  const [openEdit, setOpenEdit] = useState<null | UserRow>(null);
+
+  // ------ EDIT modal state: only userId + fetched initial data ------
+  const [editUserId, setEditUserId] = useState<number | null>(null);
+  const [editInitial, setEditInitial] = useState<Partial<UserFormValues> | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   // dept tree
   const [deptTree, setDeptTree] = useState<DeptNode[]>([]);
 
-  // NEW: role & post options from backend
+  // role & post options from backend
   const [roleOptions, setRoleOptions] = useState<Option[]>([]);
   const [postOptions, setPostOptions] = useState<Option[]>([]);
 
@@ -86,7 +90,7 @@ const UsersPage: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res: any = await getRolePost();
+        const res: any = await getUserDetailApi();
         const roles = (res?.roles ?? []).filter((r: any) => r.status === '0' && r.delFlag !== '2');
         const posts = (res?.posts ?? []).filter((p: any) => p.status === '0');
 
@@ -111,17 +115,18 @@ const UsersPage: React.FC = () => {
     })();
   }, []);
 
+  // ---- load user list (table) ----
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const d = dayjs(filters.date);
+      const d = dayjs(filters.date as string | null);
       const params = {
         pageNum: 1,
         pageSize: 20,
         userName: filters.username || undefined,
         phonenumber: filters.phonenumber || undefined,
         deptName: filters.dept || undefined,
-        status: filters.status,
+        status: filters.status || undefined,
         createTime: d.isValid() ? d.startOf('day').format('YYYY-MM-DD HH:mm:ss') : undefined
       };
       const res: any = await getUsersApi(params);
@@ -140,7 +145,47 @@ const UsersPage: React.FC = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // helpers
+  // ---- fetch single user detail for EDIT modal ----
+  useEffect(() => {
+    if (editUserId == null) {
+      setEditInitial(null);
+      return;
+    }
+
+    (async () => {
+      try {
+        setEditLoading(true);
+        const res: any = await getUserDetailApi(editUserId);
+        const u = res?.data;
+        if (!u) {
+          message.error('User not found');
+          setEditUserId(null);
+          return;
+        }
+
+        // adapt these fields to your actual backend response
+        setEditInitial({
+          avatar: u.avatar ?? null,
+          nick: u.nickName ?? '',
+          phone: u.phonenumber ?? '',
+          email: u.email ?? '',
+          deptId: u.deptId ? String(u.deptId) : undefined,
+          post: u.postId ? String(u.postId) : '',
+          role: u.roleId ? String(u.roleId) : '',
+          sex: u.sex ?? '',
+          status: u.status === 'Enabled' ? 'Enable' : 'Disable'
+        });
+      } catch (e) {
+        console.error(e);
+        message.error('Failed to load user detail');
+        setEditUserId(null);
+      } finally {
+        setEditLoading(false);
+      }
+    })();
+  }, [editUserId]);
+
+  // helpers for client-side filter
   const ci = (s?: string | null) => (s ?? '').toLowerCase();
   const digits = (s?: string | null) => (s ?? '').replace(/\D/g, '');
 
@@ -160,22 +205,22 @@ const UsersPage: React.FC = () => {
     [rows, filters]
   );
 
+  // ---- handlers ----
+
   const handleAdd = async (values: UserFormValues) => {
     try {
       let avatarUrl: string | null = values.avatar ?? null;
 
-      // 1) if user picked a file, upload it first
+      // upload avatar file if chosen
       if (values.avatarFile) {
         const fd = new FormData();
         fd.append('file', values.avatarFile);
 
         const res: any = await uploadAvatar(fd);
-        // based on your screenshot response
         avatarUrl = res.url || res.fileName || res.data?.url || null;
         console.log('UPLOAD_AVATAR_RESULT', res, 'chosenUrl=', avatarUrl);
       }
 
-      // 2) now call user API with avatar url
       const payload = {
         nickName: values.nick,
         email: values.email,
@@ -183,8 +228,8 @@ const UsersPage: React.FC = () => {
         status: values.status,
         sex: values.sex,
         deptId: values.deptId ? Number(values.deptId) : undefined,
-        roleId: values.role ? Number(values.role) : undefined,
-        postId: values.post ? Number(values.post) : undefined,
+        roleIds: values.role ? [Number(values.role)] : undefined,
+        postIds: values.post ? [Number(values.post)] : undefined,
         avatar: avatarUrl ?? undefined,
         password: '123456' // default password for new user
       };
@@ -199,9 +244,9 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const handleEdit = async (row: UserRow, values: UserFormValues) => {
+  const handleEdit = async (userId: number, values: UserFormValues) => {
     try {
-      let avatarUrl: string | null = values.avatar ?? row.avatar ?? null;
+      let avatarUrl: string | null = values.avatar ?? null;
 
       if (values.avatarFile) {
         const fd = new FormData();
@@ -211,12 +256,12 @@ const UsersPage: React.FC = () => {
       }
 
       const payload = {
-        userId: Number(row.id),
+        userId,
         userName: values.nick,
         nickName: values.nick,
         email: values.email,
         phonenumber: values.phone,
-        status: values.status === 'Enable' ? '0' : '1',
+        status: values.status === 'Enable' ? '0' : '1', // adjust if backend expects Enabled/Disabled
         deptId: values.deptId ? Number(values.deptId) : undefined,
         roleId: values.role ? Number(values.role) : undefined,
         postId: values.post ? Number(values.post) : undefined,
@@ -225,7 +270,7 @@ const UsersPage: React.FC = () => {
 
       await updateUserApi(payload);
       message.success('User updated');
-      setOpenEdit(null);
+      setEditUserId(null); // close modal
       fetchUsers();
     } catch (e) {
       console.error(e);
@@ -245,16 +290,22 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const onModify = (row: UserRow) => setOpenEdit(row);
+  // row actions
+  const onModify = (row: UserRow) => {
+    setEditUserId(Number(row.id)); // only pass id, detail will be fetched
+  };
+
   const onDelete = async (row: UserRow) => {
     await deleteUserApi({ userIds: row.id });
     message.success('Deleted');
     fetchUsers();
   };
+
   const onToggleVisible = (row: UserRow) => {
     console.log('TOGGLE_VISIBLE (client-only)', row.id);
     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, visible: !r.visible } : r)));
   };
+
   const onResetPass = (row: UserRow) => console.log('RESET_PASSCODE (placeholder)', row.id);
   const onAssignRole = (row: UserRow) => console.log('ASSIGN_ROLE (placeholder)', row.id);
 
@@ -288,19 +339,14 @@ const UsersPage: React.FC = () => {
       </Modal>
 
       {/* EDIT */}
-      <Modal title="Edit User" open={!!openEdit} footer={null} onCancel={() => setOpenEdit(null)}>
-        {openEdit && (
+      <Modal title="Edit User" open={editUserId !== null} footer={null} onCancel={() => setEditUserId(null)}>
+        {editLoading && <div style={{ padding: 16 }}>Loading...</div>}
+
+        {!editLoading && editUserId !== null && editInitial && (
           <UserForm
             submitLabel="Save Changes"
-            initial={{
-              avatar: openEdit.avatar, // <— existing avatar url from row
-              nick: openEdit.username,
-              phone: openEdit.phone,
-              email: openEdit.email ?? '',
-              deptId: findDeptIdByLabel(deptTree, openEdit.department),
-              status: openEdit.status === 'Enabled' ? 'Enable' : 'Disable'
-            }}
-            onSubmit={(v) => handleEdit(openEdit, v)}
+            initial={editInitial}
+            onSubmit={(v) => handleEdit(editUserId, v)}
             deptTree={deptTree}
             roles={roleOptions}
             posts={postOptions}

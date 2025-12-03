@@ -1,3 +1,4 @@
+// views/user/Table.tsx
 import AvatarCell from '@/components/avatarCell';
 import { DeleteOutlined, EditOutlined, EyeInvisibleOutlined, EyeOutlined, KeyOutlined, MoreOutlined, TeamOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Table, Tag } from 'antd';
@@ -50,7 +51,12 @@ const UsersTable: React.FC<Props> = ({ data, rowSelection, onModify, onDelete, o
         dataIndex: 'createTime',
         key: 'createTime',
         width: 160,
-        render: (v: string) => new Date(v).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
+        render: (v: string) =>
+          new Date(v).toLocaleDateString(undefined, {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          })
       },
       {
         title: 'ACTION',
@@ -105,7 +111,14 @@ const UsersTable: React.FC<Props> = ({ data, rowSelection, onModify, onDelete, o
 
   return (
     <div className="rounded-xl border border-[var(--card-border)] bg-white shadow-[var(--shadow)] overflow-hidden">
-      <Table rowKey="id" columns={columns} dataSource={data} rowSelection={rowSelection} pagination={{ pageSize: 10, showSizeChanger: false }} />
+      <Table
+        rowKey="id"
+        columns={columns}
+        dataSource={data}
+        rowSelection={rowSelection}
+        loading={false}
+        pagination={{ pageSize: 10, showSizeChanger: false }}
+      />
     </div>
   );
 };
