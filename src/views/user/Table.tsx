@@ -64,16 +64,7 @@ const UsersTable: React.FC<Props> = ({ data, rowSelection, onModify, onDelete, o
         fixed: 'right',
         width: 260,
         render: (_: any, row: UserRow) => {
-          const menuItems = [
-            {
-              key: 'visible',
-              icon: row.visible ? <EyeInvisibleOutlined /> : <EyeOutlined />,
-              label: row.visible ? 'Hide user' : 'Show user',
-              onClick: () => onToggleVisible(row)
-            },
-            { key: 'reset', icon: <KeyOutlined />, label: 'Reset passcode', onClick: () => onResetPass(row) },
-            { key: 'assign', icon: <TeamOutlined />, label: 'Assign role', onClick: () => onAssignRole(row) }
-          ];
+          const menuItems = [{ key: 'assign', icon: <TeamOutlined />, label: 'Assign role', onClick: () => onAssignRole(row) }];
           return (
             <div className="flex items-center gap-2">
               <Button
@@ -95,12 +86,15 @@ const UsersTable: React.FC<Props> = ({ data, rowSelection, onModify, onDelete, o
               >
                 Delete
               </Button>
-              <Dropdown
-                menu={{ items: menuItems.map((i) => ({ key: i.key, icon: i.icon, label: i.label, onClick: i.onClick })) }}
-                trigger={['click']}
+
+              <Button
+                icon={<TeamOutlined />}
+                onClick={() => {
+                  console.log('Assign', row.id);
+                }}
               >
-                <Button icon={<MoreOutlined />}>More</Button>
-              </Dropdown>
+                Assign Role
+              </Button>
             </div>
           );
         }
