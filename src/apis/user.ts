@@ -57,9 +57,10 @@ export function getUserInfoApi(params) {
   });
 }
 
-export function getUserDetailApi(userId?: string | number) {
+export function getUserDetailApi(userId: number) {
   return request({
-    url: '/system/user/' + (userId ? userId : ''),
-    method: 'get'
+    url: '/system/user/info',
+    method: 'get',
+    params: { userId }
   });
 }
