@@ -1,10 +1,11 @@
+// src/views/user/FilterBar.tsx
 import { DeleteOutlined, FileExcelOutlined, FilterOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Input, Select } from 'antd';
+import { Button, Input, Select } from 'antd';
 import React from 'react';
 
 type Filters = {
   date?: string | null;
-  dept?: string | null; // dropdown value
+  dept?: string | null;
   status?: string | null;
   username?: string;
   phonenumber?: string;
@@ -22,14 +23,17 @@ type Props = {
 
 const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount, onAdd, onDelete, onExport }) => {
   const statusOptions = ['Enabled', 'Disabled'].map((v) => ({ value: v, label: v }));
-  const deptOptions = ['Design', 'Engineering', 'Finance', 'HR', 'Medicine', 'Mobile', 'Watch'].map((v) => ({
-    value: v,
-    label: v
-  }));
+
+  // One unified width for all filter controls (other than the "Filter By" pill)
+  const FILTER_WIDTH = 160;
+  // Compact but consistent width for all buttons
+  const BUTTON_WIDTH = 90;
 
   return (
     <div className="rounded-xl border border-[var(--card-border)] bg-white shadow-[var(--shadow)] p-4 mb-5">
+      {/* Everything in one row; will only wrap on very small screens */}
       <div className="flex flex-wrap items-center gap-3">
+        {/* Filter label */}
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-[var(--text-muted)]">
           <FilterOutlined />
           <span className="text-sm font-medium">Filter By</span>
@@ -37,43 +41,49 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
 
         {/* Username */}
         <Input
-          placeholder="Username"
+          placeholder="Name"
           value={filters.username}
           onChange={(e) => onFilters({ ...filters, username: e.target.value })}
-          style={{ width: 200 }}
           allowClear
+          style={{ width: FILTER_WIDTH }}
         />
+
+        {/* Phone */}
         <Input
           placeholder="Phone"
           value={filters.phonenumber}
           onChange={(e) => onFilters({ ...filters, phonenumber: e.target.value })}
-          inputMode="tel" // mobile keypad
-          style={{ width: 160 }}
+          inputMode="tel"
           allowClear
+          style={{ width: FILTER_WIDTH }}
         />
 
+        {/* Department */}
         <Input
-          placeholder="Department"
-          value={filters.dept}
-          onChange={(e) => onFilters({ ...filters, dept: e.target.value })}
-          style={{ width: 200 }}
+          placeholder="Dept"
+          value={filters.dept ?? ''}
+          onChange={(e) => onFilters({ ...filters, dept: e.target.value || null })}
           allowClear
+          style={{ width: FILTER_WIDTH }}
         />
 
         {/* Status */}
         <Select
+          className="cus-selector-dropdown"
           value={filters.status ?? undefined}
           onChange={(v) => onFilters({ ...filters, status: v ?? null })}
           options={statusOptions}
           placeholder="Status"
           allowClear
-          className="min-w-[140px]"
+          style={{ width: FILTER_WIDTH }}
         />
 
-        <div className="flex items-center gap-2">
-          <Button icon={<ReloadOutlined />} onClick={onReset}>
+        {/* Actions pushed to the right */}
+        <div className="ml-auto flex items-center gap-2">
+          <Button icon={<ReloadOutlined />} onClick={onReset} style={{ width: BUTTON_WIDTH }}>
             Reset
           </Button>
+
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -81,9 +91,11 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
               console.log('ADD_USER_CLICK');
               onAdd();
             }}
+            style={{ width: BUTTON_WIDTH }}
           >
             Add
           </Button>
+
           <Button
             danger
             icon={<DeleteOutlined />}
@@ -92,9 +104,11 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
               console.log('DELETE_SELECTED');
               onDelete();
             }}
+            style={{ width: BUTTON_WIDTH }}
           >
             Delete
           </Button>
+
           <Button
             type="primary"
             icon={<FileExcelOutlined />}
@@ -102,6 +116,7 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
               console.log('EXPORT_USERS');
               onExport();
             }}
+            style={{ width: BUTTON_WIDTH }}
           >
             Export
           </Button>

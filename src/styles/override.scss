@@ -239,3 +239,10 @@
     color: var(--primary) !important;
   }
 }
+
+.cus-selector-dropdown {
+  .ant-select-selector {
+    border-radius: 10px !important;
+    border-color: #d9d9d9;
+  }
+}
