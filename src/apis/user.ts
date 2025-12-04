@@ -1,6 +1,5 @@
 import request from 'utils/request';
 
-// @/apis/user
 export function getUsersApi(payload) {
   const { pageNum, pageSize, ...filters } = payload;
   return request({
@@ -50,10 +49,11 @@ export function logoutApi() {
   });
 }
 
-export function getUserInfoApi() {
+export function getUserInfoApi(params) {
   return request({
-    url: '/getInfo',
-    method: 'get'
+    url: '/system/user/info',
+    method: 'get',
+    params
   });
 }
 
