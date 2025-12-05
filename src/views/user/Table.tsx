@@ -15,9 +15,10 @@ type Props = {
   onToggleVisible: (row: UserRow) => void;
   onResetPass: (row: UserRow) => void;
   onAssignRole: (row: UserRow) => void;
+  loading?: boolean;
 };
 
-const UsersTable: React.FC<Props> = ({ data, rowSelection, onModify, onDelete, onToggleVisible, onResetPass, onAssignRole }) => {
+const UsersTable: React.FC<Props> = ({ data, rowSelection, onModify, onDelete, onToggleVisible, onResetPass, onAssignRole, loading }) => {
   const columns: ColumnsType<UserRow> = useMemo(
     () => [
       { title: 'USERNAME', dataIndex: 'username', key: 'username', render: (v: string) => <span className="font-medium">{v}</span> },
@@ -110,7 +111,7 @@ const UsersTable: React.FC<Props> = ({ data, rowSelection, onModify, onDelete, o
         columns={columns}
         dataSource={data}
         rowSelection={rowSelection}
-        loading={false}
+        loading={loading}
         pagination={{ pageSize: 10, showSizeChanger: false }}
       />
     </div>

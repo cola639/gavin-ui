@@ -1,3 +1,4 @@
+// pages/user/index.tsx
 import { uploadAvatarApi } from '@/apis/common';
 import { getDeptApi } from '@/apis/dept';
 import { exportExcelApi } from '@/apis/export';
@@ -5,7 +6,7 @@ import { addUserApi, deleteUserApi, getUserDetailApi, getUsersApi, updateUserApi
 import UserForm, { UserFormValues } from '@/components/form';
 import { Modal, message } from 'antd';
 import dayjs from 'dayjs';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import FilterBar from './FilterBar';
 import UsersTable from './Table';
 import type { DeptNode } from './depTypes';
@@ -151,33 +152,31 @@ const UsersPage: React.FC = () => {
 
   // ---------- table data loading (always from backend, no local filtering) ----------
 
-  const fetchUsers = useCallback(
-    async (targetFilters: Filters = filters) => {
-      setLoading(true);
-      try {
-        const params = buildUserQueryParams(targetFilters);
-        const res: any = await getUsersApi(params);
-        const list: ApiUser[] = res?.rows ?? [];
-        setRows(list.map(toRow));
-        console.log('GET_USERS', params, res);
-      } catch (e) {
-        console.error(e);
-        message.error('Failed to load users');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [filters]
-  );
+  const fetchUsers = async (targetFilters: Filters = filters) => {
+    setLoading(true);
+    try {
+      const params = buildUserQueryParams(targetFilters);
+      const res: any = await getUsersApi(params);
+      const list: ApiUser[] = res?.rows ?? [];
+      setRows(list.map(toRow));
+      console.log('GET_USERS', params, res);
+    } catch (e) {
+      console.error(e);
+      message.error('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // first load
+  // first load, with default filters
   useEffect(() => {
     fetchUsers(DEFAULT_FILTERS);
-  }, [fetchUsers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFiltersChange = (next: Filters) => {
     setFilters(next);
-    fetchUsers(next);
+    fetchUsers(next); // exactly one request per change
   };
 
   const handleResetFilters = () => {
@@ -187,17 +186,17 @@ const UsersPage: React.FC = () => {
 
   // ---------- role/post loader used by both ADD and EDIT ----------
 
-  const loadRolePostMeta = useCallback(async (userId?: number) => {
+  const loadRolePostMeta = async (userId?: number) => {
     const res: any = await getUserDetailApi(userId);
     const { roles, posts } = extractRolePostOptions(res);
     setRoleOptions(roles);
     setPostOptions(posts);
     return res;
-  }, []);
+  };
 
   // ---------- CRUD handlers ----------
 
-  // ADD: first open modal, then load role/post meta with NO userId
+  // ADD: open modal, then load roles/posts meta without userId
   const handleOpenAdd = async () => {
     setOpenAdd(true);
     try {
@@ -228,7 +227,7 @@ const UsersPage: React.FC = () => {
       await addUserApi(payload);
       message.success('User added');
       setOpenAdd(false);
-      fetchUsers();
+      fetchUsers(); // use current filters
     } catch (e) {
       console.error(e);
       message.error('Add failed');
@@ -289,7 +288,7 @@ const UsersPage: React.FC = () => {
     setEditInitial(null);
 
     try {
-      const res = await loadRolePostMeta(userId); // ← userId passed here
+      const res = await loadRolePostMeta(userId); // userId passed here
       const u = (res as any)?.data;
       if (!u) {
         message.error('User not found');
@@ -373,6 +372,7 @@ const UsersPage: React.FC = () => {
         onToggleVisible={onToggleVisible}
         onResetPass={onResetPass}
         onAssignRole={onAssignRole}
+        loading={loading}
       />
 
       {/* ADD */}
