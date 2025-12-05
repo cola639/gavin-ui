@@ -18,11 +18,13 @@ export function addUserApi(data) {
   });
 }
 
-export function deleteUserApi(params) {
+// apis/user.ts
+export function deleteUserApi(userIds: number | string | Array<number | string>) {
+  const ids = Array.isArray(userIds) ? userIds.join(',') : userIds;
+
   return request({
-    url: '/system/user',
-    method: 'delete',
-    params
+    url: `/system/user/${ids}`,
+    method: 'delete'
   });
 }
 

@@ -220,7 +220,7 @@ const UsersPage: React.FC = () => {
 
   const handleDeleteSelected = async () => {
     try {
-      await deleteUserApi({ userIds: selectedKeys.join(',') });
+      await deleteUserApi(selectedKeys);
       message.success('Deleted');
       setSelectedKeys([]);
       fetchUsers();
@@ -275,7 +275,7 @@ const UsersPage: React.FC = () => {
 
   const onDeleteRow = async (row: UserRow) => {
     try {
-      await deleteUserApi({ userIds: row.id });
+      await deleteUserApi(row.id);
       message.success('Deleted');
       fetchUsers();
     } catch (e) {
