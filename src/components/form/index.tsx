@@ -24,7 +24,7 @@ export type UserFormValues = {
   phone: string;
   email: string;
   sex: string;
-  status: 'Enable' | 'Disable';
+  status: 'Enabled' | 'Disabled';
 };
 
 export type SimpleOption = { label: string; value: string };
@@ -52,7 +52,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
   const [phone, setPhone] = useState(initial?.phone ?? '');
   const [email, setEmail] = useState(initial?.email ?? '');
   const [sex, setSex] = useState(initial?.sex ?? '');
-  const [status, setStatus] = useState<UserFormValues['status']>(initial?.status ?? 'Disable');
+  const [status, setStatus] = useState<UserFormValues['status']>(initial?.status ?? 'Disabled');
 
   const [errors, setErrors] = useState<Errors>({});
   const fileRef = useRef<HTMLInputElement>(null);

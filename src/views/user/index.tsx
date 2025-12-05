@@ -1,4 +1,3 @@
-// pages/user/index.tsx
 import { uploadAvatarApi } from '@/apis/common';
 import { getDeptApi } from '@/apis/dept';
 import { exportExcelApi } from '@/apis/export';
@@ -57,7 +56,7 @@ const toRow = (u: ApiUser): UserRow => ({
 });
 
 // map form radio value → backend string
-const formStatusToApi = (status: UserFormValues['status']): 'Enabled' | 'Disabled' => (status === 'Enable' ? 'Enabled' : 'Disabled');
+const formStatusToApi = (status: UserFormValues['status']): 'Enabled' | 'Disabled' => (status === 'Enabled' ? 'Enabled' : 'Disabled');
 
 const buildUserQueryParams = (filters: Filters) => {
   const d = filters.date ? dayjs(filters.date) : null;
@@ -89,6 +88,28 @@ const resolveAvatarUrl = async (values: UserFormValues): Promise<string | null> 
   return avatarUrl;
 };
 
+/** Normalize roles/posts payload from /system/user/info */
+const extractRolePostOptions = (res: any): { roles: Option[]; posts: Option[] } => {
+  const rawRoles = res?.roles ?? [];
+  const rawPosts = res?.posts ?? [];
+
+  const roles: Option[] = rawRoles
+    .filter((r: any) => r.status === '0' && r.delFlag !== '2')
+    .map((r: any) => ({
+      label: r.roleName,
+      value: String(r.roleId)
+    }));
+
+  const posts: Option[] = rawPosts
+    .filter((p: any) => p.status === '0')
+    .map((p: any) => ({
+      label: p.postName,
+      value: String(p.postId)
+    }));
+
+  return { roles, posts };
+};
+
 // ---------- Component ----------
 
 const UsersPage: React.FC = () => {
@@ -98,6 +119,8 @@ const UsersPage: React.FC = () => {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
 
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
+
+  // ADD modal
   const [openAdd, setOpenAdd] = useState(false);
 
   // EDIT modal
@@ -110,7 +133,7 @@ const UsersPage: React.FC = () => {
   const [roleOptions, setRoleOptions] = useState<Option[]>([]);
   const [postOptions, setPostOptions] = useState<Option[]>([]);
 
-  // ---------- bootstrap meta (dept / roles / posts) ----------
+  // ---------- bootstrap dept tree once ----------
 
   useEffect(() => {
     const loadDepts = async () => {
@@ -162,7 +185,28 @@ const UsersPage: React.FC = () => {
     fetchUsers(DEFAULT_FILTERS);
   };
 
+  // ---------- role/post loader used by both ADD and EDIT ----------
+
+  const loadRolePostMeta = useCallback(async (userId?: number) => {
+    const res: any = await getUserDetailApi(userId);
+    const { roles, posts } = extractRolePostOptions(res);
+    setRoleOptions(roles);
+    setPostOptions(posts);
+    return res;
+  }, []);
+
   // ---------- CRUD handlers ----------
+
+  // ADD: first open modal, then load role/post meta with NO userId
+  const handleOpenAdd = async () => {
+    setOpenAdd(true);
+    try {
+      await loadRolePostMeta(); // no userId → backend returns global roles/posts
+    } catch (e) {
+      console.error(e);
+      message.error('Failed to load role/post options');
+    }
+  };
 
   const handleAdd = async (values: UserFormValues) => {
     try {
@@ -231,13 +275,13 @@ const UsersPage: React.FC = () => {
   };
 
   const handleExport = async () => {
-    // reuse the same query builder you use for getUsersApi
     const criteria = buildUserQueryParams(filters);
     await exportExcelApi('/system/user/export', 'users.xlsx', criteria);
   };
 
   // ---------- row actions ----------
 
+  // EDIT: pass current row userId → get roles, posts AND user info
   const openEditModal = async (row: UserRow) => {
     const userId = Number(row.id);
     setEditUserId(userId);
@@ -245,13 +289,16 @@ const UsersPage: React.FC = () => {
     setEditInitial(null);
 
     try {
-      const res: any = await getUserDetailApi(userId);
-      const u = res?.data;
+      const res = await loadRolePostMeta(userId); // ← userId passed here
+      const u = (res as any)?.data;
       if (!u) {
         message.error('User not found');
         setEditUserId(null);
         return;
       }
+
+      const roleIds: number[] = (res as any)?.roleIds ?? [];
+      const postIds: number[] = (res as any)?.postIds ?? [];
 
       setEditInitial({
         avatar: u.avatar ?? null,
@@ -259,10 +306,10 @@ const UsersPage: React.FC = () => {
         phone: u.phonenumber ?? '',
         email: u.email ?? '',
         deptId: u.deptId ? String(u.deptId) : undefined,
-        post: (u.postIds && u.postIds[0] && String(u.postIds[0])) || '',
-        role: (u.roleIds && u.roleIds[0] && String(u.roleIds[0])) || '',
+        post: postIds[0] != null ? String(postIds[0]) : '',
+        role: roleIds[0] != null ? String(roleIds[0]) : '',
         sex: u.sex ?? '',
-        status: u.status === 'Enabled' ? 'Enable' : 'Disable'
+        status: u.status === 'Enabled' ? 'Enabled' : 'Disabled'
       });
     } catch (e) {
       console.error(e);
@@ -313,7 +360,7 @@ const UsersPage: React.FC = () => {
         onFilters={handleFiltersChange}
         onReset={handleResetFilters}
         selectedCount={selectedKeys.length}
-        onAdd={() => setOpenAdd(true)}
+        onAdd={handleOpenAdd}
         onDelete={handleDeleteSelected}
         onExport={handleExport}
       />
