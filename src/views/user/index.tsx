@@ -273,15 +273,25 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const onDeleteRow = async (row: UserRow) => {
-    try {
-      await deleteUserApi(row.id);
-      message.success('Deleted');
-      fetchUsers();
-    } catch (e) {
-      console.error(e);
-      message.error('Delete failed');
-    }
+  const onDeleteRow = (row: UserRow) => {
+    Modal.confirm({
+      title: 'Delete this user?',
+      content: `Are you sure you want to delete "${row.username}"?`,
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      centered: true,
+      async onOk() {
+        try {
+          await deleteUserApi(row.id);
+          message.success('Deleted');
+          fetchUsers();
+        } catch (e) {
+          console.error(e);
+          message.error('Delete failed');
+        }
+      }
+    });
   };
 
   const onToggleVisible = (row: UserRow) => {
