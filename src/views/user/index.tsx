@@ -1,6 +1,7 @@
 // pages/user/index.tsx
-import { uploadAvatar } from '@/apis/common';
+import { uploadAvatarApi } from '@/apis/common';
 import { getDeptApi } from '@/apis/dept';
+import { exportExcelApi } from '@/apis/export';
 import { addUserApi, deleteUserApi, getUserDetailApi, getUsersApi, updateUserApi } from '@/apis/user';
 import UserForm, { UserFormValues } from '@/components/form';
 import { Modal, message } from 'antd';
@@ -80,7 +81,7 @@ const resolveAvatarUrl = async (values: UserFormValues): Promise<string | null> 
   if (avatarFile) {
     const fd = new FormData();
     fd.append('file', avatarFile);
-    const res: any = await uploadAvatar(fd);
+    const res: any = await uploadAvatarApi(fd);
     avatarUrl = res.url || res.fileName || res.data?.url || null;
     console.log('UPLOAD_AVATAR_RESULT', res, 'chosenUrl=', avatarUrl);
   }
@@ -229,6 +230,12 @@ const UsersPage: React.FC = () => {
     }
   };
 
+  const handleExport = async () => {
+    // reuse the same query builder you use for getUsersApi
+    const criteria = buildUserQueryParams(filters);
+    await exportExcelApi('/system/user/export', 'users.xlsx', criteria);
+  };
+
   // ---------- row actions ----------
 
   const openEditModal = async (row: UserRow) => {
@@ -298,7 +305,7 @@ const UsersPage: React.FC = () => {
         selectedCount={selectedKeys.length}
         onAdd={() => setOpenAdd(true)}
         onDelete={handleDeleteSelected}
-        onExport={() => console.log('EXPORT users (wire to exportExcelApi when ready)')}
+        onExport={handleExport}
       />
 
       <UsersTable

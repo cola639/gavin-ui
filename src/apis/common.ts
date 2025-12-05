@@ -1,6 +1,6 @@
 import request from 'utils/request';
 
-export function uploadAvatar(data: FormData) {
+export function uploadAvatarApi(data: FormData) {
   return request({
     url: '/common/upload-avatar',
     method: 'post',
