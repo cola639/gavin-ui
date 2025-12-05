@@ -1,4 +1,4 @@
-// pages/user/index.tsx
+// src/views/user/index.tsx
 import { uploadAvatarApi } from '@/apis/common';
 import { getDeptApi } from '@/apis/dept';
 import { exportExcelApi } from '@/apis/export';
@@ -19,6 +19,7 @@ type ApiUser = {
   userName: string;
   nickName: string;
   email: string;
+  avatar: string;
   phonenumber: string;
   status: 'Enabled' | 'Disabled';
   createTime: string;
@@ -48,7 +49,7 @@ const toRow = (u: ApiUser): UserRow => ({
   id: String(u.userId ?? ''),
   username: u.userName ?? '',
   email: u.email ?? '',
-  avatar: '',
+  avatar: u.avatar ?? '',
   department: u.deptName ?? '',
   phone: String(u.phonenumber ?? ''),
   status: u.status,
@@ -59,12 +60,12 @@ const toRow = (u: ApiUser): UserRow => ({
 // map form radio value → backend string
 const formStatusToApi = (status: UserFormValues['status']): 'Enabled' | 'Disabled' => (status === 'Enabled' ? 'Enabled' : 'Disabled');
 
-const buildUserQueryParams = (filters: Filters) => {
+const buildUserQueryParams = (filters: Filters, pageNum: number, pageSize: number) => {
   const d = filters.date ? dayjs(filters.date) : null;
 
   return {
-    pageNum: 1,
-    pageSize: 20,
+    pageNum,
+    pageSize,
     userName: filters.username || undefined,
     phonenumber: filters.phonenumber || undefined,
     deptName: filters.dept || undefined,
@@ -121,6 +122,11 @@ const UsersPage: React.FC = () => {
 
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
 
+  // pagination (server-side)
+  const [pageNum, setPageNum] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+
   // ADD modal
   const [openAdd, setOpenAdd] = useState(false);
 
@@ -152,13 +158,25 @@ const UsersPage: React.FC = () => {
 
   // ---------- table data loading (always from backend, no local filtering) ----------
 
-  const fetchUsers = async (targetFilters: Filters = filters) => {
+  /**
+   * Centralized fetch; **single place** that hits /system/user/list.
+   * - If pageNum/pageSize/filters are not provided, current state is used.
+   */
+  const fetchUsers = async (opts?: { pageNum?: number; pageSize?: number; filters?: Filters }) => {
+    const nextPageNum = opts?.pageNum ?? pageNum;
+    const nextPageSize = opts?.pageSize ?? pageSize;
+    const nextFilters = opts?.filters ?? filters;
+
     setLoading(true);
     try {
-      const params = buildUserQueryParams(targetFilters);
+      const params = buildUserQueryParams(nextFilters, nextPageNum, nextPageSize);
       const res: any = await getUsersApi(params);
       const list: ApiUser[] = res?.rows ?? [];
+
       setRows(list.map(toRow));
+      setPageNum(nextPageNum);
+      setPageSize(nextPageSize);
+      setTotal(Number(res?.total ?? list.length));
       console.log('GET_USERS', params, res);
     } catch (e) {
       console.error(e);
@@ -168,20 +186,25 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  // first load, with default filters
+  // first load
   useEffect(() => {
-    fetchUsers(DEFAULT_FILTERS);
+    fetchUsers({ pageNum: 1, pageSize, filters: DEFAULT_FILTERS });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFiltersChange = (next: Filters) => {
     setFilters(next);
-    fetchUsers(next); // exactly one request per change
+    // reset to page 1 whenever filters change; ONLY ONE REQUEST here
+    fetchUsers({ pageNum: 1, filters: next });
   };
 
   const handleResetFilters = () => {
     setFilters(DEFAULT_FILTERS);
-    fetchUsers(DEFAULT_FILTERS);
+    fetchUsers({ pageNum: 1, filters: DEFAULT_FILTERS });
+  };
+
+  const handlePageChange = (nextPage: number, nextPageSize: number) => {
+    fetchUsers({ pageNum: nextPage, pageSize: nextPageSize });
   };
 
   // ---------- role/post loader used by both ADD and EDIT ----------
@@ -196,7 +219,7 @@ const UsersPage: React.FC = () => {
 
   // ---------- CRUD handlers ----------
 
-  // ADD: open modal, then load roles/posts meta without userId
+  // ADD: open modal, then load role/post meta with NO userId
   const handleOpenAdd = async () => {
     setOpenAdd(true);
     try {
@@ -227,7 +250,8 @@ const UsersPage: React.FC = () => {
       await addUserApi(payload);
       message.success('User added');
       setOpenAdd(false);
-      fetchUsers(); // use current filters
+      // reload current page with current filters
+      fetchUsers();
     } catch (e) {
       console.error(e);
       message.error('Add failed');
@@ -274,7 +298,8 @@ const UsersPage: React.FC = () => {
   };
 
   const handleExport = async () => {
-    const criteria = buildUserQueryParams(filters);
+    // For export, pagination doesn't matter – backend uses Pageable.unpaged()
+    const criteria = buildUserQueryParams(filters, pageNum, pageSize);
     await exportExcelApi('/system/user/export', 'users.xlsx', criteria);
   };
 
@@ -288,16 +313,16 @@ const UsersPage: React.FC = () => {
     setEditInitial(null);
 
     try {
-      const res = await loadRolePostMeta(userId); // userId passed here
-      const u = (res as any)?.data;
+      const res: any = await loadRolePostMeta(userId); // ← userId passed here
+      const u = res?.data;
       if (!u) {
         message.error('User not found');
         setEditUserId(null);
         return;
       }
 
-      const roleIds: number[] = (res as any)?.roleIds ?? [];
-      const postIds: number[] = (res as any)?.postIds ?? [];
+      const roleIds: number[] = res?.roleIds ?? [];
+      const postIds: number[] = res?.postIds ?? [];
 
       setEditInitial({
         avatar: u.avatar ?? null,
@@ -366,13 +391,19 @@ const UsersPage: React.FC = () => {
 
       <UsersTable
         data={rows}
+        loading={loading}
         rowSelection={{ selectedRowKeys: selectedKeys, onChange: (keys) => setSelectedKeys(keys) }}
         onModify={openEditModal}
         onDelete={onDeleteRow}
         onToggleVisible={onToggleVisible}
         onResetPass={onResetPass}
         onAssignRole={onAssignRole}
-        loading={loading}
+        pagination={{
+          current: pageNum,
+          pageSize,
+          total
+        }}
+        onChangePage={handlePageChange}
       />
 
       {/* ADD */}
