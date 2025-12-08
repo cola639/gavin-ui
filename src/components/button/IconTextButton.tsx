@@ -4,8 +4,8 @@ import React from 'react';
 import styles from './IconTextButton.module.scss';
 
 export interface IconTextButtonProps extends ButtonProps {
-  label: React.ReactNode;
-  icon: React.ReactNode;
+  label?: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 const IconTextButton: React.FC<IconTextButtonProps> = ({ label, icon, size = 'small', className, ...rest }) => {

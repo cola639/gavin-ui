@@ -123,9 +123,9 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
 
         {/* Action */}
         <div className={styles.colAction}>
-          <IconTextButton icon={<Plus size={14} />} label="Child" size="small" onClick={() => onAddChild(node)} />
-          <IconTextButton icon={<Pencil size={14} />} label="Modify" size="small" onClick={() => onEdit(node)} />
-          <IconTextButton icon={<Trash2 size={14} />} label="Delete" size="small" danger onClick={() => onDelete(node)} />
+          <IconTextButton icon={<Plus size={14} />} size="small" onClick={() => onAddChild(node)} />
+          <IconTextButton icon={<Pencil size={14} />} size="small" onClick={() => onEdit(node)} />
+          <IconTextButton icon={<Trash2 size={14} />} size="small" danger onClick={() => onDelete(node)} />
         </div>
       </div>
     );

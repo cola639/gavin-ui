@@ -8,6 +8,7 @@
   font-size: 13px;
 }
 
+/* header area */
 .header {
   background: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
@@ -16,33 +17,44 @@
 .headerRow,
 .row {
   display: grid;
+  /* same “table” layout for header & body */
   grid-template-columns: minmax(220px, 3fr) 2fr 3fr 1.4fr 1.8fr;
-  align-items: stretch;
+  align-items: center;
 }
 
+/* header row */
 .headerRow {
-  padding: 10px 16px;
   font-weight: 600;
   color: #6b7280;
 }
 
-/* make header columns behave like body columns */
+/* common header cells */
 .headerColName,
 .headerColPerm,
 .headerColPath,
 .headerColStatus,
 .headerColAction {
-  padding-inline: 4px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  box-sizing: border-box;
 }
 
-/* push “Name” so it aligns with first row text (after caret) */
+/* NAME header: left aligned and pushed to match caret + icon */
 .headerColName {
-  padding-left: 40px; /* tweak 36–44px if you want pixel-perfect */
+  justify-content: flex-start;
+  padding-left: 52px; /* tweak 48–56px for pixel perfect alignment */
 }
 
+/* the rest of headers: centered like a table */
+.headerColPerm,
+.headerColPath,
+.headerColStatus,
+.headerColAction {
+  justify-content: center;
+}
+
+/* body rows */
 .body {
   max-height: 640px;
   overflow: auto;
@@ -55,6 +67,7 @@
   background: #f9fafb;
 }
 
+/* body cells – base styles */
 .colName,
 .colPerm,
 .colPath,
@@ -63,6 +76,20 @@
   padding: 8px 16px;
   display: flex;
   align-items: center;
+  box-sizing: border-box;
+}
+
+/* NAME column – left aligned */
+.colName {
+  justify-content: flex-start;
+}
+
+/* other columns – centered to align with headers */
+.colPerm,
+.colPath,
+.colStatus,
+.colAction {
+  justify-content: center;
 }
 
 .colNameInner {
@@ -123,16 +150,13 @@
   font-weight: 600;
 }
 
-/* other columns */
+/* other text columns */
 .colPerm,
 .colPath {
   color: #4b5563;
 }
 
-.colStatus {
-  justify-content: flex-start;
-}
-
+/* status badge */
 .statusBadge {
   display: inline-flex;
   align-items: center;
@@ -154,39 +178,7 @@
   color: #b91c1c;
 }
 
+/* action column just needs gap; alignment is handled above */
 .colAction {
   gap: 6px;
-  justify-content: flex-start;
-}
-
-.actionBtn {
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  padding: 4px 10px;
-  font-size: 12px;
-  background: #fff;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.1s ease;
-}
-
-.actionBtn:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-}
-
-.actionBtn:active {
-  transform: translateY(1px);
-}
-
-.actionDanger {
-  border-color: #fecaca;
-  color: #b91c1c;
-  background: #fef2f2;
-}
-
-.actionDanger:hover {
-  background: #fee2e2;
 }
