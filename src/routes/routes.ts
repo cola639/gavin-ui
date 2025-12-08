@@ -7,7 +7,7 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
   return [
     {
       name: 'System Management',
-      path: '/view',
+      path: '/views',
       hidden: false,
       redirect: 'noRedirect',
       component: '@/views/layout',
@@ -18,35 +18,35 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
           name: 'User',
           path: 'user',
           hidden: false,
-          component: '@/view/user',
+          component: '@/views/user',
           meta: { title: 'monitor user', icon: 'user', link: null }
         },
         {
           name: 'Dept',
           path: 'dept',
           hidden: false,
-          component: '@/view/order',
+          component: '@/views/order',
           meta: { title: 'monitor dept', icon: 'dept', link: null }
         },
         {
           name: 'Role',
           path: 'role',
           hidden: false,
-          component: '@/view/user',
+          component: '@/views/user',
           meta: { title: 'monitor user', icon: 'role', link: null }
         },
         {
           name: 'Menu',
-          path: 'configure',
+          path: 'menu',
           hidden: false,
-          component: '@/view/user',
+          component: '@/views/menu',
           meta: { title: 'monitor user', icon: 'menu', link: null }
         },
         {
           name: 'Configure',
           path: 'configure',
           hidden: false,
-          component: '@/view/user',
+          component: '@/views/user',
           meta: { title: 'monitor user', icon: 'user', link: null }
         }
       ]
@@ -64,14 +64,14 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
           name: 'Monitor',
           path: 'online-user',
           hidden: false,
-          component: '@/view/user',
+          component: '@/views/user',
           meta: { title: 'monitor user', icon: 'monitor', link: null }
         },
         {
           name: 'Quartz',
           path: 'quartz',
           hidden: false,
-          component: '@/view/user',
+          component: '@/views/user',
           meta: { title: 'monitor user', icon: 'quartz', link: null }
         }
       ]

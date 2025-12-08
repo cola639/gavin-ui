@@ -56,8 +56,9 @@ const defaultResolver: ComponentResolver = (component, meta) => {
 
   // Explicit map first (fast + tree-shakable)
   const map: Record<string, () => Promise<{ default: React.ComponentType<any> }>> = {
-    '@/view/user': () => import('@/views/user'),
-    '@/view/order': () => import('@/views/order')
+    '@/views/user': () => import('@/views/user'),
+    '@/views/order': () => import('@/views/order'),
+    '@/views/menu': () => import('@/views/menu')
   };
 
   const importer = map[component];

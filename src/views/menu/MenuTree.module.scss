@@ -1,0 +1,152 @@
+.wrap {
+  border-radius: 16px;
+  border: 1px solid var(--card-border, #e5e7eb);
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  font-size: 14px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(220px, 3fr) 2fr 3fr 1.5fr 2fr;
+  align-items: center;
+  padding: 8px 14px;
+  column-gap: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.row:first-of-type {
+  border-top: none;
+}
+
+.header {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.body .row:nth-child(odd) {
+  background: #fff;
+}
+.body .row:nth-child(even) {
+  background: #fdfdfd;
+}
+
+.colName,
+.colPerm,
+.colPath,
+.colStatus,
+.colActions {
+  display: flex;
+  align-items: center;
+}
+
+.colPerm,
+.colPath,
+.colStatus {
+  color: #4b5563;
+}
+
+.colActions {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* name cell structure */
+
+.nameInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.expandBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.expandBtn:hover {
+  color: #111827;
+}
+
+.expandPlaceholder {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+}
+
+.nodeIcon {
+  font-size: 14px;
+  margin-right: 2px;
+}
+
+.nodeName {
+  font-weight: 500;
+  color: #111827;
+}
+
+/* status badges */
+
+.statusNormal {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.statusDisabled {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* action buttons (simple, no antd) */
+
+.actionBtn {
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  padding: 4px 10px;
+  background: #f9fafb;
+  font-size: 12px;
+  cursor: pointer;
+  color: #374151;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.08s ease;
+}
+
+.actionBtn:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.actionBtn:active {
+  transform: translateY(1px);
+}
+
+.actionDanger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.actionDanger:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
