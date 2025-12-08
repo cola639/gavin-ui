@@ -14,11 +14,18 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
-.headerRow,
+/* ---- TABLE LAYOUT ---- */
+/* adjust these numbers to taste */
+.headerRow {
+  display: grid;
+  /* Name | Permission | Component | Status | Action */
+  grid-template-columns: minmax(220px, 27%) 17% 21% 10% 25%;
+  align-items: center;
+}
+
 .row {
   display: grid;
-  /* same “table” layout for header & body */
-  grid-template-columns: minmax(220px, 3fr) 2fr 3fr 1.4fr 1.8fr;
+  grid-template-columns: minmax(220px, 27%) 17% 21% 10% 25%;
   align-items: center;
 }
 
@@ -43,7 +50,7 @@
 /* NAME header: left aligned and pushed to match caret + icon */
 .headerColName {
   justify-content: flex-start;
-  padding-left: 52px; /* tweak 48–56px for pixel perfect alignment */
+  padding-left: 52px; /* tweak 48–56px for pixel-perfect alignment */
 }
 
 /* the rest of headers: centered like a table */
