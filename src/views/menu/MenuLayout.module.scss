@@ -1,0 +1,74 @@
+/* src/views/menu/MenuLayout.module.scss */
+
+.page {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 8px 0;
+}
+
+/* wider left panel */
+.sidebar {
+  width: 320px; // <— expand left side width
+  flex-shrink: 0;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  padding: 16px 18px;
+}
+
+/* name row: label + input in one line */
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 0 10px;
+  font-size: 13px;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.input:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25);
+}
+
+/* buttons row: single line */
+.buttonRow {
+  display: flex;
+  gap: 8px;
+}
+
+/* right side */
+.main {
+  flex: 1;
+}
+
+.tableCard {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  padding: 0;
+}
