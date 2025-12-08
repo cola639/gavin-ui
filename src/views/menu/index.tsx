@@ -1,6 +1,5 @@
-// src/views/menu/MenuPage.tsx
-import React, { useMemo, useState } from 'react';
-import MenuLayout from './MenuLayout'; // the left/right layout with lucide-react buttons
+import React, { useState } from 'react';
+import MenuLayout from './MenuLayout';
 import MenuTree, { MenuNode } from './MenuTree';
 
 const initialData: MenuNode[] = [
@@ -29,28 +28,28 @@ const initialData: MenuNode[] = [
             children: [
               {
                 id: 11231,
-                name: 'User Query',
+                name: 'User Query Deep',
                 permission: 'system:user:query',
                 path: 'system/user/index',
                 status: 'Normal',
                 children: [
                   {
                     id: 1123681,
-                    name: 'User Query',
+                    name: 'User Query Deeper',
                     permission: 'system:user:query',
                     path: 'system/user/index',
                     status: 'Normal',
                     children: [
                       {
                         id: 112310,
-                        name: 'User Query',
+                        name: 'User Query Last',
                         permission: 'system:user:query',
                         path: 'system/user/index',
                         status: 'Normal'
                       },
                       {
                         id: 1121230,
-                        name: 'User Add last',
+                        name: 'User Add Last',
                         permission: 'system:user:add',
                         path: 'system/user/index',
                         status: 'Normal'
@@ -67,8 +66,8 @@ const initialData: MenuNode[] = [
                 ]
               },
               {
-                id: 112123,
-                name: 'User Add',
+                id: 1121234,
+                name: 'User Add Sibling',
                 permission: 'system:user:add',
                 path: 'system/user/index',
                 status: 'Normal'
@@ -77,7 +76,7 @@ const initialData: MenuNode[] = [
           },
           {
             id: 112,
-            name: 'User Add',
+            name: 'User Add Root Child',
             permission: 'system:user:add',
             path: 'system/user/index',
             status: 'Normal'
@@ -88,77 +87,53 @@ const initialData: MenuNode[] = [
   }
 ];
 
-/** simple recursive filter by name */
-const filterByName = (nodes: MenuNode[], term: string): MenuNode[] => {
-  if (!term.trim()) return nodes;
-
-  const lower = term.toLowerCase();
-
-  const walk = (list: MenuNode[]): MenuNode[] => {
-    const result: MenuNode[] = [];
-
-    for (const n of list) {
-      const matchSelf = n.name.toLowerCase().includes(lower);
-      const children = n.children ? walk(n.children) : undefined;
-
-      if (matchSelf || (children && children.length)) {
-        // only add `children` when it actually exists, so it stays optional
-        result.push({
-          ...n,
-          ...(children && children.length ? { children } : {})
-        });
-      }
-    }
-
-    return result;
-  };
-
-  return walk(nodes);
-};
-
 const MenuPage: React.FC = () => {
   const [data, setData] = useState<MenuNode[]>(initialData);
-  const [nameFilter, setNameFilter] = useState('');
 
-  const filteredData = useMemo(() => filterByName(data, nameFilter), [data, nameFilter]);
+  // what user is typing
+  const [nameInput, setNameInput] = useState('');
+  // actual search keyword that drives expand/highlight
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleAddChild = (parent: MenuNode) => {
-    // TODO: open "new menu" modal
     console.log('add child to', parent);
+    // TODO: open modal & update data via setData
   };
 
   const handleEdit = (node: MenuNode) => {
-    // TODO: open "edit menu" modal
     console.log('edit', node);
+    // TODO: open modal & update data via setData
   };
 
   const handleDelete = (node: MenuNode) => {
-    // TODO: confirm + delete from tree & setData(newTree)
     console.log('delete', node);
+    // TODO: confirm + remove from tree via setData
   };
 
-  // LEFT-panel actions
   const handleSearch = () => {
-    // with current implementation, filtering happens live while typing
-    // you can trigger API call here later if needed
-    console.log('search by name:', nameFilter);
+    setSearchTerm(nameInput.trim());
   };
 
   const handleReset = () => {
-    setNameFilter('');
-    setData(initialData); // or refetch from backend
+    setNameInput('');
+    setSearchTerm('');
+    // if later fetching from backend, refetch here
+    setData(initialData);
   };
 
   const handleNew = () => {
-    // open "create root menu" dialog
     console.log('create new root menu');
+    // TODO: open "create root menu" modal
   };
 
   return (
-    <MenuLayout name={nameFilter} onNameChange={setNameFilter} onSearch={handleSearch} onReset={handleReset} onNew={handleNew}>
-      {/* right side: your menu tree table */}
-      <MenuTree data={filteredData} onAddChild={handleAddChild} onEdit={handleEdit} onDelete={handleDelete} />
-    </MenuLayout>
+    <main className="min-h-screen bg-[var(--bg-page)] p-5 lg:p-8">
+      <h1 className="mb-5 text-3xl font-semibold text-gray-900">Menu Management</h1>
+
+      <MenuLayout name={nameInput} onNameChange={setNameInput} onSearch={handleSearch} onReset={handleReset} onNew={handleNew}>
+        <MenuTree data={data} searchTerm={searchTerm} onAddChild={handleAddChild} onEdit={handleEdit} onDelete={handleDelete} />
+      </MenuLayout>
+    </main>
   );
 };
 

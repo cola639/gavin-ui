@@ -1,74 +1,52 @@
-/* src/views/menu/MenuLayout.module.scss */
-
 .page {
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
-  padding: 8px 0;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 20px;
 }
 
-/* wider left panel */
-.sidebar {
-  width: 320px; // <— expand left side width
-  flex-shrink: 0;
+.left {
+  align-self: flex-start;
 }
 
 .card {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  padding: 16px 18px;
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid var(--card-border, #e5e7eb);
+  box-shadow: var(--shadow, 0 18px 45px rgba(15, 23, 42, 0.08));
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* name row: label + input in one line */
 .fieldRow {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 14px;
 }
 
 .label {
+  flex: 0 0 60px;
   font-size: 13px;
-  font-weight: 500;
-  color: #0f172a;
-  flex-shrink: 0;
+  font-weight: 600;
+  color: #111827;
 }
 
 .input {
-  flex: 1;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  padding: 0 10px;
-  font-size: 13px;
-  outline: none;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+  flex: 1 1 auto;
 }
 
-.input:focus {
-  border-color: #22c55e;
-  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25);
-}
-
-/* buttons row: single line */
-.buttonRow {
+.actionsRow {
   display: flex;
   gap: 8px;
+  margin-top: 6px;
 }
 
-/* right side */
-.main {
-  flex: 1;
+.newRow {
+  margin-top: 8px;
 }
 
-.tableCard {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  padding: 0;
+/* right panel */
+.right {
+  min-height: 480px;
 }
