@@ -84,6 +84,14 @@ const initialData: MenuNode[] = [
         ]
       }
     ]
+  },
+  {
+    id: 2,
+    name: 'System Management2',
+    icon: '🛠',
+    permission: 'system2',
+    path: 'system2',
+    status: 'Normal'
   }
 ];
 
