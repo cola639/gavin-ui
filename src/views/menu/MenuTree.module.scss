@@ -109,13 +109,13 @@
   overflow-x: hidden;
 }
 
-// /* zebra stripes */
-// .row:nth-child(odd) {
-//   background: #ffffff;
-// }
-// .row:nth-child(even) {
-//   background: #f9fafb;
-// }
+/* zebra stripes */
+.row:nth-child(odd) {
+  background: #ffffff;
+}
+.row:nth-child(even) {
+  background: #ffffff;
+}
 
 /* body cells – base */
 .colName,
