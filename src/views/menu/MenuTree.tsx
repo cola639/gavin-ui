@@ -1,4 +1,6 @@
+// src/views/menu/MenuTree.tsx
 import IconTextButton from '@/components/button/IconTextButton';
+import { message } from 'antd'; // ⬅️ NEW
 import { ChevronDown, ChevronRight, GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import styles from './MenuTree.module.scss';
@@ -170,8 +172,12 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
     const parentFrom = fromPath.slice(0, -1);
     const parentTo = toPath.slice(0, -1);
 
-    // only allow same-level sort
-    if (parentFrom.length !== parentTo.length || !parentFrom.every((v, i) => v === parentTo[i])) {
+    // ❗ only allow same-level sort
+    const sameParent = parentFrom.length === parentTo.length && parentFrom.every((v, i) => v === parentTo[i]);
+
+    if (!sameParent) {
+      // "alarm" when dragging across levels
+      message.warning('You can only reorder menus within the same level.');
       setDragOverId(null);
       return;
     }
