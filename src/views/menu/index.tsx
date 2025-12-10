@@ -1,122 +1,94 @@
-import React, { useState } from 'react';
-import MenuLayout from './MenuLayout';
-import MenuTree, { MenuNode } from './MenuTree';
+// src/views/menu/index.tsx
+import { message, Modal, Spin } from 'antd';
+import React, { useEffect, useState } from 'react';
 
-const initialData: MenuNode[] = [
-  {
-    id: 1,
-    name: 'System Management',
-    icon: '🛠',
-    permission: 'system',
-    path: 'system',
-    status: 'Normal',
-    children: [
-      {
-        id: 11,
-        name: 'User Management',
-        icon: '👤',
-        permission: 'system:user:list',
-        path: 'system/user/index',
-        status: 'Normal',
-        children: [
-          {
-            id: 111,
-            name: 'User Query',
-            permission: 'system:user:query',
-            path: 'system/user/index',
-            status: 'Normal',
-            children: [
-              {
-                id: 11231,
-                name: 'User Query Deep',
-                permission: 'system:user:query',
-                path: 'system/user/index',
-                status: 'Normal',
-                children: [
-                  {
-                    id: 1123681,
-                    name: 'User Query Deeper',
-                    permission: 'system:user:query',
-                    path: 'system/user/index',
-                    status: 'Normal',
-                    children: [
-                      {
-                        id: 112310,
-                        name: 'User Query Last',
-                        permission: 'system:user:query',
-                        path: 'system/user/index',
-                        status: 'Normal'
-                      },
-                      {
-                        id: 1121230,
-                        name: 'User Add Last',
-                        permission: 'system:user:add',
-                        path: 'system/user/index',
-                        status: 'Normal'
-                      }
-                    ]
-                  },
-                  {
-                    id: 112123,
-                    name: 'User Add',
-                    permission: 'system:user:add',
-                    path: 'system/user/index',
-                    status: 'Normal'
-                  }
-                ]
-              },
-              {
-                id: 1121234,
-                name: 'User Add Sibling',
-                permission: 'system:user:add',
-                path: 'system/user/index',
-                status: 'Normal'
-              }
-            ]
-          },
-          {
-            id: 112,
-            name: 'User Add Root Child',
-            permission: 'system:user:add',
-            path: 'system/user/index',
-            status: 'Normal'
-          }
-        ]
+import MenuLayout from './MenuLayout';
+import MenuTree, { MenuNode, MenuStatus } from './MenuTree';
+
+import { createMenu, deleteMenu, fetchMenuList, updateMenu, type RawMenu } from '@/apis/menu';
+
+/* ---------- helpers: flat list -> tree, then -> MenuNode[] ---------- */
+
+const normalizeStatus = (status?: string | null): MenuStatus => (status === 'Normal' ? 'Normal' : 'Disabled');
+
+/** Convert flat array (with parentId) into a nested tree (children[]) */
+const buildMenuTreeFromFlat = (rows: RawMenu[]): RawMenu[] => {
+  const map = new Map<number, RawMenu & { children: RawMenu[] }>();
+
+  rows.forEach((item) => {
+    map.set(item.menuId, { ...item, children: [] });
+  });
+
+  const roots: (RawMenu & { children: RawMenu[] })[] = [];
+
+  map.forEach((item) => {
+    const pid = item.parentId;
+    if (!pid || !map.has(pid)) {
+      // top level
+      roots.push(item);
+    } else {
+      map.get(pid)!.children.push(item);
+    }
+  });
+
+  const sortTree = (list: RawMenu[]) => {
+    list.sort((a, b) => (a.orderNum ?? 0) - (b.orderNum ?? 0));
+    list.forEach((n) => {
+      if (n.children && n.children.length) {
+        sortTree(n.children);
       }
-    ]
-  },
-  {
-    id: 2,
-    name: 'System Management2',
-    icon: '🛠',
-    permission: 'system2',
-    path: 'system2',
-    status: 'Normal'
-  }
-];
+    });
+  };
+
+  sortTree(roots);
+  return roots;
+};
+
+/** Map backend RawMenu tree -> UI MenuNode tree used by MenuTree */
+const mapToMenuNodes = (nodes: RawMenu[]): MenuNode[] =>
+  nodes.map((item) => ({
+    id: item.menuId,
+    name: item.menuName,
+    permission: item.perms || '',
+    path: item.component || item.path || '',
+    status: normalizeStatus(item.status),
+    // you can render icons later by mapping item.icon -> lucide-react icon
+    children: item.children && item.children.length ? mapToMenuNodes(item.children) : undefined
+  }));
+
+/* -------------------------------------------------------------------- */
 
 const MenuPage: React.FC = () => {
-  const [data, setData] = useState<MenuNode[]>(initialData);
+  const [loading, setLoading] = useState(false);
 
-  // what user is typing
+  // search box text + actual search term passed into MenuTree
   const [nameInput, setNameInput] = useState('');
-  // actual search keyword that drives expand/highlight
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleAddChild = (parent: MenuNode) => {
-    console.log('add child to', parent);
-    // TODO: open modal & update data via setData
+  // UI tree for MenuTree
+  const [treeData, setTreeData] = useState<MenuNode[]>([]);
+
+  /** Load menus from backend and build tree for MenuTree */
+  const loadMenus = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchMenuList();
+      const rows = res?.data as any;
+      const tree = buildMenuTreeFromFlat(rows);
+      setTreeData(mapToMenuNodes(tree));
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to load menu list');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEdit = (node: MenuNode) => {
-    console.log('edit', node);
-    // TODO: open modal & update data via setData
-  };
+  useEffect(() => {
+    loadMenus();
+  }, []);
 
-  const handleDelete = (node: MenuNode) => {
-    console.log('delete', node);
-    // TODO: confirm + remove from tree via setData
-  };
+  /* ---------- left panel actions ---------- */
 
   const handleSearch = () => {
     setSearchTerm(nameInput.trim());
@@ -125,21 +97,115 @@ const MenuPage: React.FC = () => {
   const handleReset = () => {
     setNameInput('');
     setSearchTerm('');
-    // if later fetching from backend, refetch here
-    setData(initialData);
+    loadMenus();
   };
 
-  const handleNew = () => {
-    console.log('create new root menu');
-    // TODO: open "create root menu" modal
+  const handleNewRoot = async () => {
+    const menuName = window.prompt('New root menu name');
+    if (!menuName) return;
+
+    try {
+      await createMenu({
+        menuName,
+        parentId: 0,
+        orderNum: 1,
+        status: 'Normal',
+        menuType: 'M',
+        visible: 'True',
+        isFrame: 'False',
+        isCache: 'False'
+      });
+      message.success('Root menu created');
+      loadMenus();
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to create root menu');
+    }
+  };
+
+  /* ---------- MenuTree actions ---------- */
+
+  const handleAddChild = async (parent: MenuNode) => {
+    const menuName = window.prompt(`New child under "${parent.name}"`);
+    if (!menuName) return;
+
+    try {
+      await createMenu({
+        menuName,
+        parentId: Number(parent.id),
+        orderNum: 1,
+        status: 'Normal',
+        menuType: 'C',
+        visible: 'True',
+        isFrame: 'False',
+        isCache: 'False'
+      });
+      message.success('Menu created');
+      loadMenus();
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to create child menu');
+    }
+  };
+
+  const handleEdit = async (node: MenuNode) => {
+    const menuName = window.prompt('Edit menu name', node.name);
+    if (!menuName || menuName === node.name) return;
+
+    try {
+      await updateMenu({
+        menuId: Number(node.id),
+        menuName
+      });
+      message.success('Menu updated');
+      loadMenus();
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to update menu');
+    }
+  };
+
+  const handleDelete = (node: MenuNode) => {
+    Modal.confirm({
+      title: 'Delete menu',
+      content: `Are you sure you want to delete "${node.name}"?`,
+      okText: 'Delete',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          await deleteMenu(node.id as number);
+          message.success('Menu deleted');
+          loadMenus();
+        } catch (err) {
+          console.error(err);
+          message.error(`${err}`);
+        }
+      }
+    });
+  };
+
+  /** Drag-sort from MenuTree – for now just keep it in memory */
+  const handleReorder = (nextTree: MenuNode[]) => {
+    setTreeData(nextTree);
+    // If you later add a "sort" API, compute new orderNum per sibling here
+    // and call updateMenu(...) or a dedicated reorder endpoint.
   };
 
   return (
     <main className="min-h-screen bg-[var(--bg-page)] p-5 lg:p-8">
       <h1 className="mb-5 text-3xl font-semibold text-gray-900">Menu Management</h1>
 
-      <MenuLayout name={nameInput} onNameChange={setNameInput} onSearch={handleSearch} onReset={handleReset} onNew={handleNew}>
-        <MenuTree data={data} searchTerm={searchTerm} onAddChild={handleAddChild} onEdit={handleEdit} onDelete={handleDelete} />
+      <MenuLayout name={nameInput} onNameChange={setNameInput} onSearch={handleSearch} onReset={handleReset} onNew={handleNewRoot}>
+        <Spin spinning={loading}>
+          <MenuTree
+            data={treeData}
+            searchTerm={searchTerm}
+            onAddChild={handleAddChild}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onReorder={handleReorder}
+          />
+        </Spin>
       </MenuLayout>
     </main>
   );
