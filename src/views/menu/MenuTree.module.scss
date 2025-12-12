@@ -88,18 +88,14 @@
   box-sizing: border-box;
 }
 
+.headerColStatus {
+  padding-left: 1vw;
+}
+
 /* NAME header: left aligned & pushed right to line up with text (after handle) */
 .headerColName {
   justify-content: flex-start;
   padding-left: 60px; /* tweak if you adjust handle / caret sizing */
-}
-
-/* other headers: centered like a table */
-.headerColPerm,
-.headerColPath,
-.headerColStatus,
-.headerColAction {
-  justify-content: center;
 }
 
 /* body rows container */
@@ -139,7 +135,7 @@
 .colPath,
 .colStatus,
 .colAction {
-  justify-content: center;
+  // justify-content: center;
 }
 
 .colNameInner {
