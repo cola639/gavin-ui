@@ -1,6 +1,7 @@
 // src/views/menu/MenuTree.tsx
 import IconTextButton from '@/components/button/IconTextButton';
-import { message } from 'antd'; // ⬅️ NEW
+import Icon from '@/components/Icons';
+import { message } from 'antd';
 import { ChevronDown, ChevronRight, GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import styles from './MenuTree.module.scss';
@@ -10,7 +11,8 @@ export type MenuStatus = 'Normal' | 'Disabled';
 export type MenuNode = {
   id: string | number;
   name: string;
-  icon?: React.ReactNode;
+  /** backend icon name, e.g. "system", "user", ... */
+  icon?: string | React.ReactNode; // allow both string (for <Icon/>) and custom React node
   permission?: string;
   path?: string;
   status?: MenuStatus;
@@ -32,6 +34,7 @@ type IndexPath = number[];
 
 const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDelete, searchTerm, onReorder }) => {
   const [tree, setTree] = useState<MenuNode[]>(data);
+
   const [expanded, setExpanded] = useState<Set<string | number>>(() => new Set());
   const [matchedIds, setMatchedIds] = useState<Set<string | number>>(() => new Set());
 
@@ -176,7 +179,7 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
     const sameParent = parentFrom.length === parentTo.length && parentFrom.every((v, i) => v === parentTo[i]);
 
     if (!sameParent) {
-      // "alarm" when dragging across levels
+      // alarm when dragging across levels
       message.warning('You can only reorder menus within the same level.');
       setDragOverId(null);
       return;
@@ -196,6 +199,19 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
     const hasChildren = !!(node.children && node.children.length);
     const isExpanded = expanded.has(node.id);
     const isMatched = matchedIds.has(node.id);
+    const isActive = isMatched;
+
+    const renderIcon = () => {
+      if (!node.icon) return null;
+
+      // if backend gave you a string, use <Icon name="..." />
+      if (typeof node.icon === 'string') {
+        return <Icon name={node.icon} size={15} fill={isActive ? '#fafafa' : '#707070'} className="w-[16px] h-[16px] flex-shrink-0" />;
+      }
+
+      // else assume it’s already a ReactNode (emoji/custom)
+      return <span className={styles.icon}>{node.icon}</span>;
+    };
 
     const rowClass = [styles.row, dragInfo?.id === node.id ? styles.rowDragging : '', dragOverId === node.id ? styles.rowDragOver : '']
       .filter(Boolean)
@@ -226,8 +242,8 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
 
               {/* icon + name */}
               <div className={styles.iconAndName}>
-                {node.icon && <span className={styles.icon}>{node.icon}</span>}
-                <span className={`${styles.name} ${isMatched ? styles.nameMatched : ''}`}>{node.name}</span>
+                {renderIcon()}
+                <span className={`${styles.name} ${isActive ? styles.nameMatched : ''}`}>{node.name}</span>
               </div>
             </div>
           </div>

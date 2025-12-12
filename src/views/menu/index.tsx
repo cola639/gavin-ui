@@ -52,6 +52,7 @@ const mapToMenuNodes = (nodes: RawMenu[]): MenuNode[] =>
     permission: item.perms || '',
     path: item.component || item.path || '',
     status: normalizeStatus(item.status),
+    icon: item.icon || undefined,
     // you can render icons later by mapping item.icon -> lucide-react icon
     children: item.children && item.children.length ? mapToMenuNodes(item.children) : undefined
   }));
