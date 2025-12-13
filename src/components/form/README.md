@@ -1,7 +1,3 @@
-
-
-<img src="/Users/gavin/Library/Application Support/typora-user-images/image-20251213200249900.png" alt="image-20251213200249900" style="zoom:50%;" />
-
 // @/components/form
 
 Form Components Usage Guide (AI-Friendly)
@@ -21,6 +17,7 @@ This package contains a small set of **React + TypeScript** form components:
 ## Shared conventions
 
 ### ID/name derivation
+
 When an explicit `id`/`name` isn’t provided, components derive one from `label`:
 
 - `label.toLowerCase().replace(/\s+/g, '-')`
@@ -28,7 +25,9 @@ When an explicit `id`/`name` isn’t provided, components derive one from `label
 This means **duplicate labels on the same page can cause id/name collisions**. Pass explicit `id` or `name` when needed.
 
 ### Error rendering and ARIA
+
 When `error` is provided:
+
 - The control sets `aria-invalid={true}`
 - The control sets `aria-describedby` to the error element id
 - An error `<span>` is rendered
@@ -40,9 +39,11 @@ When `error` is provided:
 ## 1) `TextInput`
 
 ### Purpose
+
 A labeled `<input>` that forwards standard input props, and shows an error message if present.
 
 ### Props (TypeScript)
+
 ```ts
 type Props = React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -52,6 +53,7 @@ type Props = React.InputHTMLAttributes<HTMLInputElement> & {
 ```
 
 ### Behavior
+
 - `inputId = id || slug(label)`
 - Adds `styles.inputError` when `error` exists
 - ARIA:
@@ -59,14 +61,9 @@ type Props = React.InputHTMLAttributes<HTMLInputElement> & {
   - `aria-describedby={error ? `${inputId}-error` : undefined}`
 
 ### Example
+
 ```tsx
-<TextInput
-  label="Email"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-  placeholder="you@example.com"
-  error={errors.email}
-/>
+<TextInput label="Email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" error={errors.email} />
 ```
 
 ---
@@ -74,9 +71,11 @@ type Props = React.InputHTMLAttributes<HTMLInputElement> & {
 ## 2) `Dropdown`
 
 ### Purpose
+
 A labeled `<select>` that supports a placeholder option and error rendering.
 
 ### Props (TypeScript)
+
 ```ts
 type Option = { label: string; value: string };
 
@@ -93,21 +92,23 @@ type Props = {
 ```
 
 ### Behavior
+
 - `selectId = id || slug(label)`
 - Placeholder is rendered as an `<option value="" disabled hidden>`
 - The control stays controlled by coercing undefined to `''`
 - `onChange` emits the selected value: `onChange?.(e.target.value)`
-- Error span id is `errId = `${selectId}-error`` and wired via `aria-describedby`
+- Error span id is `errId = `${selectId}-error``and wired via`aria-describedby`
 
 ### Example
+
 ```tsx
 <Dropdown
   label="Role"
   value={roleId}
   onChange={setRoleId}
   options={[
-    { label: "Admin", value: "1" },
-    { label: "User", value: "2" },
+    { label: 'Admin', value: '1' },
+    { label: 'User', value: '2' }
   ]}
   placeholder="Please select"
   error={errors.role}
@@ -119,9 +120,11 @@ type Props = {
 ## 3) `RadioGroup`
 
 ### Purpose
+
 A group of radios that emits the selected option value.
 
 ### Props (TypeScript)
+
 ```ts
 type Option = { label: string; value: string };
 
@@ -135,6 +138,7 @@ type Props = {
 ```
 
 ### Behavior
+
 - Radio `name`:
   - `const group = name || slug(label)`
 - Each option:
@@ -142,14 +146,15 @@ type Props = {
   - `onChange={() => onChange?.(option.value)}`
 
 ### Example
+
 ```tsx
 <RadioGroup
   label="Status"
   value={status}
   onChange={setStatus}
   options={[
-    { label: "Enabled", value: "Enabled" },
-    { label: "Disabled", value: "Disabled" },
+    { label: 'Enabled', value: 'Enabled' },
+    { label: 'Disabled', value: 'Disabled' }
   ]}
 />
 ```
@@ -159,25 +164,29 @@ type Props = {
 ## 4) `DeptTreeDropdown` (Ant Design TreeSelect wrapper)
 
 ### Purpose
+
 A labeled `TreeSelect` for selecting a department from a hierarchical tree.
 
 ### Dependencies
+
 - `antd` `TreeSelect`
 - `DeptNode` type and `toAntTreeData()` converter imported from `@/views/user/depTypes`
 
 ### Props (TypeScript)
+
 ```ts
 type Props = {
-  label?: string;        // default: "Department"
+  label?: string; // default: "Department"
   value?: string;
   onChange?: (value: string | undefined) => void;
-  tree?: DeptNode[];     // default: []
+  tree?: DeptNode[]; // default: []
   error?: string;
-  placeholder?: string;  // default: "Please select"
+  placeholder?: string; // default: "Please select"
 };
 ```
 
 ### Behavior
+
 - `treeData = useMemo(() => toAntTreeData(tree), [tree])`
 - Error id: `errId = `${slug(label)}-error``
 - `onChange` emits `string | undefined` (to support clear)
@@ -186,15 +195,9 @@ type Props = {
   - `aria-describedby={error ? errId : undefined}`
 
 ### Example
+
 ```tsx
-<DeptTreeDropdown
-  label="Department"
-  value={deptId}
-  tree={deptTree}
-  onChange={setDeptId}
-  placeholder="Please select"
-  error={errors.deptId}
-/>
+<DeptTreeDropdown label="Department" value={deptId} tree={deptTree} onChange={setDeptId} placeholder="Please select" error={errors.deptId} />
 ```
 
 ---
@@ -202,16 +205,19 @@ type Props = {
 ## 5) `UserForm`
 
 ### Purpose
+
 A full user form that:
+
 - Owns local state for all fields
 - Validates on submit
 - Emits a single payload via `onSubmit(values)`
 
 ### Public types (TypeScript)
+
 ```ts
 export type UserFormValues = {
-  avatar?: string | null;      // existing avatar URL when editing
-  avatarFile?: File | null;    // newly picked file (for upload)
+  avatar?: string | null; // existing avatar URL when editing
+  avatarFile?: File | null; // newly picked file (for upload)
 
   nick: string;
   deptId?: string;
@@ -227,9 +233,9 @@ export type SimpleOption = { label: string; value: string };
 
 export type UserFormProps = {
   initial?: Partial<UserFormValues>;
-  submitLabel?: string;        // default "Submit"
+  submitLabel?: string; // default "Submit"
   onSubmit: (values: UserFormValues) => void;
-  onCancel?: () => void;       // present but may not be rendered
+  onCancel?: () => void; // present but may not be rendered
   deptTree?: DeptNode[];
   roles?: SimpleOption[];
   posts?: SimpleOption[];
@@ -237,7 +243,9 @@ export type UserFormProps = {
 ```
 
 ### Validation rules
+
 On submit:
+
 - `nick` required (trim)
 - `deptId` required
 - `post` required
@@ -248,6 +256,7 @@ On submit:
 - `status` required (`Enabled` | `Disabled`)
 
 ### Avatar file behavior
+
 - Reads `e.target.files?.[0]`
 - Ignores invalid files:
   - returns if missing or if `!file.type.startsWith('image/')`
@@ -256,7 +265,9 @@ On submit:
   - `avatarPreview = URL.createObjectURL(file)` for local preview
 
 ### Submit contract
+
 If validation passes, it calls:
+
 ```ts
 onSubmit({
   avatar: initial?.avatar ?? null,
@@ -268,11 +279,12 @@ onSubmit({
   phone,
   email,
   sex,
-  status,
+  status
 });
 ```
 
 ### Example parent integration
+
 ```tsx
 function EditUserPage() {
   const [deptTree, setDeptTree] = useState<DeptNode[]>([]);
@@ -281,7 +293,7 @@ function EditUserPage() {
 
   return (
     <UserForm
-      initial={{ nick: "John", status: "Enabled", avatar: "https://cdn/a.png" }}
+      initial={{ nick: 'John', status: 'Enabled', avatar: 'https://cdn/a.png' }}
       deptTree={deptTree}
       roles={roles}
       posts={posts}
@@ -302,11 +314,13 @@ function EditUserPage() {
 ## Data contracts (AI-parseable)
 
 ### Option (Dropdown / RadioGroup / roles / posts)
+
 ```json
 { "label": "string", "value": "string" }
 ```
 
 ### `UserForm` submit payload (JSON-ish)
+
 ```json
 {
   "avatar": "string|null|undefined",
