@@ -35,7 +35,7 @@ const MenuLayout: React.FC<MenuLayoutProps> = ({ name, onNameChange, onSearch, o
           {/* Buttons row: Search + Reset */}
           <div className={styles.actionsRow}>
             <IconTextButton icon={<Search size={14} />} label="Search" onClick={onSearch} />
-            <IconTextButton icon={<RotateCcw size={14} />} label="Reset" onClick={onReset} />{' '}
+            <IconTextButton icon={<RotateCcw size={14} />} label="Reset" onClick={onReset} />
             <IconTextButton icon={<Plus size={14} />} label="New" type="primary" onClick={onNew} />
           </div>
         </div>

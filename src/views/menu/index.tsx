@@ -1,4 +1,3 @@
-// src/views/menu/index.tsx
 import { message, Modal, Spin } from 'antd';
 import React, { useEffect, useState } from 'react';
 
@@ -6,6 +5,7 @@ import MenuLayout from './MenuLayout';
 import MenuTree, { MenuNode, MenuStatus } from './MenuTree';
 
 import { createMenu, deleteMenu, fetchMenuList, updateMenu, type RawMenu } from '@/apis/menu';
+import NewModuleModal from './NewModuleModal';
 
 /* ---------- helpers: flat list -> tree, then -> MenuNode[] ---------- */
 
@@ -24,7 +24,6 @@ const buildMenuTreeFromFlat = (rows: RawMenu[]): RawMenu[] => {
   map.forEach((item) => {
     const pid = item.parentId;
     if (!pid || !map.has(pid)) {
-      // top level
       roots.push(item);
     } else {
       map.get(pid)!.children.push(item);
@@ -34,9 +33,7 @@ const buildMenuTreeFromFlat = (rows: RawMenu[]): RawMenu[] => {
   const sortTree = (list: RawMenu[]) => {
     list.sort((a, b) => (a.orderNum ?? 0) - (b.orderNum ?? 0));
     list.forEach((n) => {
-      if (n.children && n.children.length) {
-        sortTree(n.children);
-      }
+      if (n.children && n.children.length) sortTree(n.children);
     });
   };
 
@@ -53,7 +50,6 @@ const mapToMenuNodes = (nodes: RawMenu[]): MenuNode[] =>
     path: item.component || item.path || '',
     status: normalizeStatus(item.status),
     icon: item.icon || undefined,
-    // you can render icons later by mapping item.icon -> lucide-react icon
     children: item.children && item.children.length ? mapToMenuNodes(item.children) : undefined
   }));
 
@@ -66,6 +62,9 @@ const MenuPage: React.FC = () => {
   const [nameInput, setNameInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // modal
+  const [openNew, setOpenNew] = useState(false);
+
   // UI tree for MenuTree
   const [treeData, setTreeData] = useState<MenuNode[]>([]);
 
@@ -74,7 +73,7 @@ const MenuPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await fetchMenuList();
-      const rows = res?.data as any;
+      const rows = (res?.data as any) ?? [];
       const tree = buildMenuTreeFromFlat(rows);
       setTreeData(mapToMenuNodes(tree));
     } catch (err) {
@@ -92,6 +91,7 @@ const MenuPage: React.FC = () => {
   /* ---------- left panel actions ---------- */
 
   const handleSearch = () => {
+    // current behavior: local search highlight/filter inside MenuTree
     setSearchTerm(nameInput.trim());
   };
 
@@ -101,28 +101,7 @@ const MenuPage: React.FC = () => {
     loadMenus();
   };
 
-  const handleNewRoot = async () => {
-    const menuName = window.prompt('New root menu name');
-    if (!menuName) return;
-
-    try {
-      await createMenu({
-        menuName,
-        parentId: 0,
-        orderNum: 1,
-        status: 'Normal',
-        menuType: 'M',
-        visible: 'True',
-        isFrame: 'False',
-        isCache: 'False'
-      });
-      message.success('Root menu created');
-      loadMenus();
-    } catch (err) {
-      console.error(err);
-      message.error('Failed to create root menu');
-    }
-  };
+  const handleOpenNew = () => setOpenNew(true);
 
   /* ---------- MenuTree actions ---------- */
 
@@ -188,15 +167,19 @@ const MenuPage: React.FC = () => {
   /** Drag-sort from MenuTree – for now just keep it in memory */
   const handleReorder = (nextTree: MenuNode[]) => {
     setTreeData(nextTree);
-    // If you later add a "sort" API, compute new orderNum per sibling here
-    // and call updateMenu(...) or a dedicated reorder endpoint.
   };
 
   return (
     <main className="min-h-screen bg-[var(--bg-page)] p-5 lg:p-8">
       <h1 className="mb-5 text-3xl font-semibold text-gray-900">Menu Management</h1>
 
-      <MenuLayout name={nameInput} onNameChange={setNameInput} onSearch={handleSearch} onReset={handleReset} onNew={handleNewRoot}>
+      <MenuLayout
+        name={nameInput}
+        onNameChange={setNameInput}
+        onSearch={handleSearch}
+        onReset={handleReset}
+        onNew={handleOpenNew} // ✅ FIXED
+      >
         <Spin spinning={loading}>
           <MenuTree
             data={treeData}
@@ -208,6 +191,8 @@ const MenuPage: React.FC = () => {
           />
         </Spin>
       </MenuLayout>
+
+      <NewModuleModal open={openNew} onClose={() => setOpenNew(false)} onCreated={loadMenus} parentId={0} />
     </main>
   );
 };
