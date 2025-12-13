@@ -2,11 +2,11 @@
 import { SEXES, STATUS } from '@/utils/dict';
 import type { DeptNode } from '@/views/user/depTypes';
 import React, { useRef, useState } from 'react';
-import Dropdown from './dropdown/Dropdown';
-import styles from './index.module.scss';
-import TextInput from './input/TextInput';
-import RadioGroup from './radio/RadioGroup';
-import DeptTreeDropdown from './treeDropdown';
+import Dropdown from '../../components/form/dropdown/Dropdown';
+import TextInput from '../../components/form/input/TextInput';
+import RadioGroup from '../../components/form/radio/RadioGroup';
+import DeptTreeDropdown from '../../components/form/treeDropdown';
+import styles from './UserForm.module.scss';
 
 type Errors = Partial<Record<'nick' | 'deptId' | 'post' | 'role' | 'phone' | 'email' | 'sex' | 'status', string>>;
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;

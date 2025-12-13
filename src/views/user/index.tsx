@@ -3,7 +3,7 @@ import { uploadAvatarApi } from '@/apis/common';
 import { getDeptApi } from '@/apis/dept';
 import { exportExcelApi } from '@/apis/export';
 import { addUserApi, deleteUserApi, getUserDetailApi, getUsersApi, updateUserApi } from '@/apis/user';
-import UserForm, { UserFormValues } from '@/components/form';
+import UserForm, { UserFormValues } from '@/views/user/UserForm';
 import { Modal, message } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
