@@ -20,17 +20,17 @@ type Props = {
 
 const slug = (label: string) => label.toLowerCase().replace(/\s+/g, '-');
 
-const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeholder = 'e.g., bug', disabled = false }) => {
+const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeholder = 'Please select an icon...', disabled = false }) => {
   const inputId = id || slug(label);
   const errId = `${inputId}-error`;
 
   const [open, setOpen] = useState(false);
   const [kw, setKw] = useState('');
 
-  // wrapper container (for outside-click detection)
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const normalizedValue = (value ?? '').toLowerCase();
+  const showPrefix = hasIcon(normalizedValue);
 
   const list = useMemo(() => {
     const q = kw.trim().toLowerCase();
@@ -38,7 +38,7 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
     return iconNames.filter((n) => n.includes(q));
   }, [kw]);
 
-  // ✅ close on outside click (both input area + popover content are treated as "inside")
+  // close on outside click (treat input + popover content as inside)
   useEffect(() => {
     if (!open) return;
 
@@ -47,7 +47,7 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
       if (!target) return;
 
       const root = containerRef.current;
-      const overlay = document.querySelector(`.${styles.popover}`); // css-module hashed class is OK
+      const overlay = document.querySelector(`.${styles.popover}`);
 
       if (root?.contains(target)) return;
       if (overlay?.contains(target)) return;
@@ -69,7 +69,6 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
         <div className={styles.grid}>
           {list.map((name) => {
             const selected = name === normalizedValue;
-
             return (
               <button
                 key={name}
@@ -104,8 +103,7 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
 
       <Popover
         open={open}
-        // ✅ IMPORTANT: disable internal click-toggle completely
-        trigger={[]}
+        trigger={[]} // controlled only
         placement="bottomLeft"
         content={panel}
         overlayClassName={styles.popover}
@@ -115,7 +113,6 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
           className={styles.control}
           onMouseDown={(e) => {
             if (disabled) return;
-            // keep focus behavior normal, but open deterministically
             e.stopPropagation();
             setOpen(true);
           }}
@@ -128,13 +125,15 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
             if (e.key === 'Escape') setOpen(false);
           }}
         >
-          <span className={styles.prefix} aria-hidden="true">
-            {hasIcon(normalizedValue) ? <Icon name={normalizedValue} size={16} /> : <span>#</span>}
-          </span>
+          {showPrefix ? (
+            <span className={styles.prefix} aria-hidden="true">
+              <Icon name={normalizedValue} size={16} />
+            </span>
+          ) : null}
 
           <input
             id={inputId}
-            className={`${inputStyles.input} ${styles.withPrefix} ${error ? inputStyles.inputError : ''}`}
+            className={[inputStyles.input, styles.triggerInput, showPrefix ? styles.withPrefix : '', error ? inputStyles.inputError : ''].join(' ')}
             value={value ?? ''}
             disabled={disabled}
             placeholder={placeholder}

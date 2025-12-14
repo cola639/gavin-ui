@@ -35,7 +35,7 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
 
   const [menuName, setMenuName] = useState('');
   const [path, setPath] = useState('');
-  const [icon, setIcon] = useState('bug');
+  const [icon, setIcon] = useState('');
   const [orderNum, setOrderNum] = useState('0');
 
   const [isFrame, setIsFrame] = useState<'True' | 'False'>('False');
