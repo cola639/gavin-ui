@@ -30,11 +30,38 @@ const STATUS: Option[] = [
 // If backend expects 'M' instead, change here
 const MENU_TYPE_MODULE = 'Module';
 
+/** newModule / NewModule / new_module / "New Module" => "new-module" */
+const toKebab = (input: string) => {
+  const s = (input ?? '').trim();
+  if (!s) return '';
+
+  return s
+    .replace(/[_\s]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-') // non-alnum -> -
+    .replace(/-+/g, '-') // collapse
+    .replace(/^-|-$/g, ''); // trim
+};
+
+const genPathFromName = (name: string) => {
+  const slug = toKebab(name);
+  return slug ? `/${slug}` : '';
+};
+
+const normalizePath = (p: string) => {
+  const v = (p ?? '').trim();
+  if (!v) return '';
+  return v.startsWith('/') ? v : `/${v.replace(/^\/+/, '')}`;
+};
+
 const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreated, parentId = 0 }) => {
   const [submitting, setSubmitting] = useState(false);
 
   const [menuName, setMenuName] = useState('');
   const [path, setPath] = useState('');
+  const [pathTouched, setPathTouched] = useState(false); // ✅ user manually changed path?
   const [icon, setIcon] = useState('');
   const [orderNum, setOrderNum] = useState('0');
 
@@ -50,6 +77,7 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
   const resetForm = () => {
     setMenuName('');
     setPath('');
+    setPathTouched(false);
     setIcon('');
     setOrderNum('0');
     setIsFrame('False');
@@ -127,8 +155,16 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
           label="Name"
           value={menuName}
           onChange={(e) => {
-            setMenuName(e.target.value);
+            const nextName = e.target.value;
+            setMenuName(nextName);
             clearError('menuName');
+
+            // ✅ auto-generate path until user touches path
+            if (!pathTouched) {
+              const auto = genPathFromName(nextName);
+              setPath(auto);
+              if (auto) clearError('path');
+            }
           }}
           error={errors.menuName}
           placeholder="Please enter a name..."
@@ -138,27 +174,31 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
           label="Path"
           value={path}
           onChange={(e) => {
-            setPath(e.target.value);
+            const v = e.target.value;
+            setPath(v);
             clearError('path');
+
+            // ✅ once user types -> stop auto
+            // ✅ if user clears it -> resume auto
+            if (v.trim() === '') {
+              setPathTouched(false);
+              const auto = genPathFromName(menuName);
+              setPath(auto);
+              if (auto) clearError('path');
+            } else {
+              setPathTouched(true);
+            }
+          }}
+          onBlur={(e) => {
+            // optional: help user by auto-adding leading '/'
+            const fixed = normalizePath(e.target.value);
+            if (fixed !== path) setPath(fixed);
           }}
           error={errors.path}
           placeholder="Please enter a path..."
         />
 
-        {/* ✅ same height as your other inputs */}
         <IconPicker label="Icon" value={icon} onChange={setIcon} />
-
-        {/* <TextInput
-          label="Order"
-          type="number"
-          value={orderNum}
-          onChange={(e) => {
-            setOrderNum(e.target.value);
-            clearError('orderNum');
-          }}
-          error={errors.orderNum}
-          placeholder="0"
-        /> */}
 
         <Dropdown label="Visible" value={visible} onChange={(v) => setVisible(v as any)} options={TRUE_FALSE} />
         <Dropdown label="Status" value={status} onChange={(v) => setStatus(v as any)} options={STATUS} />
