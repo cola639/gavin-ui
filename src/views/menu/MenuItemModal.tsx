@@ -1,5 +1,5 @@
 import { Modal, message } from 'antd';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { createMenu, updateMenu, type RawMenu } from '@/apis/menu';
 import Dropdown from '@/components/form/dropdown/Dropdown';
@@ -77,33 +77,67 @@ export type MenuItemModalProps = {
 const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, createType, permContext, initial, onClose, onSuccess }) => {
   const isEdit = mode === 'edit';
 
-  const initialType = normalizeType(initial?.menuType);
-  const resolvedCreateType: UiMenuType = isEdit ? initialType : createType ?? 'Menu';
-
-  const [menuType, setMenuType] = useState<UiMenuType>(resolvedCreateType);
-
-  const [menuName, setMenuName] = useState(initial?.menuName ?? '');
-  const [path, setPath] = useState(initial?.path ?? '');
-  const [pathTouched, setPathTouched] = useState(false);
-
-  const [component, setComponent] = useState((initial?.component as any) ?? '');
-  const [icon, setIcon] = useState(initial?.icon ?? '');
-
-  const [perms, setPerms] = useState(initial?.perms ?? '');
-  const [permsTouched, setPermsTouched] = useState(false);
-
-  const [visible, setVisible] = useState<'True' | 'False'>((initial?.visible as any) ?? 'True');
-  const [status, setStatus] = useState<'Normal' | 'Disabled'>((initial?.status as any) ?? 'Normal');
-  const [isFrame, setIsFrame] = useState<'True' | 'False'>((initial?.isFrame as any) ?? 'False');
-  const [isCache, setIsCache] = useState<'True' | 'False'>((initial?.isCache as any) ?? 'False');
-
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Errors>({});
+  // ✅ IMPORTANT: menuType is derived from props, not stored in state
+  const menuType: UiMenuType = isEdit ? normalizeType(initial?.menuType) : createType ?? 'Menu';
 
   const showPath = menuType !== 'Function';
   const showComponent = menuType === 'Menu';
   const showIcon = menuType !== 'Function';
-  const showPerms = menuType !== 'Module'; // module normally no perms
+  const showPerms = menuType !== 'Module';
+
+  // form states
+  const [menuName, setMenuName] = useState('');
+  const [path, setPath] = useState('');
+  const [pathTouched, setPathTouched] = useState(false);
+
+  const [component, setComponent] = useState('');
+  const [icon, setIcon] = useState('');
+
+  const [perms, setPerms] = useState('');
+  const [permsTouched, setPermsTouched] = useState(false);
+
+  const [visible, setVisible] = useState<'True' | 'False'>('True');
+  const [status, setStatus] = useState<'Normal' | 'Disabled'>('Normal');
+  const [isFrame, setIsFrame] = useState<'True' | 'False'>('False');
+  const [isCache, setIsCache] = useState<'True' | 'False'>('False');
+
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
+
+  // ✅ Re-init whenever modal opens or createType/edit target changes
+  useEffect(() => {
+    if (!open) return;
+
+    setErrors({});
+    setPathTouched(false);
+    setPermsTouched(false);
+
+    if (isEdit) {
+      setMenuName(initial?.menuName ?? '');
+      setPath(initial?.path ?? '');
+      setComponent(String((initial?.component as any) ?? ''));
+      setIcon(initial?.icon ?? '');
+      setPerms(initial?.perms ?? '');
+
+      setVisible((initial?.visible as any) ?? 'True');
+      setStatus((initial?.status as any) ?? 'Normal');
+      setIsFrame((initial?.isFrame as any) ?? 'False');
+      setIsCache((initial?.isCache as any) ?? 'False');
+    } else {
+      // create
+      setMenuName('');
+      setPath('');
+      setComponent('');
+      setIcon('');
+      setPerms('');
+
+      setVisible('True');
+      setStatus('Normal');
+      setIsFrame('False');
+      setIsCache('False');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, mode, createType, initial?.menuId, parentId]);
 
   const title = useMemo(() => {
     if (isEdit) return `Edit ${menuType === 'Function' ? 'Button' : menuType}`;
@@ -116,13 +150,11 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
     const selfPart = toKebab(name);
 
     if (menuType === 'Menu') {
-      // module:menu:view
       if (!modulePart || !selfPart) return '';
       return `${modulePart}:${selfPart}:view`;
     }
 
     if (menuType === 'Function') {
-      // module:menu:function
       if (!modulePart || !menuPartFromCtx || !selfPart) return '';
       return `${modulePart}:${menuPartFromCtx}:${selfPart}`;
     }
@@ -130,40 +162,27 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
     return '';
   };
 
+  const clearError = (k: keyof Errors) => setErrors((prev) => ({ ...prev, [k]: undefined }));
+
   const validate = (): Errors => {
     const e: Errors = {};
     if (!menuName.trim()) e.menuName = 'Please enter name.';
+
     if (showPath) {
       if (!path.trim()) e.path = 'Please enter path.';
       else if (!path.startsWith('/')) e.path = "Path must start with '/'.";
     }
+
     if (showComponent && !String(component ?? '').trim()) e.component = 'Please enter component path.';
+
     if (showPerms && menuType === 'Function' && !perms.trim()) e.perms = 'Please enter permission flag.';
+
     return e;
-  };
-
-  const clearError = (k: keyof Errors) => setErrors((prev) => ({ ...prev, [k]: undefined }));
-
-  const reset = () => {
-    setMenuType(resolvedCreateType);
-    setMenuName(initial?.menuName ?? '');
-    setPath(initial?.path ?? '');
-    setPathTouched(false);
-    setComponent((initial?.component as any) ?? '');
-    setIcon(initial?.icon ?? '');
-    setPerms(initial?.perms ?? '');
-    setPermsTouched(false);
-    setVisible((initial?.visible as any) ?? 'True');
-    setStatus((initial?.status as any) ?? 'Normal');
-    setIsFrame((initial?.isFrame as any) ?? 'False');
-    setIsCache((initial?.isCache as any) ?? 'False');
-    setErrors({});
   };
 
   const handleCancel = () => {
     if (submitting) return;
     onClose();
-    reset();
   };
 
   const handleOk = async () => {
@@ -175,7 +194,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
       parentId,
       menuType,
       menuName: menuName.trim(),
-      orderNum: isEdit ? initial?.orderNum ?? 0 : 0, // ✅ no UI, default 0 on create
+      orderNum: isEdit ? initial?.orderNum ?? 0 : 0,
       visible,
       status,
       isFrame,
@@ -183,7 +202,6 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
     };
 
     payload.perms = showPerms ? perms.trim() || undefined : undefined;
-
     payload.path = showPath ? normalizePath(path) : '';
     payload.component = showComponent ? String(component).trim() : null;
     payload.icon = showIcon ? icon?.trim() || undefined : undefined;
@@ -198,7 +216,6 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
         message.success('Created');
       }
       onClose();
-      reset();
       onSuccess();
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -228,14 +245,12 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
             setMenuName(nextName);
             clearError('menuName');
 
-            // path auto
             if (showPath && !pathTouched) {
               const auto = genPathFromName(nextName);
               setPath(auto);
               if (auto) clearError('path');
             }
 
-            // perms auto
             if (showPerms && !permsTouched) {
               const p = autoPerms(nextName);
               setPerms(p);
@@ -293,7 +308,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
             label="Permission Flag"
             value={perms}
             onChange={(e) => {
-              setPermsTouched(true); // ✅ user manually overrides
+              setPermsTouched(true);
               setPerms(e.target.value);
               clearError('perms');
             }}

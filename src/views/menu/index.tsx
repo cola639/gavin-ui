@@ -17,14 +17,11 @@ const normalizeType = (t?: string): UiMenuType => {
   return 'Menu';
 };
 
-/** Convert flat array (with parentId) into a nested tree (children[]) */
 const buildMenuTreeFromFlat = (rows: RawMenu[]): RawMenu[] => {
   const map = new Map<number, RawMenu & { children: RawMenu[] }>();
-
   rows.forEach((item) => map.set(item.menuId, { ...item, children: [] }));
 
   const roots: (RawMenu & { children: RawMenu[] })[] = [];
-
   map.forEach((item) => {
     const pid = item.parentId;
     if (!pid || !map.has(pid)) roots.push(item);
@@ -40,12 +37,6 @@ const buildMenuTreeFromFlat = (rows: RawMenu[]): RawMenu[] => {
   return roots;
 };
 
-/**
- * Map backend tree -> UI MenuNode
- * Also attach:
- * - moduleNameForPerm: top module name
- * - menuNameForPerm: nearest menu name
- */
 const mapToMenuNodes = (nodes: RawMenu[], moduleName?: string, menuName?: string): MenuNode[] =>
   nodes.map((item) => {
     const t = normalizeType(item.menuType);
@@ -60,14 +51,11 @@ const mapToMenuNodes = (nodes: RawMenu[], moduleName?: string, menuName?: string
       id: item.menuId,
       parentId: item.parentId,
       menuType: t,
-
       name: item.menuName,
 
       permission: item.perms || '',
       routePath,
       component,
-
-      // table "Component Path" shows component first, otherwise route
       path: component || routePath || '-',
 
       status: normalizeStatus(item.status),
@@ -93,10 +81,8 @@ const MenuPage: React.FC = () => {
 
   const [treeData, setTreeData] = useState<MenuNode[]>([]);
 
-  // New module modal (keep it, different UI)
   const [openNew, setOpenNew] = useState(false);
 
-  // Menu/Button modal state
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [itemModalMode, setItemModalMode] = useState<'create' | 'edit'>('create');
   const [createType, setCreateType] = useState<'Menu' | 'Function'>('Menu');
@@ -131,10 +117,8 @@ const MenuPage: React.FC = () => {
     loadMenus();
   };
 
-  // Left "New" button => NewModuleModal
   const handleOpenNew = () => setOpenNew(true);
 
-  // plus dropdown (Add Menu / Add Button)
   const handleAddChild = (parent: MenuNode, type: 'Menu' | 'Function') => {
     setItemModalMode('create');
     setCreateType(type);
@@ -150,19 +134,13 @@ const MenuPage: React.FC = () => {
     setEditInitial({
       menuId: Number(node.id),
       parentId: Number(node.parentId ?? 0),
-
       menuName: node.name,
       menuType: node.menuType,
-
-      // real route path for edit
       path: node.routePath || '',
-
       component: node.component || '',
       perms: node.permission || '',
-
       icon: typeof node.icon === 'string' ? node.icon : '',
       orderNum: node.orderNum ?? 0,
-
       visible: node.visible ?? 'True',
       status: node.status ?? 'Normal',
       isFrame: node.isFrame ?? 'False',
@@ -201,6 +179,8 @@ const MenuPage: React.FC = () => {
       }
     : undefined;
 
+  const modalKey = `${itemModalMode}-${createType}-${activeNode?.id ?? '0'}-${editInitial?.menuId ?? ''}`;
+
   return (
     <main className="min-h-screen bg-[var(--bg-page)] p-5 lg:p-8">
       <h1 className="mb-5 text-3xl font-semibold text-gray-900">Menu Management</h1>
@@ -218,11 +198,10 @@ const MenuPage: React.FC = () => {
         </Spin>
       </MenuLayout>
 
-      {/* Keep your NewModuleModal for root module creation */}
       <NewModuleModal open={openNew} onClose={() => setOpenNew(false)} onCreated={loadMenus} parentId={0} />
 
-      {/* Menu/Button modal for plus/edit */}
       <MenuItemModal
+        key={modalKey} // ✅ force remount when createType/target changes
         open={itemModalOpen}
         mode={itemModalMode}
         parentId={itemModalMode === 'create' ? Number(activeNode?.id ?? 0) : Number(editInitial?.parentId ?? 0)}
