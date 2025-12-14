@@ -1,10 +1,10 @@
 import { message, Modal, Spin } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import MenuLayout from './MenuLayout';
-import MenuTree, { MenuNode, MenuStatus, UiMenuType } from './MenuTree';
+import MenuTree, { MenuNode, MenuStatus, OrderPatchItem, UiMenuType } from './MenuTree';
 
-import { deleteMenu, fetchMenuList, type RawMenu } from '@/apis/menu';
+import { deleteMenu, fetchMenuList, updateMenuOrders, type RawMenu } from '@/apis/menu';
 import MenuItemModal from './MenuItemModal';
 import NewModuleModal from './NewModuleModal';
 
@@ -93,7 +93,7 @@ const MenuPage: React.FC = () => {
 
   const [treeData, setTreeData] = useState<MenuNode[]>([]);
 
-  // New Module modal
+  // New module modal (keep it, different UI)
   const [openNew, setOpenNew] = useState(false);
 
   // Menu/Button modal state
@@ -102,6 +102,8 @@ const MenuPage: React.FC = () => {
   const [createType, setCreateType] = useState<'Menu' | 'Function'>('Menu');
   const [activeNode, setActiveNode] = useState<MenuNode | null>(null);
   const [editInitial, setEditInitial] = useState<any>(null);
+
+  const orderReqSeq = useRef(0);
 
   const loadMenus = async () => {
     setLoading(true);
@@ -161,6 +163,7 @@ const MenuPage: React.FC = () => {
       perms: node.permission || '',
 
       icon: typeof node.icon === 'string' ? node.icon : '',
+
       orderNum: node.orderNum ?? 0,
 
       visible: node.visible ?? 'True',
@@ -192,7 +195,23 @@ const MenuPage: React.FC = () => {
     });
   };
 
-  const handleReorder = (nextTree: MenuNode[]) => setTreeData(nextTree);
+  const handleReorder = (nextTree: MenuNode[], orderPatch?: OrderPatchItem[]) => {
+    setTreeData(nextTree);
+
+    if (!orderPatch?.length) return;
+
+    const seq = ++orderReqSeq.current;
+
+    updateMenuOrders(orderPatch).catch((err) => {
+      // only show error for the latest reorder attempt
+      if (seq !== orderReqSeq.current) return;
+
+      // eslint-disable-next-line no-console
+      console.error('UPDATE_ORDERS_FAILED', err, orderPatch);
+      message.error('Update order failed, reloading...');
+      loadMenus();
+    });
+  };
 
   const permContext = activeNode
     ? {
@@ -223,6 +242,7 @@ const MenuPage: React.FC = () => {
 
       {/* Menu/Button modal for plus/edit */}
       <MenuItemModal
+        key={`${itemModalMode}-${activeNode?.id ?? 0}-${createType}-${editInitial?.menuId ?? 0}`}
         open={itemModalOpen}
         mode={itemModalMode}
         parentId={itemModalMode === 'create' ? Number(activeNode?.id ?? 0) : Number(editInitial?.parentId ?? 0)}

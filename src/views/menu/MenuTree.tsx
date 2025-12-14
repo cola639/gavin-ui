@@ -13,7 +13,6 @@ export type MenuNode = {
   parentId?: number;
 
   menuType: UiMenuType;
-
   name: string;
 
   /** backend icon name, e.g. "system", "user" */
@@ -46,16 +45,39 @@ export type MenuNode = {
   children?: MenuNode[];
 };
 
+export type OrderPatchItem = { menuId: number; orderNum: number };
+
 type MenuTreeProps = {
   data?: MenuNode[];
   onAddChild: (parent: MenuNode, createType: 'Menu' | 'Function') => void;
   onEdit: (node: MenuNode) => void;
   onDelete: (node: MenuNode) => void;
   searchTerm?: string;
-  onReorder?: (nextTree: MenuNode[]) => void;
+
+  /** called after drop */
+  onReorder?: (nextTree: MenuNode[], orderPatch?: OrderPatchItem[]) => void;
 };
 
 type IndexPath = number[];
+
+const getNodeAtPath = (nodes: MenuNode[], path: IndexPath): MenuNode | null => {
+  let cur: MenuNode | null = null;
+  let arr = nodes;
+
+  for (let i = 0; i < path.length; i++) {
+    cur = arr[path[i]] ?? null;
+    if (!cur) return null;
+    arr = cur.children ?? [];
+  }
+
+  return cur;
+};
+
+const getSiblingsAtParentPath = (nodes: MenuNode[], parentPath: IndexPath): MenuNode[] => {
+  if (parentPath.length === 0) return nodes;
+  const parent = getNodeAtPath(nodes, parentPath);
+  return parent?.children ?? [];
+};
 
 const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDelete, searchTerm, onReorder }) => {
   const [tree, setTree] = useState<MenuNode[]>(data);
@@ -89,6 +111,7 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
     return null;
   };
 
+  // reorder within same-level sibling array
   const reorderSameLevel = (nodes: MenuNode[], parentPath: IndexPath, fromIndex: number, toIndex: number, depth = 0): MenuNode[] => {
     if (depth === parentPath.length) {
       const arr = [...nodes];
@@ -101,6 +124,7 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
     const node = nodes[idx];
     const children = node.children ?? [];
     const nextChildren = reorderSameLevel(children, parentPath, fromIndex, toIndex, depth + 1);
+
     const nextNodes = [...nodes];
     nextNodes[idx] = { ...node, children: nextChildren };
     return nextNodes;
@@ -129,6 +153,7 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
     };
 
     walk(tree, []);
+
     setMatchedIds(nextMatches);
 
     if (toExpand.size) {
@@ -162,7 +187,7 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
   };
 
   const handleDragOver = (e: React.DragEvent, targetId: string | number) => {
-    e.preventDefault();
+    e.preventDefault(); // allow drop
     if (!dragInfo) return;
     if (dragOverId !== targetId) setDragOverId(targetId);
   };
@@ -186,6 +211,7 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
     const parentFrom = fromPath.slice(0, -1);
     const parentTo = toPath.slice(0, -1);
 
+    // ❗ only allow same-level sort
     const sameParent = parentFrom.length === parentTo.length && parentFrom.every((v, i) => v === parentTo[i]);
     if (!sameParent) {
       message.warning('You can only reorder menus within the same level.');
@@ -198,7 +224,13 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
 
     const nextTree = reorderSameLevel(tree, parentFrom, fromIdx, toIdx);
     setTree(nextTree);
-    onReorder?.(nextTree);
+
+    // ✅ build order patch for ONLY the affected siblings
+    const siblings = getSiblingsAtParentPath(nextTree, parentFrom);
+    const orderPatch: OrderPatchItem[] = siblings.map((n, idx) => ({ menuId: Number(n.id), orderNum: idx })).filter((x) => Number.isFinite(x.menuId));
+
+    onReorder?.(nextTree, orderPatch);
+
     setDragInfo(null);
     setDragOverId(null);
   };

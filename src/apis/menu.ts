@@ -22,6 +22,9 @@ export interface RawMenu {
   children?: RawMenu[];
 }
 
+// add this near your other exports
+export type UpdateOrderItem = { menuId: number; orderNum: number };
+
 /** Common RuoYi-style response wrapper */
 export interface ApiResp<T> {
   code: number;
@@ -45,6 +48,11 @@ export function createMenu(data: Partial<RawMenu>) {
 /** PUT /system/menu */
 export function updateMenu(data: Partial<RawMenu> & { menuId: number }) {
   return request.put<ApiResp<null>>('/system/menu', data);
+}
+
+// if your backend expects POST instead of PUT, switch to request.post(...)
+export function updateMenuOrders(data: UpdateOrderItem[]) {
+  return request.put('/system/menu/update-orders', data);
 }
 
 /** DELETE /system/menu/{menuId} */
