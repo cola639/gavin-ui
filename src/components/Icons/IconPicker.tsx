@@ -1,10 +1,9 @@
 import { Popover } from 'antd';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import Icon from '@/components/Icons';
 import { hasIcon, iconNames } from '@/components/Icons/iconRegistry';
 
-// ✅ reuse TextInput's styles to keep same height/style
 import inputStyles from '@/components/form/input/input.module.scss';
 import styles from './iconPicker.module.scss';
 
@@ -28,7 +27,8 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
   const [open, setOpen] = useState(false);
   const [kw, setKw] = useState('');
 
-  const containerRef = useRef<HTMLLabelElement | null>(null);
+  // wrapper container (for outside-click detection)
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const normalizedValue = (value ?? '').toLowerCase();
 
@@ -38,9 +38,29 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
     return iconNames.filter((n) => n.includes(q));
   }, [kw]);
 
+  // ✅ close on outside click (both input area + popover content are treated as "inside")
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDownCapture = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+
+      const root = containerRef.current;
+      const overlay = document.querySelector(`.${styles.popover}`); // css-module hashed class is OK
+
+      if (root?.contains(target)) return;
+      if (overlay?.contains(target)) return;
+
+      setOpen(false);
+    };
+
+    document.addEventListener('pointerdown', onPointerDownCapture, true);
+    return () => document.removeEventListener('pointerdown', onPointerDownCapture, true);
+  }, [open]);
+
   const panel = (
-    <div className={styles.panel}>
-      {/* Search input - EXACT same input style as TextInput */}
+    <div className={styles.panel} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}>
       <div className={styles.search}>
         <input className={inputStyles.input} value={kw} onChange={(e) => setKw(e.target.value)} placeholder="请输入图标名称" autoFocus />
       </div>
@@ -77,23 +97,37 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
   );
 
   return (
-    <label ref={containerRef} className={inputStyles.field} htmlFor={inputId}>
-      <span className={inputStyles.label}>{label}</span>
+    <div ref={containerRef} className={inputStyles.field}>
+      <label className={inputStyles.label} htmlFor={inputId}>
+        {label}
+      </label>
 
       <Popover
         open={open}
-        onOpenChange={(next) => {
-          if (disabled) return;
-          setOpen(next);
-        }}
-        trigger="click"
+        // ✅ IMPORTANT: disable internal click-toggle completely
+        trigger={[]}
         placement="bottomLeft"
         content={panel}
         overlayClassName={styles.popover}
         getPopupContainer={() => containerRef.current ?? document.body}
       >
-        {/* Wrapper so we can place the prefix inside while keeping TextInput's input style */}
-        <div className={styles.control}>
+        <div
+          className={styles.control}
+          onMouseDown={(e) => {
+            if (disabled) return;
+            // keep focus behavior normal, but open deterministically
+            e.stopPropagation();
+            setOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (disabled) return;
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              setOpen(true);
+            }
+            if (e.key === 'Escape') setOpen(false);
+          }}
+        >
           <span className={styles.prefix} aria-hidden="true">
             {hasIcon(normalizedValue) ? <Icon name={normalizedValue} size={16} /> : <span>#</span>}
           </span>
@@ -107,7 +141,6 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
             aria-invalid={!!error}
             aria-describedby={error ? errId : undefined}
             onFocus={() => !disabled && setOpen(true)}
-            onClick={() => !disabled && setOpen(true)}
             onChange={(e) => onChange?.(e.target.value.toLowerCase())}
           />
         </div>
@@ -118,7 +151,7 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
           {error}
         </span>
       ) : null}
-    </label>
+    </div>
   );
 };
 
