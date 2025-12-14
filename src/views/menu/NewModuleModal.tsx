@@ -190,7 +190,6 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
             }
           }}
           onBlur={(e) => {
-            // optional: help user by auto-adding leading '/'
             const fixed = normalizePath(e.target.value);
             if (fixed !== path) setPath(fixed);
           }}

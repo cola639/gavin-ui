@@ -6,9 +6,9 @@ import Dropdown from '@/components/form/dropdown/Dropdown';
 import TextInput from '@/components/form/input/TextInput';
 import IconPicker from '@/components/Icons/IconPicker';
 
-type UiMenuType = 'Module' | 'Menu' | 'Function';
-type Errors = Partial<Record<'menuName' | 'path' | 'component' | 'perms', string>>;
+export type UiMenuType = 'Module' | 'Menu' | 'Function';
 
+type Errors = Partial<Record<'menuName' | 'path' | 'component' | 'perms', string>>;
 type Option = { label: string; value: string };
 
 const TRUE_FALSE: Option[] = [
@@ -55,7 +55,6 @@ const normalizeType = (t?: string): UiMenuType => {
 export type MenuItemModalProps = {
   open: boolean;
   mode: 'create' | 'edit';
-
   parentId: number;
 
   /** create only: from plus selection */
@@ -63,7 +62,7 @@ export type MenuItemModalProps = {
 
   /** for perms auto-gen */
   permContext?: {
-    moduleName?: string;
+    moduleName?: string; // top module name
     menuName?: string; // nearest menu name (for function)
   };
 
@@ -77,15 +76,25 @@ export type MenuItemModalProps = {
 const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, createType, permContext, initial, onClose, onSuccess }) => {
   const isEdit = mode === 'edit';
 
-  // ✅ IMPORTANT: menuType is derived from props, not stored in state
-  const menuType: UiMenuType = isEdit ? normalizeType(initial?.menuType) : createType ?? 'Menu';
+  // ✅ IMPORTANT: derive menuType from props (no stale state)
+  const menuType: UiMenuType = useMemo(() => {
+    if (isEdit) return normalizeType(initial?.menuType);
+    return createType === 'Function' ? 'Function' : 'Menu';
+  }, [isEdit, initial?.menuType, createType]);
 
-  const showPath = menuType !== 'Function';
-  const showComponent = menuType === 'Menu';
-  const showIcon = menuType !== 'Function';
-  const showPerms = menuType !== 'Module';
+  const isButton = menuType === 'Function';
 
-  // form states
+  const showPath = !isButton; // hide for button
+  const showComponent = menuType === 'Menu'; // only for menu
+  const showIcon = !isButton; // hide for button
+  const showPerms = menuType !== 'Module'; // module usually no perms
+  const showFrameCache = !isButton; // hide for button (per your screenshot)
+
+  const title = useMemo(() => {
+    if (isEdit) return `Edit ${menuType === 'Function' ? 'Button' : menuType}`;
+    return menuType === 'Function' ? 'Add Button' : 'Add Menu';
+  }, [isEdit, menuType]);
+
   const [menuName, setMenuName] = useState('');
   const [path, setPath] = useState('');
   const [pathTouched, setPathTouched] = useState(false);
@@ -104,10 +113,11 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
 
-  // ✅ Re-init whenever modal opens or createType/edit target changes
+  // ✅ reset form every time modal opens (fixes “Add Menu then Add Button shows wrong modal”)
   useEffect(() => {
     if (!open) return;
 
+    setSubmitting(false);
     setErrors({});
     setPathTouched(false);
     setPermsTouched(false);
@@ -123,26 +133,21 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
       setStatus((initial?.status as any) ?? 'Normal');
       setIsFrame((initial?.isFrame as any) ?? 'False');
       setIsCache((initial?.isCache as any) ?? 'False');
-    } else {
-      // create
-      setMenuName('');
-      setPath('');
-      setComponent('');
-      setIcon('');
-      setPerms('');
-
-      setVisible('True');
-      setStatus('Normal');
-      setIsFrame('False');
-      setIsCache('False');
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, mode, createType, initial?.menuId, parentId]);
 
-  const title = useMemo(() => {
-    if (isEdit) return `Edit ${menuType === 'Function' ? 'Button' : menuType}`;
-    return menuType === 'Function' ? 'Add Button' : 'Add Menu';
-  }, [isEdit, menuType]);
+    // create defaults
+    setMenuName('');
+    setPath('');
+    setComponent('');
+    setIcon('');
+    setPerms('');
+
+    setVisible('True');
+    setStatus('Normal');
+    setIsFrame('False');
+    setIsCache('False');
+  }, [open, isEdit, menuType, initial?.menuId]);
 
   const autoPerms = (name: string) => {
     const modulePart = toKebab(permContext?.moduleName || '');
@@ -150,11 +155,13 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
     const selfPart = toKebab(name);
 
     if (menuType === 'Menu') {
+      // module:menu:view
       if (!modulePart || !selfPart) return '';
       return `${modulePart}:${selfPart}:view`;
     }
 
     if (menuType === 'Function') {
+      // module:menu:function
       if (!modulePart || !menuPartFromCtx || !selfPart) return '';
       return `${modulePart}:${menuPartFromCtx}:${selfPart}`;
     }
@@ -162,23 +169,28 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
     return '';
   };
 
-  const clearError = (k: keyof Errors) => setErrors((prev) => ({ ...prev, [k]: undefined }));
-
   const validate = (): Errors => {
     const e: Errors = {};
+
     if (!menuName.trim()) e.menuName = 'Please enter name.';
 
-    if (showPath) {
+    if (menuType === 'Menu' || menuType === 'Module') {
       if (!path.trim()) e.path = 'Please enter path.';
       else if (!path.startsWith('/')) e.path = "Path must start with '/'.";
     }
 
-    if (showComponent && !String(component ?? '').trim()) e.component = 'Please enter component path.';
+    if (menuType === 'Menu') {
+      if (!String(component ?? '').trim()) e.component = 'Please enter component path.';
+    }
 
-    if (showPerms && menuType === 'Function' && !perms.trim()) e.perms = 'Please enter permission flag.';
+    if (menuType === 'Function') {
+      if (!perms.trim()) e.perms = 'Please enter permission flag.';
+    }
 
     return e;
   };
+
+  const clearError = (k: keyof Errors) => setErrors((prev) => ({ ...prev, [k]: undefined }));
 
   const handleCancel = () => {
     if (submitting) return;
@@ -194,14 +206,17 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
       parentId,
       menuType,
       menuName: menuName.trim(),
-      orderNum: isEdit ? initial?.orderNum ?? 0 : 0,
+      orderNum: isEdit ? initial?.orderNum ?? 0 : 0, // ✅ no UI, default 0
       visible,
       status,
       isFrame,
       isCache
     };
 
+    // perms
     payload.perms = showPerms ? perms.trim() || undefined : undefined;
+
+    // path/component/icon per type
     payload.path = showPath ? normalizePath(path) : '';
     payload.component = showComponent ? String(component).trim() : null;
     payload.icon = showIcon ? icon?.trim() || undefined : undefined;
@@ -245,12 +260,14 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
             setMenuName(nextName);
             clearError('menuName');
 
+            // path auto (Menu/Module only)
             if (showPath && !pathTouched) {
               const auto = genPathFromName(nextName);
               setPath(auto);
               if (auto) clearError('path');
             }
 
+            // perms auto (Menu/Function only)
             if (showPerms && !permsTouched) {
               const p = autoPerms(nextName);
               setPerms(p);
@@ -261,6 +278,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
           placeholder="Please enter a name..."
         />
 
+        {/* ✅ Button: remove Path completely */}
         {showPath ? (
           <TextInput
             label="Path"
@@ -284,10 +302,9 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
             error={errors.path}
             placeholder="Please enter a path..."
           />
-        ) : (
-          <TextInput label="Path" value="(Button has no route)" disabled />
-        )}
+        ) : null}
 
+        {/* ✅ Button: remove Component completely */}
         {showComponent ? (
           <TextInput
             label="Component"
@@ -299,10 +316,9 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
             error={errors.component}
             placeholder='e.g., "@/views/xxx"'
           />
-        ) : (
-          <TextInput label="Component" value="-" disabled />
-        )}
+        ) : null}
 
+        {/* perms (Menu & Button) */}
         {showPerms ? (
           <TextInput
             label="Permission Flag"
@@ -315,16 +331,22 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({ open, mode, parentId, cre
             error={errors.perms}
             placeholder={menuType === 'Function' ? 'e.g., module:menu:function' : 'e.g., module:menu:view'}
           />
-        ) : (
-          <TextInput label="Permission Flag" value="-" disabled />
-        )}
+        ) : null}
 
-        {showIcon ? <IconPicker label="Icon" value={icon} onChange={setIcon} /> : <TextInput label="Icon" value="-" disabled />}
+        {/* ✅ Button: remove Icon completely */}
+        {showIcon ? <IconPicker label="Icon" value={icon} onChange={setIcon} /> : null}
 
+        {/* keep these for button */}
         <Dropdown label="Visible" value={visible} onChange={(v) => setVisible(v as any)} options={TRUE_FALSE} />
         <Dropdown label="Status" value={status} onChange={(v) => setStatus(v as any)} options={STATUS} />
-        <Dropdown label="Is Frame" value={isFrame} onChange={(v) => setIsFrame(v as any)} options={TRUE_FALSE} />
-        <Dropdown label="Is Cache" value={isCache} onChange={(v) => setIsCache(v as any)} options={TRUE_FALSE} />
+
+        {/* ✅ Button: remove Is Frame / Is Cache completely */}
+        {showFrameCache ? (
+          <>
+            <Dropdown label="Is Frame" value={isFrame} onChange={(v) => setIsFrame(v as any)} options={TRUE_FALSE} />
+            <Dropdown label="Is Cache" value={isCache} onChange={(v) => setIsCache(v as any)} options={TRUE_FALSE} />
+          </>
+        ) : null}
       </div>
     </Modal>
   );
