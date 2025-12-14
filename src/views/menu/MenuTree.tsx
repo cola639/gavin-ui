@@ -1,32 +1,57 @@
-// src/views/menu/MenuTree.tsx
 import IconTextButton from '@/components/button/IconTextButton';
 import Icon from '@/components/Icons';
-import { message } from 'antd';
+import { Dropdown as AntDropdown, message } from 'antd';
 import { ChevronDown, ChevronRight, GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import styles from './MenuTree.module.scss';
 
 export type MenuStatus = 'Normal' | 'Disabled';
+export type UiMenuType = 'Module' | 'Menu' | 'Function';
 
 export type MenuNode = {
   id: string | number;
+  parentId?: number;
+
+  menuType: UiMenuType;
+
   name: string;
-  /** backend icon name, e.g. "system", "user", ... */
-  icon?: string | React.ReactNode; // allow both string (for <Icon/>) and custom React node
+
+  /** backend icon name, e.g. "system", "user" */
+  icon?: string | React.ReactNode;
+
+  /** perms */
   permission?: string;
+
+  /** backend route path, e.g. /system/user */
+  routePath?: string;
+
+  /** backend component, e.g. "@/views/xxx" */
+  component?: string;
+
+  /** for table display (Component Path column) */
   path?: string;
+
   status?: MenuStatus;
+
+  /** extra info for modal auto perms */
+  moduleNameForPerm?: string; // top module name
+  menuNameForPerm?: string; // nearest menu name
+
+  /** optional fields used by edit modal */
+  orderNum?: number;
+  visible?: 'True' | 'False';
+  isFrame?: 'True' | 'False';
+  isCache?: 'True' | 'False';
+
   children?: MenuNode[];
 };
 
 type MenuTreeProps = {
   data?: MenuNode[];
-  onAddChild: (parent: MenuNode) => void;
+  onAddChild: (parent: MenuNode, createType: 'Menu' | 'Function') => void;
   onEdit: (node: MenuNode) => void;
   onDelete: (node: MenuNode) => void;
-  /** search keyword used to auto-expand & highlight */
   searchTerm?: string;
-  /** optional: bubble up reordered tree */
   onReorder?: (nextTree: MenuNode[]) => void;
 };
 
@@ -34,7 +59,6 @@ type IndexPath = number[];
 
 const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDelete, searchTerm, onReorder }) => {
   const [tree, setTree] = useState<MenuNode[]>(data);
-
   const [expanded, setExpanded] = useState<Set<string | number>>(() => new Set());
   const [matchedIds, setMatchedIds] = useState<Set<string | number>>(() => new Set());
 
@@ -42,27 +66,22 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
   const [dragInfo, setDragInfo] = useState<{ id: string | number; path: IndexPath } | null>(null);
   const [dragOverId, setDragOverId] = useState<string | number | null>(null);
 
-  // keep local tree in sync with parent data
-  useEffect(() => {
-    setTree(data);
-  }, [data]);
+  useEffect(() => setTree(data), [data]);
 
   const toggleExpand = (id: string | number) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };
 
-  // find index path for a node id in the current tree
   const findIndexPath = (nodes: MenuNode[], targetId: string | number, acc: IndexPath = []): IndexPath | null => {
     for (let i = 0; i < nodes.length; i++) {
       const n = nodes[i];
       const here = [...acc, i];
       if (n.id === targetId) return here;
-      if (n.children && n.children.length) {
+      if (n.children?.length) {
         const childPath = findIndexPath(n.children, targetId, here);
         if (childPath) return childPath;
       }
@@ -70,7 +89,6 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
     return null;
   };
 
-  // reorder within same-level sibling array
   const reorderSameLevel = (nodes: MenuNode[], parentPath: IndexPath, fromIndex: number, toIndex: number, depth = 0): MenuNode[] => {
     if (depth === parentPath.length) {
       const arr = [...nodes];
@@ -106,14 +124,11 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
           nextMatches.add(n.id);
           ancestors.forEach((id) => toExpand.add(id));
         }
-        if (n.children && n.children.length) {
-          walk(n.children, [...ancestors, n.id]);
-        }
+        if (n.children?.length) walk(n.children, [...ancestors, n.id]);
       }
     };
 
     walk(tree, []);
-
     setMatchedIds(nextMatches);
 
     if (toExpand.size) {
@@ -126,9 +141,7 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
   }, [searchTerm, tree]);
 
   const renderStatusBadge = (status?: MenuStatus) => {
-    if (!status || status === 'Normal') {
-      return <span className={`${styles.statusBadge} ${styles.statusNormal}`}>Normal</span>;
-    }
+    if (!status || status === 'Normal') return <span className={`${styles.statusBadge} ${styles.statusNormal}`}>Normal</span>;
     return <span className={`${styles.statusBadge} ${styles.statusDisabled}`}>Disabled</span>;
   };
 
@@ -149,11 +162,9 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
   };
 
   const handleDragOver = (e: React.DragEvent, targetId: string | number) => {
-    e.preventDefault(); // allow drop
+    e.preventDefault();
     if (!dragInfo) return;
-    if (dragOverId !== targetId) {
-      setDragOverId(targetId);
-    }
+    if (dragOverId !== targetId) setDragOverId(targetId);
   };
 
   const handleDrop = (e: React.DragEvent, target: MenuNode) => {
@@ -175,11 +186,8 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
     const parentFrom = fromPath.slice(0, -1);
     const parentTo = toPath.slice(0, -1);
 
-    // ❗ only allow same-level sort
     const sameParent = parentFrom.length === parentTo.length && parentFrom.every((v, i) => v === parentTo[i]);
-
     if (!sameParent) {
-      // alarm when dragging across levels
       message.warning('You can only reorder menus within the same level.');
       setDragOverId(null);
       return;
@@ -203,13 +211,9 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
 
     const renderIcon = () => {
       if (!node.icon) return null;
-
-      // if backend gave you a string, use <Icon name="..." />
       if (typeof node.icon === 'string') {
         return <Icon name={node.icon} size={15} fill={isActive ? '#fafafa' : '#707070'} className="w-[16px] h-[16px] flex-shrink-0" />;
       }
-
-      // else assume it’s already a ReactNode (emoji/custom)
       return <span className={styles.icon}>{node.icon}</span>;
     };
 
@@ -217,69 +221,76 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
       .filter(Boolean)
       .join(' ');
 
-    const row = (
-      <div key={node.id} className={rowClass} onDragOver={(e) => handleDragOver(e, node.id)} onDrop={(e) => handleDrop(e, node)}>
-        {/* Name column */}
-        <div className={`${styles.colName} ${isMatched ? styles.colNameMatched : ''}`}>
-          <div className={styles.colNameInner}>
-            <div className={styles.colNameLeft}>
-              {/* drag handle */}
-              <div className={styles.dragHandle} draggable onDragStart={(e) => handleDragStart(e, node)} onDragEnd={handleDragEnd}>
-                <GripVertical size={14} />
-              </div>
+    const canAddChild = node.menuType !== 'Function';
 
-              {/* indent */}
-              <div className={styles.indent} style={{ width: depth * 18 }} />
-
-              {/* caret */}
-              {hasChildren ? (
-                <button type="button" className={styles.expandBtn} onClick={() => toggleExpand(node.id)}>
-                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                </button>
-              ) : (
-                <div className={styles.expandPlaceholder} />
-              )}
-
-              {/* icon + name */}
-              <div className={styles.iconAndName}>
-                {renderIcon()}
-                <span className={`${styles.name} ${isActive ? styles.nameMatched : ''}`}>{node.name}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Permission flag */}
-        <div className={styles.colPerm}>{node.permission || '-'}</div>
-
-        {/* Component path */}
-        <div className={styles.colPath}>{node.path || '-'}</div>
-
-        {/* Status */}
-        <div className={styles.colStatus}>{renderStatusBadge(node.status)}</div>
-
-        {/* Action */}
-        <div className={styles.colAction}>
-          <IconTextButton className="!min-w-[40px]" icon={<Plus size={14} />} size="small" onClick={() => onAddChild(node)} />
-          <IconTextButton className="!min-w-[40px]" icon={<Pencil size={14} />} size="small" onClick={() => onEdit(node)} />
-          <IconTextButton className="!min-w-[40px]" icon={<Trash2 size={14} />} size="small" danger onClick={() => onDelete(node)} />
-        </div>
-      </div>
-    );
-
-    const children = hasChildren && isExpanded ? node.children!.map((c) => renderNode(c, depth + 1)) : null;
+    const addMenu = {
+      items: [
+        { key: 'Menu', label: 'Add Menu' },
+        { key: 'Function', label: 'Add Button' }
+      ],
+      onClick: ({ key }: { key: string }) => onAddChild(node, key as 'Menu' | 'Function')
+    };
 
     return (
       <React.Fragment key={node.id}>
-        {row}
-        {children}
+        <div key={node.id} className={rowClass} onDragOver={(e) => handleDragOver(e, node.id)} onDrop={(e) => handleDrop(e, node)}>
+          {/* Name column */}
+          <div className={`${styles.colName} ${isMatched ? styles.colNameMatched : ''}`}>
+            <div className={styles.colNameInner}>
+              <div className={styles.colNameLeft}>
+                <div className={styles.dragHandle} draggable onDragStart={(e) => handleDragStart(e, node)} onDragEnd={handleDragEnd}>
+                  <GripVertical size={14} />
+                </div>
+
+                <div className={styles.indent} style={{ width: depth * 18 }} />
+
+                {hasChildren ? (
+                  <button type="button" className={styles.expandBtn} onClick={() => toggleExpand(node.id)}>
+                    {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  </button>
+                ) : (
+                  <div className={styles.expandPlaceholder} />
+                )}
+
+                <div className={styles.iconAndName}>
+                  {renderIcon()}
+                  <span className={`${styles.name} ${isActive ? styles.nameMatched : ''}`}>{node.name}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Permission flag */}
+          <div className={styles.colPerm}>{node.permission || '-'}</div>
+
+          {/* Component path */}
+          <div className={styles.colPath}>{node.path || '-'}</div>
+
+          {/* Status */}
+          <div className={styles.colStatus}>{renderStatusBadge(node.status)}</div>
+
+          {/* Action */}
+          <div className={styles.colAction}>
+            {canAddChild ? (
+              <AntDropdown menu={addMenu} trigger={['click']} placement="bottomRight">
+                <span>
+                  <IconTextButton className="!min-w-[40px]" icon={<Plus size={14} />} size="small" />
+                </span>
+              </AntDropdown>
+            ) : null}
+
+            <IconTextButton className="!min-w-[40px]" icon={<Pencil size={14} />} size="small" onClick={() => onEdit(node)} />
+            <IconTextButton className="!min-w-[40px]" icon={<Trash2 size={14} />} size="small" danger onClick={() => onDelete(node)} />
+          </div>
+        </div>
+
+        {hasChildren && isExpanded ? node.children!.map((c) => renderNode(c, depth + 1)) : null}
       </React.Fragment>
     );
   };
 
   return (
     <div className={styles.wrapper}>
-      {/* header */}
       <div className={styles.header}>
         <div className={styles.headerRow}>
           <div className={styles.headerColName}>Name</div>
@@ -290,7 +301,6 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
         </div>
       </div>
 
-      {/* body */}
       <div className={styles.body}>{tree.map((node) => renderNode(node, 0))}</div>
     </div>
   );

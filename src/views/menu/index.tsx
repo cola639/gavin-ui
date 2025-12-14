@@ -2,73 +2,107 @@ import { message, Modal, Spin } from 'antd';
 import React, { useEffect, useState } from 'react';
 
 import MenuLayout from './MenuLayout';
-import MenuTree, { MenuNode, MenuStatus } from './MenuTree';
+import MenuTree, { MenuNode, MenuStatus, UiMenuType } from './MenuTree';
 
-import { createMenu, deleteMenu, fetchMenuList, updateMenu, type RawMenu } from '@/apis/menu';
+import { deleteMenu, fetchMenuList, type RawMenu } from '@/apis/menu';
+import MenuItemModal from './MenuItemModal';
 import NewModuleModal from './NewModuleModal';
 
-/* ---------- helpers: flat list -> tree, then -> MenuNode[] ---------- */
-
 const normalizeStatus = (status?: string | null): MenuStatus => (status === 'Normal' ? 'Normal' : 'Disabled');
+
+const normalizeType = (t?: string): UiMenuType => {
+  if (t === 'M' || t === 'Module') return 'Module';
+  if (t === 'C' || t === 'Menu') return 'Menu';
+  if (t === 'F' || t === 'Function') return 'Function';
+  return 'Menu';
+};
 
 /** Convert flat array (with parentId) into a nested tree (children[]) */
 const buildMenuTreeFromFlat = (rows: RawMenu[]): RawMenu[] => {
   const map = new Map<number, RawMenu & { children: RawMenu[] }>();
 
-  rows.forEach((item) => {
-    map.set(item.menuId, { ...item, children: [] });
-  });
+  rows.forEach((item) => map.set(item.menuId, { ...item, children: [] }));
 
   const roots: (RawMenu & { children: RawMenu[] })[] = [];
 
   map.forEach((item) => {
     const pid = item.parentId;
-    if (!pid || !map.has(pid)) {
-      roots.push(item);
-    } else {
-      map.get(pid)!.children.push(item);
-    }
+    if (!pid || !map.has(pid)) roots.push(item);
+    else map.get(pid)!.children.push(item);
   });
 
   const sortTree = (list: RawMenu[]) => {
     list.sort((a, b) => (a.orderNum ?? 0) - (b.orderNum ?? 0));
-    list.forEach((n) => {
-      if (n.children && n.children.length) sortTree(n.children);
-    });
+    list.forEach((n) => n.children?.length && sortTree(n.children));
   };
 
   sortTree(roots);
   return roots;
 };
 
-/** Map backend RawMenu tree -> UI MenuNode tree used by MenuTree */
-const mapToMenuNodes = (nodes: RawMenu[]): MenuNode[] =>
-  nodes.map((item) => ({
-    id: item.menuId,
-    name: item.menuName,
-    permission: item.perms || '',
-    path: item.component || item.path || '',
-    status: normalizeStatus(item.status),
-    icon: item.icon || undefined,
-    children: item.children && item.children.length ? mapToMenuNodes(item.children) : undefined
-  }));
+/**
+ * Map backend tree -> UI MenuNode
+ * Also attach:
+ * - moduleNameForPerm: top module name
+ * - menuNameForPerm: nearest menu name
+ */
+const mapToMenuNodes = (nodes: RawMenu[], moduleName?: string, menuName?: string): MenuNode[] =>
+  nodes.map((item) => {
+    const t = normalizeType(item.menuType);
 
-/* -------------------------------------------------------------------- */
+    const nextModule = t === 'Module' ? item.menuName : moduleName;
+    const nextMenu = t === 'Menu' ? item.menuName : menuName;
+
+    const routePath = item.path || '';
+    const component = item.component || '';
+
+    return {
+      id: item.menuId,
+      parentId: item.parentId,
+      menuType: t,
+
+      name: item.menuName,
+
+      permission: item.perms || '',
+      routePath,
+      component,
+
+      // table "Component Path" shows component first, otherwise route
+      path: component || routePath || '-',
+
+      status: normalizeStatus(item.status),
+      icon: item.icon || undefined,
+
+      orderNum: item.orderNum,
+      visible: item.visible as any,
+      isFrame: item.isFrame as any,
+      isCache: item.isCache as any,
+
+      moduleNameForPerm: nextModule,
+      menuNameForPerm: nextMenu,
+
+      children: item.children?.length ? mapToMenuNodes(item.children, nextModule, nextMenu) : undefined
+    };
+  });
 
 const MenuPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
-  // search box text + actual search term passed into MenuTree
   const [nameInput, setNameInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // modal
-  const [openNew, setOpenNew] = useState(false);
-
-  // UI tree for MenuTree
   const [treeData, setTreeData] = useState<MenuNode[]>([]);
 
-  /** Load menus from backend and build tree for MenuTree */
+  // New module modal (keep it, different UI)
+  const [openNew, setOpenNew] = useState(false);
+
+  // Menu/Button modal state
+  const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [itemModalMode, setItemModalMode] = useState<'create' | 'edit'>('create');
+  const [createType, setCreateType] = useState<'Menu' | 'Function'>('Menu');
+  const [activeNode, setActiveNode] = useState<MenuNode | null>(null);
+  const [editInitial, setEditInitial] = useState<any>(null);
+
   const loadMenus = async () => {
     setLoading(true);
     try {
@@ -77,6 +111,7 @@ const MenuPage: React.FC = () => {
       const tree = buildMenuTreeFromFlat(rows);
       setTreeData(mapToMenuNodes(tree));
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
       message.error('Failed to load menu list');
     } finally {
@@ -88,12 +123,7 @@ const MenuPage: React.FC = () => {
     loadMenus();
   }, []);
 
-  /* ---------- left panel actions ---------- */
-
-  const handleSearch = () => {
-    // current behavior: local search highlight/filter inside MenuTree
-    setSearchTerm(nameInput.trim());
-  };
+  const handleSearch = () => setSearchTerm(nameInput.trim());
 
   const handleReset = () => {
     setNameInput('');
@@ -101,48 +131,45 @@ const MenuPage: React.FC = () => {
     loadMenus();
   };
 
+  // Left "New" button => NewModuleModal
   const handleOpenNew = () => setOpenNew(true);
 
-  /* ---------- MenuTree actions ---------- */
-
-  const handleAddChild = async (parent: MenuNode) => {
-    const menuName = window.prompt(`New child under "${parent.name}"`);
-    if (!menuName) return;
-
-    try {
-      await createMenu({
-        menuName,
-        parentId: Number(parent.id),
-        orderNum: 1,
-        status: 'Normal',
-        menuType: 'C',
-        visible: 'True',
-        isFrame: 'False',
-        isCache: 'False'
-      });
-      message.success('Menu created');
-      loadMenus();
-    } catch (err) {
-      console.error(err);
-      message.error('Failed to create child menu');
-    }
+  // plus dropdown (Add Menu / Add Button)
+  const handleAddChild = (parent: MenuNode, type: 'Menu' | 'Function') => {
+    setItemModalMode('create');
+    setCreateType(type);
+    setActiveNode(parent);
+    setEditInitial(null);
+    setItemModalOpen(true);
   };
 
-  const handleEdit = async (node: MenuNode) => {
-    const menuName = window.prompt('Edit menu name', node.name);
-    if (!menuName || menuName === node.name) return;
+  const handleEdit = (node: MenuNode) => {
+    setItemModalMode('edit');
+    setActiveNode(node);
 
-    try {
-      await updateMenu({
-        menuId: Number(node.id),
-        menuName
-      });
-      message.success('Menu updated');
-      loadMenus();
-    } catch (err) {
-      console.error(err);
-      message.error('Failed to update menu');
-    }
+    setEditInitial({
+      menuId: Number(node.id),
+      parentId: Number(node.parentId ?? 0),
+
+      menuName: node.name,
+      menuType: node.menuType,
+
+      // real route path for edit
+      path: node.routePath || '',
+
+      component: node.component || '',
+      perms: node.permission || '',
+
+      icon: typeof node.icon === 'string' ? node.icon : '',
+      orderNum: node.orderNum ?? 0,
+
+      visible: node.visible ?? 'True',
+      status: node.status ?? 'Normal',
+      isFrame: node.isFrame ?? 'False',
+      isCache: node.isCache ?? 'False'
+    });
+
+    setItemModalOpen(true);
   };
 
   const handleDelete = (node: MenuNode) => {
@@ -157,6 +184,7 @@ const MenuPage: React.FC = () => {
           message.success('Menu deleted');
           loadMenus();
         } catch (err) {
+          // eslint-disable-next-line no-console
           console.error(err);
           message.error(`${err}`);
         }
@@ -164,22 +192,20 @@ const MenuPage: React.FC = () => {
     });
   };
 
-  /** Drag-sort from MenuTree – for now just keep it in memory */
-  const handleReorder = (nextTree: MenuNode[]) => {
-    setTreeData(nextTree);
-  };
+  const handleReorder = (nextTree: MenuNode[]) => setTreeData(nextTree);
+
+  const permContext = activeNode
+    ? {
+        moduleName: activeNode.moduleNameForPerm,
+        menuName: activeNode.menuType === 'Menu' ? activeNode.name : activeNode.menuNameForPerm
+      }
+    : undefined;
 
   return (
     <main className="min-h-screen bg-[var(--bg-page)] p-5 lg:p-8">
       <h1 className="mb-5 text-3xl font-semibold text-gray-900">Menu Management</h1>
 
-      <MenuLayout
-        name={nameInput}
-        onNameChange={setNameInput}
-        onSearch={handleSearch}
-        onReset={handleReset}
-        onNew={handleOpenNew} // ✅ FIXED
-      >
+      <MenuLayout name={nameInput} onNameChange={setNameInput} onSearch={handleSearch} onReset={handleReset} onNew={handleOpenNew}>
         <Spin spinning={loading}>
           <MenuTree
             data={treeData}
@@ -192,7 +218,20 @@ const MenuPage: React.FC = () => {
         </Spin>
       </MenuLayout>
 
+      {/* Keep your NewModuleModal for root module creation */}
       <NewModuleModal open={openNew} onClose={() => setOpenNew(false)} onCreated={loadMenus} parentId={0} />
+
+      {/* Menu/Button modal for plus/edit */}
+      <MenuItemModal
+        open={itemModalOpen}
+        mode={itemModalMode}
+        parentId={itemModalMode === 'create' ? Number(activeNode?.id ?? 0) : Number(editInitial?.parentId ?? 0)}
+        createType={itemModalMode === 'create' ? createType : undefined}
+        permContext={permContext}
+        initial={itemModalMode === 'edit' ? editInitial : undefined}
+        onClose={() => setItemModalOpen(false)}
+        onSuccess={loadMenus}
+      />
     </main>
   );
 };
