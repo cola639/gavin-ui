@@ -1,18 +1,17 @@
 import { Modal, message } from 'antd';
 import React, { useMemo, useState } from 'react';
 
-import { createMenu } from '@/apis/menu'; // adjust import to your actual path
+import { createMenu } from '@/apis/menu';
 import Dropdown from '@/components/form/dropdown/Dropdown';
 import TextInput from '@/components/form/input/TextInput';
+import IconPicker from '@/components/Icons/IconPicker';
 
 type Errors = Partial<Record<'menuName' | 'path' | 'orderNum', string>>;
 
 export type NewModuleModalProps = {
   open: boolean;
   onClose: () => void;
-  /** Call after successful creation so parent can refresh tree/table */
   onCreated?: () => void;
-  /** Optional: create under a parent folder/module; default 0 */
   parentId?: number;
 };
 
@@ -28,15 +27,12 @@ const STATUS: Option[] = [
   { label: 'Disabled', value: 'Disabled' }
 ];
 
-// NOTE: Your API doc uses "Module".
-// Your menu.ts comment hints it could be 'M'|'C'|'F'.
-// If your backend expects 'M', change this constant to 'M'.
+// If backend expects 'M' instead, change here
 const MENU_TYPE_MODULE = 'Module';
 
 const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreated, parentId = 0 }) => {
   const [submitting, setSubmitting] = useState(false);
 
-  // form state
   const [menuName, setMenuName] = useState('');
   const [path, setPath] = useState('');
   const [icon, setIcon] = useState('bug');
@@ -65,13 +61,11 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
 
   const validate = (): Errors => {
     const e: Errors = {};
-
     if (!menuName.trim()) e.menuName = 'Please enter module name.';
     if (!path.trim()) e.path = 'Please enter path.';
     else if (!path.startsWith('/')) e.path = "Path must start with '/'.";
     if (orderNum.trim() === '') e.orderNum = 'Please enter order number.';
     else if (Number.isNaN(Number(orderNum))) e.orderNum = 'Order number must be a valid number.';
-
     return e;
   };
 
@@ -86,7 +80,7 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
   const handleOk = async () => {
     const e = validate();
     setErrors(e);
-    if (Object.keys(e).some((k) => (e as any)[k])) return;
+    if (Object.values(e).some(Boolean)) return;
 
     const payload = {
       parentId,
@@ -109,7 +103,6 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
       resetForm();
       onCreated?.();
     } catch (err) {
-      // keep it simple: show message and keep modal open
       // eslint-disable-next-line no-console
       console.error('CREATE_MODULE_FAILED', err, payload);
       message.error('Create module failed');
@@ -119,7 +112,16 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
   };
 
   return (
-    <Modal title="New Module" open={open} onCancel={handleCancel} onOk={handleOk} okText="Create" confirmLoading={submitting} destroyOnClose>
+    <Modal
+      title="New Module"
+      open={open}
+      onCancel={handleCancel}
+      onOk={handleOk}
+      okText="Create"
+      confirmLoading={submitting}
+      okButtonProps={{ disabled: !canSubmit }}
+      destroyOnClose
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-[24px]">
         <TextInput
           label="Name"
@@ -143,9 +145,10 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
           placeholder="e.g., /test-category"
         />
 
-        <TextInput label="Icon" value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="e.g., bug" />
+        {/* ✅ same height as your other inputs */}
+        <IconPicker label="Icon" value={icon} onChange={setIcon} />
 
-        <TextInput
+        {/* <TextInput
           label="Order"
           type="number"
           value={orderNum}
@@ -155,14 +158,11 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
           }}
           error={errors.orderNum}
           placeholder="0"
-        />
+        /> */}
 
         <Dropdown label="Visible" value={visible} onChange={(v) => setVisible(v as any)} options={TRUE_FALSE} />
-
         <Dropdown label="Status" value={status} onChange={(v) => setStatus(v as any)} options={STATUS} />
-
         <Dropdown label="Is Frame" value={isFrame} onChange={(v) => setIsFrame(v as any)} options={TRUE_FALSE} />
-
         <Dropdown label="Is Cache" value={isCache} onChange={(v) => setIsCache(v as any)} options={TRUE_FALSE} />
       </div>
 

@@ -1,0 +1,97 @@
+.control {
+  position: relative;
+}
+
+.prefix {
+  position: absolute;
+  left: 14px; /* matches TextInput padding */
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: #6b7280; /* gray-500 */
+}
+
+.withPrefix {
+  /* TextInput input padding is 12px 14px; we keep height identical and only add left padding */
+  padding-left: 42px !important;
+}
+
+.popover {
+  /* optional: make popover feel like your UI */
+}
+
+.panel {
+  width: 560px;
+  max-width: 88vw;
+}
+
+.search {
+  margin-bottom: 12px;
+}
+
+.scroll {
+  max-height: 280px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.18s ease;
+}
+
+.item:hover {
+  border-color: var(--primary);
+  background: rgba(159, 226, 220, 0.12);
+}
+
+.itemSelected {
+  border-color: var(--primary);
+  background: rgba(159, 226, 220, 0.18);
+}
+
+.iconBox {
+  width: 24px;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.name {
+  font-size: 12px;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+}
