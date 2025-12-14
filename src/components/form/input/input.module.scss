@@ -1,11 +1,14 @@
 .field {
   display: grid;
   gap: 8px;
+  position: relative; /* ✅ needed for absolute error */
 }
+
 .label {
   font-size: 14px;
   font-weight: 600;
 }
+
 .input {
   width: 100%;
   border: 1px solid #e5e7eb;
@@ -21,10 +24,23 @@
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(159, 226, 220, 0.25);
 }
+
+/* ✅ error no longer increases field height (prevents row expanding) */
 .error {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 2px); /* uses the existing grid row gap below */
   color: #b42318;
   font-size: 12px;
+  line-height: 14px;
+
+  /* keep it compact on one line */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
+
 .inputError {
   border-color: #fda4a1;
 }

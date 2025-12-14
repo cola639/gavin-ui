@@ -50,7 +50,7 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
   const resetForm = () => {
     setMenuName('');
     setPath('');
-    setIcon('bug');
+    setIcon('');
     setOrderNum('0');
     setIsFrame('False');
     setIsCache('False');
@@ -122,7 +122,7 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
       okButtonProps={{ disabled: !canSubmit }}
       destroyOnClose
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-[24px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-[24px]">
         <TextInput
           label="Name"
           value={menuName}
@@ -131,7 +131,7 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
             clearError('menuName');
           }}
           error={errors.menuName}
-          placeholder="e.g., test-category"
+          placeholder="Please enter a name..."
         />
 
         <TextInput
@@ -142,7 +142,7 @@ const NewModuleModal: React.FC<NewModuleModalProps> = ({ open, onClose, onCreate
             clearError('path');
           }}
           error={errors.path}
-          placeholder="e.g., /test-category"
+          placeholder="Please enter a path..."
         />
 
         {/* ✅ same height as your other inputs */}
