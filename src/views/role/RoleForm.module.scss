@@ -1,0 +1,112 @@
+.menuHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  @media (min-width: 768px) {
+    flex-wrap: nowrap;
+  }
+}
+
+.menuActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.treeBox {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+  min-height: 180px;
+}
+
+.remark {
+  min-height: 88px;
+  resize: vertical;
+}
+
+/**
+ * ✅ AntD uses :hover / :active / :focus-within states that still apply default blue.
+ * We override them with higher specificity + !important.
+ */
+.antdPrimary {
+  /* ===== Generic checkbox (Expand All / Select All) ===== */
+  :global(.ant-checkbox-inner) {
+    border-color: #d1d5db !important;
+  }
+
+  :global(.ant-checkbox-wrapper:hover .ant-checkbox-inner),
+  :global(.ant-checkbox:hover .ant-checkbox-inner),
+  :global(.ant-checkbox-wrapper:active .ant-checkbox-inner),
+  :global(.ant-checkbox:active .ant-checkbox-inner),
+  :global(.ant-checkbox-wrapper:focus-within .ant-checkbox-inner),
+  :global(.ant-checkbox-input:focus + .ant-checkbox-inner),
+  :global(.ant-checkbox-input:focus-visible + .ant-checkbox-inner) {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(159, 226, 220, 0.25) !important;
+  }
+
+  :global(.ant-checkbox-checked .ant-checkbox-inner),
+  :global(.ant-checkbox-checked:hover .ant-checkbox-inner),
+  :global(.ant-checkbox-wrapper:hover .ant-checkbox-checked .ant-checkbox-inner),
+  :global(.ant-checkbox-wrapper:active .ant-checkbox-checked .ant-checkbox-inner) {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    box-shadow: none !important;
+  }
+
+  /* ===== Tree checkbox ===== */
+  :global(.ant-tree-checkbox-inner) {
+    border-color: #d1d5db !important;
+  }
+
+  /* 🔥 This is the key: remove “blue while mouse is down / first click” */
+  :global(.ant-tree-checkbox-wrapper:hover .ant-tree-checkbox-inner),
+  :global(.ant-tree-checkbox:hover .ant-tree-checkbox-inner),
+  :global(.ant-tree-checkbox-wrapper:active .ant-tree-checkbox-inner),
+  :global(.ant-tree-checkbox:active .ant-tree-checkbox-inner),
+  :global(.ant-tree-checkbox-wrapper:focus-within .ant-tree-checkbox-inner),
+  :global(.ant-tree-checkbox-input:focus + .ant-tree-checkbox-inner),
+  :global(.ant-tree-checkbox-input:focus-visible + .ant-tree-checkbox-inner) {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(159, 226, 220, 0.25) !important;
+  }
+
+  :global(.ant-tree-checkbox-checked .ant-tree-checkbox-inner),
+  :global(.ant-tree-checkbox-checked:hover .ant-tree-checkbox-inner),
+  :global(.ant-tree-checkbox-wrapper:hover .ant-tree-checkbox-checked .ant-tree-checkbox-inner),
+  :global(.ant-tree-checkbox-wrapper:active .ant-tree-checkbox-checked .ant-tree-checkbox-inner) {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    box-shadow: none !important;
+  }
+
+  :global(.ant-tree-checkbox-indeterminate .ant-tree-checkbox-inner:after) {
+    background: var(--primary) !important;
+  }
+
+  /* Optional: tree row hover/selected */
+  :global(.ant-tree-node-content-wrapper:hover) {
+    background: rgba(159, 226, 220, 0.14) !important;
+  }
+
+  :global(.ant-tree-node-content-wrapper.ant-tree-node-selected) {
+    background: rgba(159, 226, 220, 0.14) !important;
+  }
+
+  :global(.ant-tree-switcher:hover) {
+    color: var(--primary) !important;
+  }
+}
+
+.roleTree {
+  :global(.ant-tree) {
+    background: transparent;
+  }
+}

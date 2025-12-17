@@ -6,6 +6,7 @@ import TextInput from '@/components/form/input/TextInput';
 import RadioGroup from '@/components/form/radio/RadioGroup';
 
 import inputStyles from '@/components/form/input/input.module.scss';
+import styles from './RoleForm.module.scss';
 
 import { fetchMenuList, type RawMenu as RawSysMenu } from '@/apis/menu';
 import { getRoleMenuTreeselectApi } from '@/apis/role';
@@ -21,7 +22,6 @@ export type RoleFormValues = {
 };
 
 export type RoleFormProps = {
-  /** If provided, form will load checked menuIds from roleMenuTreeselect */
   roleId?: number;
   initial?: Partial<RoleFormValues>;
   submitLabel?: string;
@@ -72,7 +72,6 @@ const collectAllKeys = (nodes: DataNode[], acc: React.Key[] = []) => {
 };
 
 const toNumberKeys = (keys: React.Key[]): number[] => keys.map((k) => Number(k)).filter((n) => Number.isFinite(n));
-
 /** -------------------------------------------------------------------------------------- */
 
 const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Submit', onSubmit }) => {
@@ -81,18 +80,18 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
   const [status, setStatus] = useState<RoleFormValues['status']>(initial?.status ?? 'Enabled');
   const [remark, setRemark] = useState(initial?.remark ?? '');
 
-  // menu tree
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeData, setTreeData] = useState<DataNode[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<React.Key[]>(initial?.menuIds?.map(String) ?? []);
-
-  // parent-child linkage: linked = true => cascade (checkStrictly=false)
   const [linked, setLinked] = useState(true);
 
   const [errors, setErrors] = useState<Errors>({});
 
   const allKeys = useMemo(() => collectAllKeys(treeData, []), [treeData]);
+
+  const isExpandedAll = allKeys.length > 0 && expandedKeys.length >= allKeys.length;
+  const isCheckedAll = allKeys.length > 0 && checkedKeys.length >= allKeys.length;
 
   const validate = (): Errors => {
     const e: Errors = {};
@@ -104,14 +103,12 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
 
   const clear = (k: keyof Errors) => setErrors((prev) => ({ ...prev, [k]: undefined }));
 
-  // load menu tree + checked keys
   useEffect(() => {
     let alive = true;
 
     const load = async () => {
       setTreeLoading(true);
       try {
-        // edit: use roleMenuTreeselect (usually returns menus tree + checkedKeys)
         if (roleId) {
           const res: any = await getRoleMenuTreeselectApi(roleId);
 
@@ -123,9 +120,8 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
           if (Array.isArray(menus) && menus.length) {
             const data = mapMenusToTreeData(menus);
             setTreeData(data);
-            setExpandedKeys(collectAllKeys(data, [])); // expand all by default
+            setExpandedKeys(collectAllKeys(data, []));
           } else {
-            // fallback to system menu list
             const listRes: any = await fetchMenuList();
             const flat: RawSysMenu[] = (listRes?.data as any) ?? [];
             const tree = buildMenuTreeFromFlat(flat);
@@ -134,20 +130,18 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
             setExpandedKeys(collectAllKeys(data, []));
           }
 
-          // normalize checked keys
           const ck = Array.isArray(checked) ? checked : [];
           setCheckedKeys(ck.map((x: any) => String(x)));
         } else {
-          // create: use system menu list (flat -> tree)
           const listRes: any = await fetchMenuList();
           const flat: RawSysMenu[] = (listRes?.data as any) ?? [];
           const tree = buildMenuTreeFromFlat(flat);
           const data = mapMenusToTreeData(tree);
+
           if (!alive) return;
 
           setTreeData(data);
-          setExpandedKeys(collectAllKeys(data, [])); // expand all by default
-          // keep initial menuIds if provided
+          setExpandedKeys(collectAllKeys(data, []));
           if (initial?.menuIds?.length) setCheckedKeys(initial.menuIds.map((id) => String(id)));
         }
       } catch (e) {
@@ -165,16 +159,6 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleId]);
 
-  const toggleExpandAll = () => {
-    const isAllExpanded = expandedKeys.length && expandedKeys.length >= allKeys.length;
-    setExpandedKeys(isAllExpanded ? [] : allKeys);
-  };
-
-  const toggleSelectAll = () => {
-    const isAllChecked = checkedKeys.length && checkedKeys.length >= allKeys.length;
-    setCheckedKeys(isAllChecked ? [] : allKeys);
-  };
-
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const eMap = validate();
@@ -191,8 +175,8 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
   };
 
   return (
-    <form onSubmit={submit} noValidate>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form className={styles.antdPrimary} onSubmit={submit} noValidate>
+      <div className="grid grid-cols-1 gap-4">
         <TextInput
           label="Role Name"
           value={roleName}
@@ -215,39 +199,34 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
           placeholder="Please enter role key..."
         />
 
-        <div className="md:col-span-2">
-          <RadioGroup
-            label="Status"
-            value={status}
-            onChange={(v) => {
-              setStatus(v as any);
-              clear('status');
-            }}
-            options={STATUS_OPTIONS}
-          />
-        </div>
+        <RadioGroup
+          label="Status"
+          value={status}
+          onChange={(v) => {
+            setStatus(v as any);
+            clear('status');
+          }}
+          options={STATUS_OPTIONS}
+        />
 
-        {/* Menu Permissions */}
-        <div className="md:col-span-2">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-sm font-semibold text-gray-900">Menu Permissions</div>
+        {/* Menus */}
+        <div>
+          <div className={`${styles.menuHeader} mb-2`}>
+            <div className="text-sm font-semibold text-gray-900">Menus</div>
 
-            <div className="flex items-center gap-4 text-sm">
-              <button type="button" className="text-[var(--primary)] hover:opacity-80" onClick={toggleExpandAll}>
-                Expand/Collapse
-              </button>
+            {/* ✅ action -> checkbox toggles */}
+            <div className={styles.menuActions}>
+              <Checkbox checked={isExpandedAll} onChange={(e) => setExpandedKeys(e.target.checked ? allKeys : [])} disabled={!allKeys.length}>
+                Expand All
+              </Checkbox>
 
-              <button type="button" className="text-[var(--primary)] hover:opacity-80" onClick={toggleSelectAll}>
-                Select All / None
-              </button>
-
-              <Checkbox checked={linked} onChange={(e) => setLinked(e.target.checked)}>
-                Parent-Child Link
+              <Checkbox checked={isCheckedAll} onChange={(e) => setCheckedKeys(e.target.checked ? allKeys : [])} disabled={!allKeys.length}>
+                Select All
               </Checkbox>
             </div>
           </div>
 
-          <div className="rounded-xl border border-[#e5e7eb] bg-white shadow-[0_6px_20px_rgba(0,0,0,0.04)] p-3" style={{ minHeight: 180 }}>
+          <div className={`${styles.treeBox} ${styles.roleTree}`}>
             <Spin spinning={treeLoading}>
               <Tree
                 checkable
@@ -258,7 +237,6 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
                 checkStrictly={!linked}
                 checkedKeys={linked ? checkedKeys : { checked: checkedKeys, halfChecked: [] }}
                 onCheck={(keys) => {
-                  // antd: when checkStrictly=true => {checked, halfChecked}
                   if (Array.isArray(keys)) setCheckedKeys(keys);
                   else setCheckedKeys((keys as any).checked ?? []);
                 }}
@@ -268,18 +246,15 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
         </div>
 
         {/* Remark */}
-        <div className="md:col-span-2">
-          <label className={inputStyles.field}>
-            <span className={inputStyles.label}>Remark</span>
-            <textarea
-              className={inputStyles.input}
-              value={remark}
-              onChange={(e) => setRemark(e.target.value)}
-              placeholder="Please enter remark..."
-              style={{ minHeight: 88, resize: 'vertical' }}
-            />
-          </label>
-        </div>
+        <label className={inputStyles.field}>
+          <span className={inputStyles.label}>Remark</span>
+          <textarea
+            className={`${inputStyles.input} ${styles.remark}`}
+            value={remark}
+            onChange={(e) => setRemark(e.target.value)}
+            placeholder="Please enter remark..."
+          />
+        </label>
       </div>
 
       <div className="mt-5">
