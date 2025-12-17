@@ -1,47 +1,36 @@
 // src/apis/role.ts
 import request from 'utils/request';
 
-export type Id = number | string;
+export type RoleStatusUI = 'Enabled' | 'Disabled';
 
-export type PageQuery<T extends Record<string, any> = Record<string, any>> = T & {
-  pageNum?: number;
-  pageSize?: number;
-};
-
-export type Role = {
-  roleId?: number;
+export type RoleListQuery = {
+  pageNum: number;
+  pageSize: number;
   roleName?: string;
-  roleKey?: string;
-  roleSort?: number;
-  status?: string;
-  remark?: string;
-
-  // common ruoyi fields
-  menuIds?: number[];
-  deptIds?: number[];
-  dataScope?: string;
-
-  [k: string]: any;
+  status?: RoleStatusUI | null;
 };
 
-/**
- * GET/POST role list
- * Your backend uses: POST /system/role/list
- * - pageNum/pageSize in params
- * - filters in body
- */
-export function getRolesApi(payload: PageQuery = {}) {
-  const { pageNum = 1, pageSize = 10, ...filters } = payload;
+export type ApiRoleRow = {
+  roleId: number;
+  roleName: string;
+  roleKey: string;
+  roleSort: number;
+  status: string; // usually '0'/'1' or 'Enabled'/'Disabled'
+  createTime?: string;
+  remark?: string;
+};
+
+export function getRolesApi(payload: any) {
+  const { pageNum, pageSize, ...filters } = payload;
   return request({
     url: '/system/role/list',
-    method: 'post',
+    method: 'get',
     params: { pageNum, pageSize },
     data: filters
   });
 }
 
-/** POST /system/role */
-export function addRoleApi(data: Role) {
+export function addRoleApi(data: Partial<ApiRoleRow>) {
   return request({
     url: '/system/role',
     method: 'post',
@@ -49,8 +38,7 @@ export function addRoleApi(data: Role) {
   });
 }
 
-/** PUT /system/role */
-export function updateRoleApi(data: Role & { roleId: Id }) {
+export function updateRoleApi(data: Partial<ApiRoleRow> & { roleId: number }) {
   return request({
     url: '/system/role',
     method: 'put',
@@ -58,69 +46,60 @@ export function updateRoleApi(data: Role & { roleId: Id }) {
   });
 }
 
-/** GET /system/role/{roleId} (role detail) */
-export function getRoleDetailApi(roleId: Id) {
-  return request({
-    url: `/system/role/${roleId}`,
-    method: 'get'
-  });
-}
-
-/**
- * DELETE /system/role/{roleIds}
- * Example: /system/role/104,101
- */
-export function deleteRoleApi(roleIds: Id | Id[]) {
-  const ids = Array.isArray(roleIds) ? roleIds.join(',') : roleIds;
+/** DELETE /system/role/104,101 */
+export function deleteRoleApi(roleIds: Array<number | string> | number | string) {
+  const ids = Array.isArray(roleIds) ? roleIds.join(',') : String(roleIds);
   return request({
     url: `/system/role/${ids}`,
     method: 'delete'
   });
 }
 
-/**
- * GET /system/role/roleMenuTreeselect/{roleId}
- * Returns menu tree + checkedKeys(menuIds) in Ruoyi style.
- */
-export function getRoleMenuTreeselectApi(roleId: Id) {
+/** GET /system/role/roleMenuTreeselect/{roleId} */
+export function getRoleMenuTreeselectApi(roleId: number | string) {
   return request({
     url: `/system/role/roleMenuTreeselect/${roleId}`,
     method: 'get'
   });
 }
 
-/**
- * GET /system/role/authUser/allocatedList
- * Example:
- * /system/role/authUser/allocatedList?roleId=100&pageNum=1&pageSize=20
- */
-export function getAllocatedUserListApi(payload: PageQuery<{ roleId: Id }>) {
-  const { roleId, pageNum = 1, pageSize = 20, ...filters } = payload;
+/** GET allocated users */
+export function getRoleAllocatedUsersApi(params: { roleId: number; pageNum: number; pageSize: number; userName?: string; phonenumber?: string }) {
   return request({
     url: '/system/role/authUser/allocatedList',
     method: 'get',
-    params: { roleId, pageNum, pageSize, ...filters }
+    params
   });
 }
 
-/**
- * GET /system/role/authUser/unallocatedList
- * Example:
- * /system/role/authUser/unallocatedList?roleId=100&pageNum=1&pageSize=20
- */
-export function getUnallocatedUserListApi(payload: PageQuery<{ roleId: Id }>) {
-  const { roleId, pageNum = 1, pageSize = 20, ...filters } = payload;
+/** GET unallocated users */
+export function getRoleUnallocatedUsersApi(params: { roleId: number; pageNum: number; pageSize: number; userName?: string; phonenumber?: string }) {
   return request({
     url: '/system/role/authUser/unallocatedList',
     method: 'get',
-    params: { roleId, pageNum, pageSize, ...filters }
+    params
   });
 }
 
 /**
- * Optional alias if your UI uses "get_role_menuIds" naming:
- * (It’s the same endpoint; menuIds are typically in `checkedKeys`.)
+ * ✅ Assign/unassign endpoints differ by backend.
+ * If your backend is RuoYi-like, commonly:
+ * - PUT /system/role/authUser/selectAll { roleId, userIds }
+ * - PUT /system/role/authUser/cancelAll { roleId, userIds }
+ * Replace these two functions to match your real endpoints.
  */
-export function getRoleMenuIdsApi(roleId: Id) {
-  return getRoleMenuTreeselectApi(roleId);
+export function assignUsersToRoleApi(payload: { roleId: number; userIds: number[] }) {
+  return request({
+    url: '/system/role/authUser/selectAll',
+    method: 'put',
+    data: payload
+  });
+}
+
+export function removeUsersFromRoleApi(payload: { roleId: number; userIds: number[] }) {
+  return request({
+    url: '/system/role/authUser/cancelAll',
+    method: 'put',
+    data: payload
+  });
 }
