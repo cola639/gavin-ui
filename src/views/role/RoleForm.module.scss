@@ -1,3 +1,8 @@
+.formPadTop {
+  /* ✅ (1) add padding between modal title and first field */
+  padding-top: 8px;
+}
+
 .menuHeader {
   display: flex;
   align-items: center;
@@ -29,6 +34,10 @@
 .remark {
   min-height: 88px;
   resize: vertical;
+  &::placeholder {
+    color: #9ca3af; /* same “soft gray” look */
+    opacity: 1;
+  }
 }
 
 /**

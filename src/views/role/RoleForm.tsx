@@ -82,9 +82,8 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
 
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeData, setTreeData] = useState<DataNode[]>([]);
-  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
+  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]); // collapsed by default
   const [checkedKeys, setCheckedKeys] = useState<React.Key[]>(initial?.menuIds?.map(String) ?? []);
-  const [linked, setLinked] = useState(true);
 
   const [errors, setErrors] = useState<Errors>({});
 
@@ -120,14 +119,14 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
           if (Array.isArray(menus) && menus.length) {
             const data = mapMenusToTreeData(menus);
             setTreeData(data);
-            setExpandedKeys(collectAllKeys(data, []));
+            setExpandedKeys([]); // ✅ first time collapsed
           } else {
             const listRes: any = await fetchMenuList();
             const flat: RawSysMenu[] = (listRes?.data as any) ?? [];
             const tree = buildMenuTreeFromFlat(flat);
             const data = mapMenusToTreeData(tree);
             setTreeData(data);
-            setExpandedKeys(collectAllKeys(data, []));
+            setExpandedKeys([]); // ✅ first time collapsed
           }
 
           const ck = Array.isArray(checked) ? checked : [];
@@ -141,7 +140,7 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
           if (!alive) return;
 
           setTreeData(data);
-          setExpandedKeys(collectAllKeys(data, []));
+          setExpandedKeys([]); // ✅ first time collapsed
           if (initial?.menuIds?.length) setCheckedKeys(initial.menuIds.map((id) => String(id)));
         }
       } catch (e) {
@@ -175,7 +174,7 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
   };
 
   return (
-    <form className={styles.antdPrimary} onSubmit={submit} noValidate>
+    <form className={`${styles.antdPrimary} ${styles.formPadTop}`} onSubmit={submit} noValidate>
       <div className="grid grid-cols-1 gap-4">
         <TextInput
           label="Role Name"
@@ -214,14 +213,14 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
           <div className={`${styles.menuHeader} mb-2`}>
             <div className="text-sm font-semibold text-gray-900">Menus</div>
 
-            {/* ✅ action -> checkbox toggles */}
             <div className={styles.menuActions}>
-              <Checkbox checked={isExpandedAll} onChange={(e) => setExpandedKeys(e.target.checked ? allKeys : [])} disabled={!allKeys.length}>
-                Expand All
-              </Checkbox>
-
+              {/* ✅ swapped order: Select All first */}
               <Checkbox checked={isCheckedAll} onChange={(e) => setCheckedKeys(e.target.checked ? allKeys : [])} disabled={!allKeys.length}>
                 Select All
+              </Checkbox>
+
+              <Checkbox checked={isExpandedAll} onChange={(e) => setExpandedKeys(e.target.checked ? allKeys : [])} disabled={!allKeys.length}>
+                Expand All
               </Checkbox>
             </div>
           </div>
@@ -234,12 +233,9 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
                 treeData={treeData}
                 expandedKeys={expandedKeys}
                 onExpand={(keys) => setExpandedKeys(keys as React.Key[])}
-                checkStrictly={!linked}
-                checkedKeys={linked ? checkedKeys : { checked: checkedKeys, halfChecked: [] }}
-                onCheck={(keys) => {
-                  if (Array.isArray(keys)) setCheckedKeys(keys);
-                  else setCheckedKeys((keys as any).checked ?? []);
-                }}
+                checkStrictly={false}
+                checkedKeys={checkedKeys}
+                onCheck={(keys) => setCheckedKeys(keys as React.Key[])}
               />
             </Spin>
           </div>
