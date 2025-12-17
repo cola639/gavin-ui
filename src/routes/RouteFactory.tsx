@@ -58,7 +58,8 @@ const defaultResolver: ComponentResolver = (component, meta) => {
   const map: Record<string, () => Promise<{ default: React.ComponentType<any> }>> = {
     '@/views/user': () => import('@/views/user'),
     '@/views/order': () => import('@/views/order'),
-    '@/views/menu': () => import('@/views/menu')
+    '@/views/menu': () => import('@/views/menu'),
+    '@/views/role': () => import('@/views/role')
   };
 
   const importer = map[component];

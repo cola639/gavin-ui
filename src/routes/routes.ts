@@ -32,15 +32,15 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
           name: 'Role',
           path: 'role',
           hidden: false,
-          component: '@/views/user',
-          meta: { title: 'monitor user', icon: 'role', link: null }
+          component: '@/views/role',
+          meta: { title: 'role management', icon: 'role', link: null }
         },
         {
           name: 'Menu',
           path: 'menu',
           hidden: false,
           component: '@/views/menu',
-          meta: { title: 'monitor user', icon: 'menu', link: null }
+          meta: { title: 'menu management', icon: 'menu', link: null }
         },
         {
           name: 'Configure',
