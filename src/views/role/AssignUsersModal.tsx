@@ -21,7 +21,7 @@ type Props = {
 };
 
 const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) => {
-  const [tab, setTab] = useState<'allocated' | 'unallocated'>('unallocated');
+  const [tab, setTab] = useState<'allocated' | 'unallocated'>('allocated');
 
   // search fields
   const [kw, setKw] = useState('');
@@ -92,7 +92,7 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
   // reset when opening / role changes
   useEffect(() => {
     if (!open) return;
-    setTab('unallocated');
+    setTab('allocated');
     setKw('');
     setPhone('');
     setPageNum(1);
