@@ -21,12 +21,17 @@ export type ApiRoleRow = {
 };
 
 export function getRolesApi(payload: any) {
-  const { pageNum, pageSize, ...filters } = payload;
+  const { pageNum = 1, pageSize = 10, ...filters } = payload ?? {};
+
   return request({
     url: '/system/role/list',
     method: 'get',
-    params: { pageNum, pageSize },
-    data: filters
+    // SysRole fields must be in params too
+    params: {
+      pageNum,
+      pageSize,
+      ...filters
+    }
   });
 }
 
