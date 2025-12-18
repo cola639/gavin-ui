@@ -17,7 +17,7 @@ const toRow = (r: ApiRoleRow): RoleRow => ({
   roleName: r.roleName ?? '',
   roleKey: r.roleKey ?? '',
   roleSort: Number(r.roleSort ?? 0),
-  status: r.status, // ✅ should already be "Enabled" | "Disabled"
+  status: r.status,
   createTime: r.createTime ?? '',
   remark: r.remark
 });
@@ -33,6 +33,10 @@ const RolesPage: React.FC = () => {
   const [pageNum, setPageNum] = useState(1);
   const pageSize = 10;
   const [total, setTotal] = useState(0);
+
+  // ✅ force refetch even if pageNum/filters didn't change (e.g. pageNum already 1)
+  const [refreshKey, setRefreshKey] = useState(0);
+  const bumpRefresh = () => setRefreshKey((k) => k + 1);
 
   // add/edit
   const [openAdd, setOpenAdd] = useState(false);
@@ -57,6 +61,7 @@ const RolesPage: React.FC = () => {
     [filters.roleName, filters.status, pageNum]
   );
 
+  // ✅ auto fetch when filters/page changes OR refreshKey changes
   useEffect(() => {
     const seq = ++reqSeq.current;
 
@@ -64,11 +69,14 @@ const RolesPage: React.FC = () => {
       setLoading(true);
       try {
         const res: any = await getRolesApi(query);
+
         if (seq !== reqSeq.current) return;
 
         const list: ApiRoleRow[] = res?.rows ?? res?.data?.rows ?? [];
         setRows(list.map(toRow));
         setTotal(Number(res?.total ?? res?.data?.total ?? list.length));
+
+        // match user-table behavior: clear selection after refresh
         setSelectedKeys([]);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -80,17 +88,20 @@ const RolesPage: React.FC = () => {
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [query]);
+  }, [query, refreshKey]);
 
+  // filters change -> go page 1 (effect will run because filters changed)
   const handleFilters = (next: RoleFilters) => {
     setFilters(next);
     setPageNum(1);
   };
 
+  // ✅ reset should ALWAYS refetch
   const onReset = () => {
     setFilters(DEFAULT_FILTERS);
     setPageNum(1);
     setSelectedKeys([]);
+    bumpRefresh();
   };
 
   const onAdd = () => setOpenAdd(true);
@@ -106,7 +117,9 @@ const RolesPage: React.FC = () => {
         try {
           await deleteRoleApi(selectedKeys as any);
           message.success('Deleted');
+
           setPageNum(1);
+          bumpRefresh(); // ✅ always refetch
         } catch (e) {
           // eslint-disable-next-line no-console
           console.error(e);
@@ -125,10 +138,11 @@ const RolesPage: React.FC = () => {
       centered: true,
       async onOk() {
         try {
-          // ✅ safest: delete expects "104,101" style => pass array
-          await deleteRoleApi([Number(row.id)]);
+          await deleteRoleApi([Number(row.id)] as any);
           message.success('Deleted');
+
           setPageNum(1);
+          bumpRefresh(); // ✅ always refetch
         } catch (e) {
           // eslint-disable-next-line no-console
           console.error(e);
@@ -139,13 +153,14 @@ const RolesPage: React.FC = () => {
   };
 
   const onModify = (row: RoleRow) => {
-    // ✅ IMPORTANT: set editRoleId so RoleForm can call roleMenuTreeselect/{roleId}
     setEditRoleId(Number(row.id));
     setEditInitial({
       roleName: row.roleName,
       roleKey: row.roleKey,
       status: row.status,
-      remark: row.remark ?? ''
+      remark: row.remark ?? '',
+      // menuIds will be loaded by RoleForm(roleId=xxx) via roleMenuTreeselect
+      menuIds: []
     });
   };
 
@@ -160,14 +175,17 @@ const RolesPage: React.FC = () => {
       await addRoleApi({
         roleName: values.roleName,
         roleKey: values.roleKey,
-        status: values.status, // ✅ "Enabled" | "Disabled"
-        roleSort: 0, // ✅ always 0
+        status: values.status, // "Enabled" | "Disabled"
+        roleSort: 0,
         menuIds: values.menuIds,
         remark: values.remark
-      });
+      } as any);
+
       message.success('Role added');
       setOpenAdd(false);
+
       setPageNum(1);
+      bumpRefresh(); // ✅ refetch
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error(e);
@@ -177,22 +195,23 @@ const RolesPage: React.FC = () => {
 
   const handleEditSubmit = async (v: RoleFormValues) => {
     if (!editRoleId) return;
-
     try {
       await updateRoleApi({
         roleId: editRoleId,
         roleName: v.roleName,
         roleKey: v.roleKey,
-        status: v.status, // ✅ "Enabled" | "Disabled"
-        roleSort: 0, // ✅ always 0
-        menuIds: v.menuIds, // ✅ IMPORTANT
-        remark: v.remark // ✅ IMPORTANT
+        status: v.status, // "Enabled" | "Disabled"
+        roleSort: 0,
+        menuIds: v.menuIds,
+        remark: v.remark
       } as any);
 
       message.success('Role updated');
       setEditRoleId(null);
       setEditInitial(null);
+
       setPageNum(1);
+      bumpRefresh(); // ✅ refetch
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error(e);
@@ -241,7 +260,6 @@ const RolesPage: React.FC = () => {
         destroyOnClose
       >
         {editRoleId !== null && editInitial && (
-          // ✅ IMPORTANT: pass roleId so RoleForm will call /roleMenuTreeselect/{roleId}
           <RoleForm roleId={editRoleId} submitLabel="Save Changes" initial={editInitial} onSubmit={handleEditSubmit} />
         )}
       </Modal>
