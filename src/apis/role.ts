@@ -3,11 +3,23 @@ import request from 'utils/request';
 
 export type RoleStatusUI = 'Enabled' | 'Disabled';
 
+export type RoleStatus = 'Enabled' | 'Disabled';
+
+export type SysRolePayload = {
+  roleId?: number;
+  roleName: string;
+  roleKey: string;
+  roleSort?: number; // we will force 0
+  status: RoleStatus; // ✅ strings only
+  remark?: string;
+  menuIds?: number[];
+};
+
 export type RoleListQuery = {
   pageNum: number;
   pageSize: number;
   roleName?: string;
-  status?: RoleStatusUI | null;
+  status?: RoleStatus;
 };
 
 export type ApiRoleRow = {
@@ -15,7 +27,7 @@ export type ApiRoleRow = {
   roleName: string;
   roleKey: string;
   roleSort: number;
-  status: string; // usually '0'/'1' or 'Enabled'/'Disabled'
+  status: RoleStatus; // usually '0'/'1' or 'Enabled'/'Disabled'
   createTime?: string;
   remark?: string;
 };
@@ -35,11 +47,20 @@ export function getRolesApi(payload: any) {
   });
 }
 
-export function addRoleApi(data: Partial<ApiRoleRow>) {
+export function addRoleApi(data: SysRolePayload) {
+  const payload: SysRolePayload = {
+    ...data,
+    roleSort: 0, // ✅ always 0
+    status: data.status // ✅ "Enabled" | "Disabled"
+  };
+
+  // IMPORTANT: create should NOT send roleId
+  delete payload.roleId;
+
   return request({
     url: '/system/role',
     method: 'post',
-    data
+    data: payload
   });
 }
 

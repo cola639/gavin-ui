@@ -16,6 +16,7 @@ type Errors = Partial<Record<'roleName' | 'roleKey' | 'status', string>>;
 export type RoleFormValues = {
   roleName: string;
   roleKey: string;
+  roleSort: number;
   status: 'Enabled' | 'Disabled';
   remark?: string;
   menuIds: number[];
@@ -168,6 +169,7 @@ const RoleForm: React.FC<RoleFormProps> = ({ roleId, initial, submitLabel = 'Sub
       roleName: roleName.trim(),
       roleKey: roleKey.trim(),
       status,
+      roleSort: 0,
       remark: remark?.trim() || '',
       menuIds: toNumberKeys(checkedKeys)
     });

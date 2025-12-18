@@ -4,7 +4,7 @@ import { Button, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TablePaginationConfig, TableRowSelection } from 'antd/es/table/interface';
 import React, { useMemo } from 'react';
-import type { RoleRow } from './types';
+import type { RoleRow } from './type';
 
 type Props = {
   data: RoleRow[];

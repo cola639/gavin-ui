@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import RoleFilterBar, { RoleFilters } from './FilterBar';
 import RolesTable from './Table';
-import type { RoleRow } from './types';
+import type { RoleRow } from './type';
 
 import AssignUsersModal from './AssignUsersModal';
 import RoleForm, { RoleFormValues } from './RoleForm';
@@ -12,19 +12,12 @@ import { addRoleApi, deleteRoleApi, getRolesApi, updateRoleApi, type ApiRoleRow 
 
 const DEFAULT_FILTERS: RoleFilters = { roleName: '', status: null };
 
-// 根据你后端调整：RuoYi 常见 status: '0' 正常 / '1' 停用
-const apiStatusToUi = (s: any): 'Enabled' | 'Disabled' => {
-  if (s === '0' || s === 0 || s === 'Enabled') return 'Enabled';
-  return 'Disabled';
-};
-const uiStatusToApi = (s: 'Enabled' | 'Disabled'): string => (s === 'Enabled' ? '0' : '1');
-
 const toRow = (r: ApiRoleRow): RoleRow => ({
   id: String(r.roleId),
   roleName: r.roleName ?? '',
   roleKey: r.roleKey ?? '',
   roleSort: Number(r.roleSort ?? 0),
-  status: apiStatusToUi(r.status),
+  status: r.status,
   createTime: r.createTime ?? '',
   remark: r.remark
 });
@@ -155,7 +148,7 @@ const RolesPage: React.FC = () => {
     setEditInitial({
       roleName: row.roleName,
       roleKey: row.roleKey,
-      roleSort: String(row.roleSort ?? 0),
+      roleSort: 0,
       status: row.status
     });
   };
@@ -166,14 +159,16 @@ const RolesPage: React.FC = () => {
     setAssignOpen(true);
   };
 
-  const handleAddSubmit = async (v: RoleFormValues) => {
+  const handleAddSubmit = async (values: RoleFormValues) => {
     try {
       await addRoleApi({
-        roleName: v.roleName,
-        roleKey: v.roleKey,
-        roleSort: Number(v.roleSort),
-        status: uiStatusToApi(v.status)
-      } as any);
+        roleName: values.roleName,
+        roleKey: values.roleKey,
+        status: values.status,
+        roleSort: 0, // ✅ always 0 (api also forces it)
+        menuIds: values.menuIds,
+        remark: values.remark
+      });
       message.success('Role added');
       setOpenAdd(false);
       setPageNum(1);
@@ -192,7 +187,7 @@ const RolesPage: React.FC = () => {
         roleName: v.roleName,
         roleKey: v.roleKey,
         roleSort: Number(v.roleSort),
-        status: uiStatusToApi(v.status)
+        status: v.status
       } as any);
       message.success('Role updated');
       setEditRoleId(null);
