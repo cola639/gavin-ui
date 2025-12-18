@@ -1,3 +1,4 @@
+// src/views/role/AssignUsersModal.tsx
 import { assignUsersToRoleApi, getRoleAllocatedUsersApi, getRoleUnallocatedUsersApi, removeUsersFromRoleApi } from '@/apis/role';
 import { Button, Input, Modal, Table, Tabs, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -21,7 +22,10 @@ type Props = {
 
 const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) => {
   const [tab, setTab] = useState<'allocated' | 'unallocated'>('unallocated');
+
+  // ✅ search fields
   const [kw, setKw] = useState('');
+  const [phone, setPhone] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<UserRow[]>([]);
@@ -41,7 +45,7 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
     []
   );
 
-  const fetchList = async (nextPage = 1) => {
+  const fetchList = async (nextPage = pageNum) => {
     if (!roleId) return;
 
     setLoading(true);
@@ -52,7 +56,8 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
         roleId,
         pageNum: nextPage,
         pageSize,
-        userName: kw.trim() || undefined
+        userName: kw.trim() || undefined,
+        phonenumber: phone.trim() || undefined
       });
 
       const list: any[] = res?.rows ?? res?.data?.rows ?? res?.data ?? [];
@@ -70,7 +75,7 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
       setTotal(t);
       setPageNum(nextPage);
 
-      // refresh -> clear selection
+      // clear selection on every fetch (safer UX)
       setSelected([]);
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -81,16 +86,18 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
     }
   };
 
-  // reset modal state when opened / role changed
+  // reset when opening / role changes
   useEffect(() => {
     if (!open) return;
     setTab('unallocated');
     setKw('');
+    setPhone('');
     setPageNum(1);
     setSelected([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, roleId]);
 
-  // fetch when tab changes or modal opens
+  // reload list when tab changes (and when roleId changes while open)
   useEffect(() => {
     if (!open) return;
     fetchList(1);
@@ -101,6 +108,8 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
     selectedRowKeys: selected,
     onChange: (keys) => setSelected(keys)
   };
+
+  const onSearch = () => fetchList(1);
 
   const onClickPrimary = async () => {
     if (!roleId) return;
@@ -117,7 +126,7 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
         message.success('Batch revoke success');
       }
 
-      // ✅ ALWAYS refresh list after update
+      // ✅ ALWAYS refresh after update (your file already intended this):contentReference[oaicite:2]{index=2}
       await fetchList(1);
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -128,25 +137,52 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
 
   return (
     <Modal title={roleName ? `Assign Users - ${roleName}` : 'Assign Users'} open={open} onCancel={onClose} footer={null} width={900} destroyOnClose>
-      <div className="flex items-center gap-2 mb-3">
-        <Input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="Search username..." allowClear style={{ width: 260 }} />
-        <Button type="primary" onClick={() => fetchList(1)}>
-          Search
-        </Button>
+      {/* ✅ Make antd tabs use your primary color */}
+      <style>
+        {`
+          .roleAssignTabs .ant-tabs-ink-bar { background: var(--primary) !important; }
+          .roleAssignTabs .ant-tabs-tab:hover .ant-tabs-tab-btn { color: var(--primary) !important; }
+          .roleAssignTabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn { color: var(--primary) !important; }
+        `}
+      </style>
 
-        <div className="ml-auto">
-          <Button type={tab === 'unallocated' ? 'primary' : 'default'} disabled={!selected.length} onClick={onClickPrimary}>
+      {/* ✅ Inputs left, buttons together on the right */}
+      <div className="flex items-center gap-2 mb-3">
+        <Input
+          value={kw}
+          onChange={(e) => setKw(e.target.value)}
+          onPressEnter={onSearch}
+          placeholder="Search username..."
+          allowClear
+          style={{ width: 240 }}
+        />
+        <Input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          onPressEnter={onSearch}
+          placeholder="Search phone..."
+          allowClear
+          style={{ width: 220 }}
+        />
+
+        <div className="ml-auto flex items-center gap-2">
+          <Button type="default" onClick={onSearch}>
+            Search
+          </Button>
+
+          <Button type="primary" disabled={!selected.length} onClick={onClickPrimary}>
             {tab === 'unallocated' ? 'Add Selected' : 'Remove Selected'}
           </Button>
         </div>
       </div>
 
       <Tabs
+        className="roleAssignTabs"
         activeKey={tab}
         onChange={(k) => setTab(k as any)}
         items={[
-          { key: 'unallocated', label: 'Unallocated Users' },
-          { key: 'allocated', label: 'Allocated Users' }
+          { key: 'allocated', label: 'Allocated Users' },
+          { key: 'unallocated', label: 'Unallocated Users' }
         ]}
       />
 

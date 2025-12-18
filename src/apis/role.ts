@@ -7,7 +7,7 @@ export type SysRolePayload = {
   roleId?: number;
   roleName: string;
   roleKey: string;
-  roleSort?: number; // always send 0
+  roleSort?: number; // force 0 from frontend
   status: RoleStatus; // ✅ strings only
   remark?: string;
   menuIds?: number[];
@@ -30,9 +30,8 @@ export type ApiRoleRow = {
   remark?: string;
 };
 
-export function getRolesApi(payload: RoleListQuery) {
-  const { pageNum = 1, pageSize = 10, ...filters } = payload ?? ({} as any);
-
+export function getRolesApi(payload: any) {
+  const { pageNum = 1, pageSize = 10, ...filters } = payload ?? {};
   return request({
     url: '/system/role/list',
     method: 'get',
@@ -47,9 +46,11 @@ export function getRolesApi(payload: RoleListQuery) {
 export function addRoleApi(data: SysRolePayload) {
   const payload: SysRolePayload = {
     ...data,
-    roleSort: 0,
-    status: data.status
+    roleSort: 0, // ✅ always 0
+    status: data.status // ✅ "Enabled" | "Disabled"
   };
+
+  // Usually POST(create) should NOT include roleId
   delete payload.roleId;
 
   return request({
@@ -60,16 +61,13 @@ export function addRoleApi(data: SysRolePayload) {
 }
 
 export function updateRoleApi(data: SysRolePayload & { roleId: number }) {
-  const payload: SysRolePayload & { roleId: number } = {
-    ...data,
-    roleSort: 0, // ✅ always 0
-    status: data.status // ✅ "Enabled" | "Disabled"
-  };
-
   return request({
     url: '/system/role',
     method: 'put',
-    data: payload
+    data: {
+      ...data,
+      roleSort: 0 // ✅ always 0
+    }
   });
 }
 
@@ -108,30 +106,30 @@ export function getRoleUnallocatedUsersApi(params: { roleId: number; pageNum: nu
   });
 }
 
-/** helper: Spring @RequestParam("userIds") Long[] userIds likes repeated params */
-const buildBatchParams = (roleId: number, userIds: number[]) => {
-  const sp = new URLSearchParams();
-  sp.set('roleId', String(roleId));
-  userIds.forEach((id) => sp.append('userIds', String(id))); // userIds=1&userIds=2
-  return sp.toString();
-};
-
-/** ✅ PUT /system/role/authUser/batch-assign?roleId=...&userIds=... */
+/**
+ * ✅ Your controller uses @RequestParam("roleId") and @RequestParam("userIds")
+ * so we must send them as query params.
+ *
+ * NOTE: For Long[] userIds Spring commonly accepts comma-separated: userIds=1,2,3
+ */
 export function assignUsersToRoleApi(payload: { roleId: number; userIds: number[] }) {
-  const qs = buildBatchParams(payload.roleId, payload.userIds);
-
   return request({
-    url: `/system/role/authUser/batch-assign?${qs}`,
-    method: 'put'
+    url: '/system/role/authUser/batch-assign',
+    method: 'put',
+    params: {
+      roleId: payload.roleId,
+      userIds: payload.userIds.join(',')
+    }
   });
 }
 
-/** ✅ PUT /system/role/authUser/batch-revoke?roleId=...&userIds=... */
 export function removeUsersFromRoleApi(payload: { roleId: number; userIds: number[] }) {
-  const qs = buildBatchParams(payload.roleId, payload.userIds);
-
   return request({
-    url: `/system/role/authUser/batch-revoke?${qs}`,
-    method: 'put'
+    url: '/system/role/authUser/batch-revoke',
+    method: 'put',
+    params: {
+      roleId: payload.roleId,
+      userIds: payload.userIds.join(',')
+    }
   });
 }
