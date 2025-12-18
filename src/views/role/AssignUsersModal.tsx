@@ -5,6 +5,8 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import styles from './AssignUsersModal.module.scss';
+
 type UserRow = {
   userId: number;
   userName: string;
@@ -23,7 +25,6 @@ type Props = {
 const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) => {
   const [tab, setTab] = useState<'allocated' | 'unallocated'>('allocated');
 
-  // search fields
   const [kw, setKw] = useState('');
   const [phone, setPhone] = useState('');
 
@@ -34,9 +35,6 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
   const [pageNum, setPageNum] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
-
-  const INPUT_W = 220;
-  const BTN_W = 120;
 
   const columns: ColumnsType<UserRow> = useMemo(
     () => [
@@ -74,11 +72,8 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
         }))
       );
 
-      const t = Number(res?.total ?? res?.data?.total ?? list.length);
-      setTotal(t);
+      setTotal(Number(res?.total ?? res?.data?.total ?? list.length));
       setPageNum(nextPage);
-
-      // clear selection on every fetch
       setSelected([]);
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -89,7 +84,6 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
     }
   };
 
-  // reset when opening / role changes
   useEffect(() => {
     if (!open) return;
     setTab('allocated');
@@ -100,7 +94,6 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, roleId]);
 
-  // reload list when tab changes
   useEffect(() => {
     if (!open) return;
     fetchList(1);
@@ -128,8 +121,6 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
         await removeUsersFromRoleApi({ roleId, userIds });
         message.success('Batch revoke success');
       }
-
-      // ✅ refresh list after update
       await fetchList(1);
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -142,48 +133,26 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
 
   return (
     <Modal title={roleName ? `Assign Users - ${roleName}` : 'Assign Users'} open={open} onCancel={onClose} footer={null} width={980} destroyOnClose>
-      {/* Tabs + checkbox theming */}
-      <style>
-        {`
-          .roleAssignTabs .ant-tabs-ink-bar { background: var(--primary) !important; }
-          .roleAssignTabs .ant-tabs-tab-btn { font-weight: 700 !important; color: var(--primary) !important; opacity: 0.65; }
-          .roleAssignTabs .ant-tabs-tab:hover .ant-tabs-tab-btn { opacity: 0.9; }
-          .roleAssignTabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn { opacity: 1 !important; }
-
-          .roleAssignTable .ant-checkbox-checked .ant-checkbox-inner {
-            background-color: var(--primary) !important;
-            border-color: var(--primary) !important;
-          }
-          .roleAssignTable .ant-checkbox-wrapper:hover .ant-checkbox-inner,
-          .roleAssignTable .ant-checkbox:hover .ant-checkbox-inner,
-          .roleAssignTable .ant-checkbox-input:focus + .ant-checkbox-inner {
-            border-color: var(--primary) !important;
-          }
-        `}
-      </style>
-
-      {/* Search row */}
-      <div className="flex flex-wrap items-center gap-3 mb-5">
+      <div className={styles.toolbar}>
         <Input
+          className={styles.input}
           value={kw}
           onChange={(e) => setKw(e.target.value)}
           onPressEnter={onSearch}
           placeholder="Search username..."
           allowClear
-          style={{ width: INPUT_W }}
         />
         <Input
+          className={styles.input}
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           onPressEnter={onSearch}
           placeholder="Search phone..."
           allowClear
-          style={{ width: INPUT_W }}
         />
 
-        {/* Buttons on right */}
-        <div className="ml-auto flex items-center gap-2">
-          <Button type={'primary'} icon={<SearchOutlined />} onClick={onSearch} style={{ width: BTN_W }}>
+        <div className={styles.actions}>
+          <Button type="primary" icon={<SearchOutlined />} onClick={onSearch} className={styles.btn}>
             Search
           </Button>
 
@@ -193,7 +162,7 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
             icon={isRemove ? <DeleteOutlined /> : <PlusOutlined />}
             disabled={!selected.length}
             onClick={onClickPrimary}
-            style={{ width: BTN_W }}
+            className={styles.btn}
           >
             {isRemove ? 'Remove' : 'Add'}
           </Button>
@@ -201,7 +170,7 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
       </div>
 
       <Tabs
-        className="roleAssignTabs"
+        className={styles.tabs}
         activeKey={tab}
         onChange={(k) => setTab(k as any)}
         items={[
@@ -211,7 +180,7 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
       />
 
       <Table<UserRow>
-        className="roleAssignTable"
+        className={styles.table}
         rowKey="userId"
         columns={columns}
         dataSource={rows}

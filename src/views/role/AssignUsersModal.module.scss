@@ -1,0 +1,70 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  /* more space between modal title area and table */
+  margin-top: 16px;
+  margin-bottom: 16px;
+  margin-left: -3px;
+}
+
+.input {
+  width: 160px;
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn {
+  width: 120px;
+}
+
+/* Tabs: primary color + bold */
+.tabs {
+  :global(.ant-tabs-ink-bar) {
+    background: var(--primary) !important;
+  }
+
+  :global(.ant-tabs-tab-btn) {
+    font-weight: 700 !important;
+    color: var(--primary) !important;
+    opacity: 0.65;
+  }
+
+  :global(.ant-tabs-tab:hover .ant-tabs-tab-btn) {
+    opacity: 0.9;
+  }
+
+  :global(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
+    opacity: 1 !important;
+  }
+}
+
+/* Table checkboxes: force primary (remove default blue on hover/focus/active) */
+.table {
+  :global(.ant-checkbox-inner) {
+    border-color: #d9d9d9;
+  }
+
+  :global(.ant-checkbox-wrapper:hover .ant-checkbox-inner),
+  :global(.ant-checkbox:hover .ant-checkbox-inner),
+  :global(.ant-checkbox-input:focus + .ant-checkbox-inner),
+  :global(.ant-checkbox-input:active + .ant-checkbox-inner) {
+    border-color: var(--primary) !important;
+  }
+
+  :global(.ant-checkbox-checked .ant-checkbox-inner) {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+  }
+
+  :global(.ant-checkbox-checked::after) {
+    border-color: var(--primary) !important;
+  }
+}
