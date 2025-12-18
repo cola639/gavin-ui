@@ -1,15 +1,13 @@
 // src/apis/role.ts
 import request from 'utils/request';
 
-export type RoleStatusUI = 'Enabled' | 'Disabled';
-
 export type RoleStatus = 'Enabled' | 'Disabled';
 
 export type SysRolePayload = {
   roleId?: number;
   roleName: string;
   roleKey: string;
-  roleSort?: number; // we will force 0
+  roleSort?: number; // always send 0
   status: RoleStatus; // ✅ strings only
   remark?: string;
   menuIds?: number[];
@@ -27,18 +25,17 @@ export type ApiRoleRow = {
   roleName: string;
   roleKey: string;
   roleSort: number;
-  status: RoleStatus; // usually '0'/'1' or 'Enabled'/'Disabled'
+  status: RoleStatus;
   createTime?: string;
   remark?: string;
 };
 
-export function getRolesApi(payload: any) {
-  const { pageNum = 1, pageSize = 10, ...filters } = payload ?? {};
+export function getRolesApi(payload: RoleListQuery) {
+  const { pageNum = 1, pageSize = 10, ...filters } = payload ?? ({} as any);
 
   return request({
     url: '/system/role/list',
     method: 'get',
-    // SysRole fields must be in params too
     params: {
       pageNum,
       pageSize,
@@ -50,11 +47,9 @@ export function getRolesApi(payload: any) {
 export function addRoleApi(data: SysRolePayload) {
   const payload: SysRolePayload = {
     ...data,
-    roleSort: 0, // ✅ always 0
-    status: data.status // ✅ "Enabled" | "Disabled"
+    roleSort: 0,
+    status: data.status
   };
-
-  // IMPORTANT: create should NOT send roleId
   delete payload.roleId;
 
   return request({
@@ -64,11 +59,17 @@ export function addRoleApi(data: SysRolePayload) {
   });
 }
 
-export function updateRoleApi(data: Partial<ApiRoleRow> & { roleId: number }) {
+export function updateRoleApi(data: SysRolePayload & { roleId: number }) {
+  const payload: SysRolePayload & { roleId: number } = {
+    ...data,
+    roleSort: 0, // ✅ always 0
+    status: data.status // ✅ "Enabled" | "Disabled"
+  };
+
   return request({
     url: '/system/role',
     method: 'put',
-    data
+    data: payload
   });
 }
 
@@ -107,25 +108,30 @@ export function getRoleUnallocatedUsersApi(params: { roleId: number; pageNum: nu
   });
 }
 
-/**
- * ✅ Assign/unassign endpoints differ by backend.
- * If your backend is RuoYi-like, commonly:
- * - PUT /system/role/authUser/selectAll { roleId, userIds }
- * - PUT /system/role/authUser/cancelAll { roleId, userIds }
- * Replace these two functions to match your real endpoints.
- */
+/** helper: Spring @RequestParam("userIds") Long[] userIds likes repeated params */
+const buildBatchParams = (roleId: number, userIds: number[]) => {
+  const sp = new URLSearchParams();
+  sp.set('roleId', String(roleId));
+  userIds.forEach((id) => sp.append('userIds', String(id))); // userIds=1&userIds=2
+  return sp.toString();
+};
+
+/** ✅ PUT /system/role/authUser/batch-assign?roleId=...&userIds=... */
 export function assignUsersToRoleApi(payload: { roleId: number; userIds: number[] }) {
+  const qs = buildBatchParams(payload.roleId, payload.userIds);
+
   return request({
-    url: '/system/role/authUser/selectAll',
-    method: 'put',
-    data: payload
+    url: `/system/role/authUser/batch-assign?${qs}`,
+    method: 'put'
   });
 }
 
+/** ✅ PUT /system/role/authUser/batch-revoke?roleId=...&userIds=... */
 export function removeUsersFromRoleApi(payload: { roleId: number; userIds: number[] }) {
+  const qs = buildBatchParams(payload.roleId, payload.userIds);
+
   return request({
-    url: '/system/role/authUser/cancelAll',
-    method: 'put',
-    data: payload
+    url: `/system/role/authUser/batch-revoke?${qs}`,
+    method: 'put'
   });
 }

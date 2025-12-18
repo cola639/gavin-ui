@@ -1,4 +1,3 @@
-// src/views/role/AssignUsersModal.tsx
 import { assignUsersToRoleApi, getRoleAllocatedUsersApi, getRoleUnallocatedUsersApi, removeUsersFromRoleApi } from '@/apis/role';
 import { Button, Input, Modal, Table, Tabs, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -42,11 +41,13 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
     []
   );
 
-  const fetchList = async (nextPage = pageNum) => {
+  const fetchList = async (nextPage = 1) => {
     if (!roleId) return;
+
     setLoading(true);
     try {
       const api = tab === 'allocated' ? getRoleAllocatedUsersApi : getRoleUnallocatedUsersApi;
+
       const res: any = await api({
         roleId,
         pageNum: nextPage,
@@ -68,6 +69,8 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
       const t = Number(res?.total ?? res?.data?.total ?? list.length);
       setTotal(t);
       setPageNum(nextPage);
+
+      // refresh -> clear selection
       setSelected([]);
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -78,20 +81,21 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
     }
   };
 
+  // reset modal state when opened / role changed
   useEffect(() => {
     if (!open) return;
     setTab('unallocated');
     setKw('');
     setPageNum(1);
     setSelected([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, roleId]);
 
+  // fetch when tab changes or modal opens
   useEffect(() => {
     if (!open) return;
     fetchList(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, open]);
+  }, [tab, open, roleId]);
 
   const rowSelection: TableRowSelection<UserRow> = {
     selectedRowKeys: selected,
@@ -100,22 +104,25 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
 
   const onClickPrimary = async () => {
     if (!roleId) return;
-    const userIds = selected.map((k) => Number(k)).filter(Boolean);
+
+    const userIds = selected.map((k) => Number(k)).filter((n) => Number.isFinite(n));
     if (!userIds.length) return;
 
     try {
       if (tab === 'unallocated') {
         await assignUsersToRoleApi({ roleId, userIds });
-        message.success('Assigned');
+        message.success('Batch assign success');
       } else {
         await removeUsersFromRoleApi({ roleId, userIds });
-        message.success('Removed');
+        message.success('Batch revoke success');
       }
-      fetchList(1);
+
+      // ✅ ALWAYS refresh list after update
+      await fetchList(1);
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error(e);
-      message.error('Operation failed (check assign endpoints in role.ts)');
+      message.error('Operation failed');
     }
   };
 
