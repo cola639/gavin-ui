@@ -5,6 +5,8 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import IconTextButton from '@/components/button/IconTextButton';
+import { Search } from 'lucide-react';
 import styles from './AssignUsersModal.module.scss';
 
 type UserRow = {
@@ -152,20 +154,15 @@ const AssignUsersModal: React.FC<Props> = ({ open, roleId, roleName, onClose }) 
         />
 
         <div className={styles.actions}>
-          <Button type="primary" icon={<SearchOutlined />} onClick={onSearch} className={styles.btn}>
-            Search
-          </Button>
-
-          <Button
+          <IconTextButton icon={<Search size={14} />} label="Search" onClick={onSearch} />
+          <IconTextButton
             type={isRemove ? 'default' : 'primary'}
-            danger={isRemove}
             icon={isRemove ? <DeleteOutlined /> : <PlusOutlined />}
+            danger={isRemove}
             disabled={!selected.length}
+            label={isRemove ? 'Remove' : 'Add'}
             onClick={onClickPrimary}
-            className={styles.btn}
-          >
-            {isRemove ? 'Remove' : 'Add'}
-          </Button>
+          />
         </div>
       </div>
 
