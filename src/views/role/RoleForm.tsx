@@ -59,7 +59,7 @@ const buildMenuTreeFromFlat = (rows: RawSysMenu[]): MenuWithChildren[] => {
 
 const mapMenusToTreeData = (nodes: Array<{ menuId: number; menuName: string; children?: any[] }>): DataNode[] =>
   nodes.map((n) => ({
-    key: n.menuId,
+    key: String(n.menuId), // ✅ was: n.menuId
     title: n.menuName,
     children: n.children?.length ? mapMenusToTreeData(n.children) : undefined
   }));

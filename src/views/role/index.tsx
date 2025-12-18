@@ -17,7 +17,7 @@ const toRow = (r: ApiRoleRow): RoleRow => ({
   roleName: r.roleName ?? '',
   roleKey: r.roleKey ?? '',
   roleSort: Number(r.roleSort ?? 0),
-  status: r.status,
+  status: r.status, // ✅ should already be "Enabled" | "Disabled"
   createTime: r.createTime ?? '',
   remark: r.remark
 });
@@ -44,7 +44,7 @@ const RolesPage: React.FC = () => {
   const [assignRoleId, setAssignRoleId] = useState<number | null>(null);
   const [assignRoleName, setAssignRoleName] = useState<string | undefined>(undefined);
 
-  // 防抖 + 只处理最后一次请求返回
+  // debounce + only accept last response
   const reqSeq = useRef(0);
 
   const query = useMemo(
@@ -57,22 +57,18 @@ const RolesPage: React.FC = () => {
     [filters.roleName, filters.status, pageNum]
   );
 
-  // ✅ 自动 fetch：filters/page 变化都会触发（250ms debounce）
   useEffect(() => {
     const seq = ++reqSeq.current;
+
     const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
         const res: any = await getRolesApi(query);
-
-        // 只接受最后一次请求的响应
         if (seq !== reqSeq.current) return;
 
         const list: ApiRoleRow[] = res?.rows ?? res?.data?.rows ?? [];
         setRows(list.map(toRow));
         setTotal(Number(res?.total ?? res?.data?.total ?? list.length));
-
-        // 任何重新 fetch 都清空勾选（和用户表一致体验）
         setSelectedKeys([]);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -86,7 +82,6 @@ const RolesPage: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [query]);
 
-  // ✅ filters 改变时，自动回到第一页
   const handleFilters = (next: RoleFilters) => {
     setFilters(next);
     setPageNum(1);
@@ -111,7 +106,6 @@ const RolesPage: React.FC = () => {
         try {
           await deleteRoleApi(selectedKeys as any);
           message.success('Deleted');
-          // 触发重新加载：保持当前 filters，但回到第一页更符合直觉
           setPageNum(1);
         } catch (e) {
           // eslint-disable-next-line no-console
@@ -131,7 +125,8 @@ const RolesPage: React.FC = () => {
       centered: true,
       async onOk() {
         try {
-          await deleteRoleApi(row.id);
+          // ✅ safest: delete expects "104,101" style => pass array
+          await deleteRoleApi([Number(row.id)]);
           message.success('Deleted');
           setPageNum(1);
         } catch (e) {
@@ -144,12 +139,13 @@ const RolesPage: React.FC = () => {
   };
 
   const onModify = (row: RoleRow) => {
+    // ✅ IMPORTANT: set editRoleId so RoleForm can call roleMenuTreeselect/{roleId}
     setEditRoleId(Number(row.id));
     setEditInitial({
       roleName: row.roleName,
       roleKey: row.roleKey,
-      roleSort: 0,
-      status: row.status
+      status: row.status,
+      remark: row.remark ?? ''
     });
   };
 
@@ -164,8 +160,8 @@ const RolesPage: React.FC = () => {
       await addRoleApi({
         roleName: values.roleName,
         roleKey: values.roleKey,
-        status: values.status,
-        roleSort: 0, // ✅ always 0 (api also forces it)
+        status: values.status, // ✅ "Enabled" | "Disabled"
+        roleSort: 0, // ✅ always 0
         menuIds: values.menuIds,
         remark: values.remark
       });
@@ -181,14 +177,18 @@ const RolesPage: React.FC = () => {
 
   const handleEditSubmit = async (v: RoleFormValues) => {
     if (!editRoleId) return;
+
     try {
       await updateRoleApi({
         roleId: editRoleId,
         roleName: v.roleName,
         roleKey: v.roleKey,
-        roleSort: Number(v.roleSort),
-        status: v.status
+        status: v.status, // ✅ "Enabled" | "Disabled"
+        roleSort: 0, // ✅ always 0
+        menuIds: v.menuIds, // ✅ IMPORTANT
+        remark: v.remark // ✅ IMPORTANT
       } as any);
+
       message.success('Role updated');
       setEditRoleId(null);
       setEditInitial(null);
@@ -230,8 +230,20 @@ const RolesPage: React.FC = () => {
       </Modal>
 
       {/* EDIT */}
-      <Modal title="Edit Role" open={editRoleId !== null} footer={null} onCancel={() => setEditRoleId(null)} destroyOnClose>
-        {editRoleId !== null && editInitial && <RoleForm submitLabel="Save Changes" initial={editInitial} onSubmit={handleEditSubmit} />}
+      <Modal
+        title="Edit Role"
+        open={editRoleId !== null}
+        footer={null}
+        onCancel={() => {
+          setEditRoleId(null);
+          setEditInitial(null);
+        }}
+        destroyOnClose
+      >
+        {editRoleId !== null && editInitial && (
+          // ✅ IMPORTANT: pass roleId so RoleForm will call /roleMenuTreeselect/{roleId}
+          <RoleForm roleId={editRoleId} submitLabel="Save Changes" initial={editInitial} onSubmit={handleEditSubmit} />
+        )}
       </Modal>
 
       {/* ASSIGN USERS */}
