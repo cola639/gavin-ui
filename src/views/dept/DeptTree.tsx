@@ -13,6 +13,7 @@ export type DeptNode = {
   status?: DeptStatus;
   createTime?: string;
 
+  ancestors?: string;
   children?: DeptNode[];
 };
 
