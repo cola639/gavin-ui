@@ -57,10 +57,14 @@ const OnlineUsersTable: React.FC<Props> = ({ data, loading, pagination, onChange
       {
         title: 'ACTION',
         key: 'action',
-        fixed: 'right',
-        width: 140,
+        width: 150,
         render: (_: any, row: OnlineUserRow) => (
-          <Button type="link" icon={<DeleteOutlined />} onClick={() => onForceLogout(row)} style={{ color: 'var(--primary-strong)' }}>
+          <Button
+            type="text"
+            icon={<DeleteOutlined />}
+            onClick={() => onForceLogout(row)}
+            style={{ color: '#faad14' }} // antd warning gold
+          >
             Force Logout
           </Button>
         )
@@ -73,10 +77,9 @@ const OnlineUsersTable: React.FC<Props> = ({ data, loading, pagination, onChange
     current: pagination.current,
     pageSize: pagination.pageSize,
     total: pagination.total,
-    showSizeChanger: true,
-    pageSizeOptions: [10, 20, 50, 100],
-    showQuickJumper: true,
-    showTotal: (t) => `Total: ${t}`,
+    showSizeChanger: false,
+    showQuickJumper: false,
+    showTotal: (total) => `Total: ${total}`,
     position: ['bottomRight']
   };
 
@@ -88,7 +91,7 @@ const OnlineUsersTable: React.FC<Props> = ({ data, loading, pagination, onChange
       loading={loading}
       pagination={tablePagination}
       onChange={(pager) => onChangePage(pager.current ?? 1, pager.pageSize ?? pagination.pageSize)}
-      scroll={{ x: 1200 }}
+      scroll={{ x: 'max-content' }} // ✅ show all columns
     />
   );
 };

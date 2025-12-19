@@ -22,10 +22,7 @@ const toRow = (r: OnlineUserApiRow): OnlineUserRow => ({
 });
 
 const OnlineUsersPage: React.FC = () => {
-  // input filters (not applied until Search)
   const [filters, setFilters] = useState<OnlineUserFilters>(DEFAULT_FILTERS);
-  // applied filters (used by query)
-  const [applied, setApplied] = useState<OnlineUserFilters>(DEFAULT_FILTERS);
 
   const [rows, setRows] = useState<OnlineUserRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +31,7 @@ const OnlineUsersPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
 
-  // allow “force refresh” even if page is already 1
+  // allow “force refresh” even if query didn't change (ex: clicking Reset twice)
   const [refreshKey, setRefreshKey] = useState(0);
   const bumpRefresh = () => setRefreshKey((k) => k + 1);
 
@@ -45,16 +42,17 @@ const OnlineUsersPage: React.FC = () => {
     () => ({
       pageNum,
       pageSize,
-      ipaddr: applied.ipaddr.trim() || undefined,
-      userName: applied.userName.trim() || undefined
+      ipaddr: filters.ipaddr.trim() || undefined,
+      userName: filters.userName.trim() || undefined
     }),
-    [applied.ipaddr, applied.userName, pageNum, pageSize]
+    [filters.ipaddr, filters.userName, pageNum, pageSize]
   );
 
+  // ✅ auto fetch on any query change (debounced)
   useEffect(() => {
     const seq = ++reqSeq.current;
 
-    (async () => {
+    const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
         const res: any = await getOnlineUsersApi(query);
@@ -70,21 +68,21 @@ const OnlineUsersPage: React.FC = () => {
       } finally {
         if (seq === reqSeq.current) setLoading(false);
       }
-    })();
+    }, 250);
+
+    return () => window.clearTimeout(timer);
   }, [query, refreshKey]);
 
-  const onSearch = () => {
-    setApplied(filters);
-    setPageNum(1);
-    bumpRefresh();
+  const handleFilters = (next: OnlineUserFilters) => {
+    setFilters(next);
+    setPageNum(1); // ✅ reset to first page when filters change
   };
 
   const onReset = () => {
     setFilters(DEFAULT_FILTERS);
-    setApplied(DEFAULT_FILTERS);
     setPageNum(1);
     setPageSize(10);
-    bumpRefresh();
+    bumpRefresh(); // ✅ always fetch even if already default
   };
 
   const onForceLogout = (row: OnlineUserRow) => {
@@ -98,7 +96,6 @@ const OnlineUsersPage: React.FC = () => {
         try {
           await forceLogoutApi(row.tokenId);
           message.success('Forced logout');
-          // refresh current page
           bumpRefresh();
         } catch (e) {
           // eslint-disable-next-line no-console
@@ -113,7 +110,7 @@ const OnlineUsersPage: React.FC = () => {
     <main className="min-h-screen bg-[var(--bg-page)] p-5 lg:p-8">
       <h1 className="mb-5 text-3xl font-semibold text-gray-900">Online Users</h1>
 
-      <OnlineUsersFilterBar filters={filters} onFilters={setFilters} onSearch={onSearch} onReset={onReset} />
+      <OnlineUsersFilterBar filters={filters} onFilters={handleFilters} onReset={onReset} />
 
       <div className="rounded-xl border border-[var(--card-border)] bg-white shadow-[var(--shadow)] p-4">
         <OnlineUsersTable
