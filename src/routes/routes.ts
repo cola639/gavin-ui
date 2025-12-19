@@ -62,9 +62,9 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
         },
         {
           name: 'Online Users',
-          path: 'online-user',
+          path: 'online-users',
           hidden: false,
-          component: '@/views/user',
+          component: '@/views/monitor/onlineUsers',
           meta: { title: 'monitor user', icon: 'monitor', link: null }
         },
         {
