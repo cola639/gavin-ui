@@ -34,6 +34,7 @@ const DeptLayout: React.FC<Props> = ({ deptName, status, onDeptNameChange, onSta
               onChange={(e) => onDeptNameChange(e.target.value)}
               onPressEnter={onSearch}
               className={styles.input}
+              allowClear={true}
             />
           </div>
 
