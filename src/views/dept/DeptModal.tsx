@@ -1,16 +1,15 @@
 // src/views/dept/DeptModal.tsx
 import type { DeptDetail, DeptStatus } from '@/apis/dept';
 import { addDeptApi, getDeptApi, normalizeDeptStatus, updateDeptApi } from '@/apis/dept';
-import Dropdown from '@/components/form/dropdown/Dropdown';
-import TextInput from '@/components/form/input/TextInput';
 import inputStyles from '@/components/form/input/input.module.scss';
+import TextInput from '@/components/form/input/TextInput';
+import RadioGroup from '@/components/form/radio/RadioGroup';
 import { Modal, message } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 
 type Errors = Partial<Record<'deptName' | 'status', string>>;
-type Option = { label: string; value: string };
 
-const STATUS_OPTS: Option[] = [
+const STATUS_OPTIONS = [
   { label: 'Enabled', value: 'Enabled' },
   { label: 'Disabled', value: 'Disabled' }
 ];
@@ -37,14 +36,12 @@ const DeptModal: React.FC<DeptModalProps> = ({ open, mode, parent, deptId, onClo
   const [email, setEmail] = useState('');
   const [remark, setRemark] = useState('');
 
-  const parentName = useMemo(() => {
-    if (!parent) return 'Root';
-    return parent.deptName;
-  }, [parent]);
+  const parentName = useMemo(() => (parent ? parent.deptName : 'Root'), [parent]);
 
   useEffect(() => {
     if (!open) return;
 
+    // reset
     setErrors({});
     setDeptName('');
     setStatus('Enabled');
@@ -53,9 +50,8 @@ const DeptModal: React.FC<DeptModalProps> = ({ open, mode, parent, deptId, onClo
     setEmail('');
     setRemark('');
 
-    if (!isEdit) return;
-
-    if (!deptId) return;
+    // edit: load detail
+    if (!isEdit || !deptId) return;
 
     (async () => {
       setLoading(true);
@@ -102,7 +98,7 @@ const DeptModal: React.FC<DeptModalProps> = ({ open, mode, parent, deptId, onClo
       leader: leader.trim() || undefined,
       phone: phone.trim() || undefined,
       email: email.trim() || undefined,
-      status,
+      status, // ✅ "Enabled" | "Disabled"
       delFlag: 'Normal' as const,
       parentName: parent ? parent.deptName : undefined,
       remark: remark.trim() || undefined,
@@ -150,7 +146,16 @@ const DeptModal: React.FC<DeptModalProps> = ({ open, mode, parent, deptId, onClo
           placeholder="Please enter dept name..."
         />
 
-        <Dropdown label="Status" value={status} onChange={(v) => setStatus(v as any)} options={STATUS_OPTS} />
+        {/* ✅ Status as RadioGroup */}
+        <RadioGroup
+          label="Status"
+          value={status}
+          onChange={(v) => {
+            setStatus(v as DeptStatus);
+            setErrors((prev) => ({ ...prev, status: undefined }));
+          }}
+          options={STATUS_OPTIONS}
+        />
 
         <TextInput label="Leader" value={leader} onChange={(e) => setLeader(e.target.value)} placeholder="Please enter leader..." />
         <TextInput label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Please enter phone..." />

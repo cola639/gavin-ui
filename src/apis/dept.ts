@@ -8,6 +8,7 @@ export type DeptTreeApiNode = {
   label: string;
   disabled?: boolean;
   children?: DeptTreeApiNode[];
+  createTime?: string;
 };
 
 export type DeptDetail = {
