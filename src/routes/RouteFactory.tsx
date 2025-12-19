@@ -60,7 +60,10 @@ const defaultResolver: ComponentResolver = (component, meta) => {
     '@/views/order': () => import('@/views/order'),
     '@/views/menu': () => import('@/views/menu'),
     '@/views/dept': () => import('@/views/dept'),
-    '@/views/role': () => import('@/views/role')
+    '@/views/role': () => import('@/views/role'),
+    '@/views/monitor/server': () => import('@/views/monitor/server')
+    // '@/views/monitor/online-user': () => import('@/views/monitor/online-user'),
+    // '@/views/monitor/quartz': () => import('@/views/monitor/quartz')
   };
 
   const importer = map[component];

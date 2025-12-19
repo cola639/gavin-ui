@@ -1,0 +1,85 @@
+/* src/views/monitor/server/Server.module.scss */
+.page {
+  min-height: 100vh;
+  background: var(--bg-page);
+  padding: 20px;
+
+  @media (min-width: 1024px) {
+    padding: 32px;
+  }
+}
+
+.title {
+  margin: 0 0 18px 0;
+  font-size: 30px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.gridTop {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--card-border);
+}
+
+.cardTitle {
+  font-weight: 700;
+  color: #111827;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 12px;
+  color: #374151;
+  word-break: break-all;
+}
+
+.pre {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px solid #eef2f7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.simpleTable :global(.ant-table) {
+  background: transparent;
+}
+
+.simpleTable :global(.ant-table-thead > tr > th) {
+  font-weight: 700;
+  background: #f9fafb !important;
+}
+
+.diskTable :global(.ant-table-thead > tr > th) {
+  font-weight: 700;
+  background: #f9fafb !important;
+}
+
+/* optional: tighten table paddings a bit */
+:global(.ant-table-small .ant-table-tbody > tr > td),
+:global(.ant-table-small .ant-table-thead > tr > th) {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* keep antd primary highlight consistent */
+:global(.ant-table-row:hover > td) {
+  background: rgba(159, 226, 220, 0.12) !important;
+}
