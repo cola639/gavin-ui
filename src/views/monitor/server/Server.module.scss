@@ -1,85 +1,168 @@
 /* src/views/monitor/server/Server.module.scss */
+
 .page {
   min-height: 100vh;
-  background: var(--bg-page);
-  padding: 20px;
-
-  @media (min-width: 1024px) {
-    padding: 32px;
-  }
+  background: var(--bg-page, #f6f7fb);
+  padding: 20px 22px 28px;
 }
 
 .title {
-  margin: 0 0 18px 0;
-  font-size: 30px;
-  font-weight: 700;
-  color: #111827;
+  margin: 0 0 16px;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
 }
 
 .gridTop {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
 
-  @media (min-width: 1024px) {
-    grid-template-columns: 1fr 1fr;
-  }
+/* ✅ fixes “no margin” between Server Info / JVM / Disk cards */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .card {
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--card-border, #e7eaf0);
+  border-radius: 16px;
+  box-shadow: var(--shadow, 0 1px 2px rgba(16, 24, 40, 0.08));
+  overflow: hidden;
+  background: #fff;
+
+  :global(.ant-card-head) {
+    padding: 0 18px;
+    min-height: 52px;
+    border-bottom: 1px solid #eef2f7;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfeff 100%);
+  }
+
+  :global(.ant-card-head-title) {
+    padding: 14px 0;
+  }
+
+  :global(.ant-card-body) {
+    padding: 16px 18px 18px;
+  }
 }
 
 .cardTitle {
-  font-weight: 700;
-  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+
+  &::before {
+    content: '';
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--primary, #9fe2dc);
+    box-shadow: 0 0 0 4px rgba(159, 226, 220, 0.35);
+  }
+}
+
+.simpleTable,
+.diskTable {
+  :global(.ant-table) {
+    background: transparent;
+  }
+
+  :global(.ant-table-thead > tr > th) {
+    background: #f8fafc;
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 13px;
+    border-bottom: 1px solid #eef2f7;
+  }
+
+  :global(.ant-table-tbody > tr > td) {
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    font-size: 13px;
+  }
+
+  :global(.ant-table-tbody > tr:hover > td) {
+    background: rgba(159, 226, 220, 0.14);
+  }
+}
+
+.desc {
+  :global(.ant-descriptions-item-label) {
+    color: #64748b;
+    font-weight: 700;
+    background: #fafafa;
+    width: 170px;
+  }
+
+  :global(.ant-descriptions-item-content) {
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  :global(.ant-descriptions-view) {
+    border-radius: 12px;
+    overflow: hidden;
+  }
 }
 
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   font-size: 12px;
-  color: #374151;
-  word-break: break-all;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 .pre {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #f9fafb;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #0f172a;
+  background: #f8fafc;
   border: 1px solid #eef2f7;
+  border-radius: 12px;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* usage pill (Disk Status) */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 70px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 800;
   font-size: 12px;
-  line-height: 1.5;
-  color: #374151;
+  border: 1px solid transparent;
 }
 
-.simpleTable :global(.ant-table) {
-  background: transparent;
+.pillOk {
+  color: #065f5b;
+  background: rgba(159, 226, 220, 0.35);
+  border-color: rgba(159, 226, 220, 0.6);
 }
 
-.simpleTable :global(.ant-table-thead > tr > th) {
-  font-weight: 700;
-  background: #f9fafb !important;
+.pillWarn {
+  color: #92400e;
+  background: rgba(253, 230, 138, 0.55);
+  border-color: rgba(253, 230, 138, 0.9);
 }
 
-.diskTable :global(.ant-table-thead > tr > th) {
-  font-weight: 700;
-  background: #f9fafb !important;
-}
-
-/* optional: tighten table paddings a bit */
-:global(.ant-table-small .ant-table-tbody > tr > td),
-:global(.ant-table-small .ant-table-thead > tr > th) {
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-
-/* keep antd primary highlight consistent */
-:global(.ant-table-row:hover > td) {
-  background: rgba(159, 226, 220, 0.12) !important;
+.pillDanger {
+  color: #991b1b;
+  background: rgba(254, 202, 202, 0.55);
+  border-color: rgba(254, 202, 202, 0.9);
 }

@@ -1,5 +1,5 @@
 // src/views/monitor/server/index.tsx
-import { Card, Descriptions, message, Spin, Table, Tag } from 'antd';
+import { Card, Descriptions, message, Spin, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -14,10 +14,16 @@ const gb = (n?: number) => (typeof n === 'number' && Number.isFinite(n) ? `${n.t
 const mb = (n?: number) => (typeof n === 'number' && Number.isFinite(n) ? `${n.toFixed(2)} MB` : '-');
 
 const pickData = (res: any): ServerMonitorData | null => {
-  // backend example: { code, msg, data: {...} }
+  // backend: { code, msg, data: {...} }
   const d = res?.data?.data ?? res?.data ?? null;
   if (!d?.cpu || !d?.mem || !d?.jvm || !d?.sys) return null;
   return d as ServerMonitorData;
+};
+
+const UsagePill: React.FC<{ value?: number }> = ({ value }) => {
+  const v = typeof value === 'number' ? value : 0;
+  const cls = v >= 85 ? styles.pillDanger : v >= 70 ? styles.pillWarn : styles.pillOk;
+  return <span className={`${styles.pill} ${cls}`}>{pct(v)}</span>;
 };
 
 const ServerPage: React.FC = () => {
@@ -76,6 +82,23 @@ const ServerPage: React.FC = () => {
     ];
   }, [data]);
 
+  const cpuTableCols: ColumnsType<KvRow> = useMemo(
+    () => [
+      { title: 'Item', dataIndex: 'label', key: 'label', width: 220 },
+      { title: 'Value', dataIndex: 'value', key: 'value' }
+    ],
+    []
+  );
+
+  const memTableCols: ColumnsType<MemRow> = useMemo(
+    () => [
+      { title: 'Item', dataIndex: 'item', key: 'item', width: 220 },
+      { title: 'Memory', dataIndex: 'memory', key: 'memory' },
+      { title: 'JVM', dataIndex: 'jvm', key: 'jvm' }
+    ],
+    []
+  );
+
   const diskColumns: ColumnsType<ServerDisk> = useMemo(
     () => [
       { title: 'Mount', dataIndex: 'dirName', key: 'dirName' },
@@ -88,30 +111,9 @@ const ServerPage: React.FC = () => {
         title: 'Usage',
         dataIndex: 'usagePercent',
         key: 'usagePercent',
-        width: 110,
-        render: (v: number) => {
-          const val = typeof v === 'number' ? v : 0;
-          const color = val >= 85 ? 'red' : val >= 70 ? 'orange' : 'green';
-          return <Tag color={color}>{pct(val)}</Tag>;
-        }
+        width: 120,
+        render: (v: number) => <UsagePill value={v} />
       }
-    ],
-    []
-  );
-
-  const cpuTableCols: ColumnsType<KvRow> = useMemo(
-    () => [
-      { title: 'Item', dataIndex: 'label', key: 'label', width: 200 },
-      { title: 'Value', dataIndex: 'value', key: 'value' }
-    ],
-    []
-  );
-
-  const memTableCols: ColumnsType<MemRow> = useMemo(
-    () => [
-      { title: 'Item', dataIndex: 'item', key: 'item', width: 200 },
-      { title: 'Memory', dataIndex: 'memory', key: 'memory' },
-      { title: 'JVM', dataIndex: 'jvm', key: 'jvm' }
     ],
     []
   );
@@ -132,46 +134,46 @@ const ServerPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Card 3: Server Info */}
-        <Card className={styles.card} title={<span className={styles.cardTitle}>Server Information</span>} bordered={false}>
-          <Descriptions size="small" column={2} bordered className={styles.desc}>
-            <Descriptions.Item label="Computer Name">{data?.sys?.computerName ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="Computer IP">{data?.sys?.computerIp ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="OS">{data?.sys?.osName ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="Arch">{data?.sys?.osArch ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="User Dir" span={2}>
-              <span className={styles.mono}>{data?.sys?.userDir ?? '-'}</span>
-            </Descriptions.Item>
-          </Descriptions>
-        </Card>
+        {/* ✅ add spacing wrapper for the next 3 cards */}
+        <div className={styles.stack}>
+          <Card className={styles.card} title={<span className={styles.cardTitle}>Server Information</span>} bordered={false}>
+            <Descriptions size="small" column={2} bordered className={styles.desc}>
+              <Descriptions.Item label="Computer Name">{data?.sys?.computerName ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="Computer IP">{data?.sys?.computerIp ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="OS">{data?.sys?.osName ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="Arch">{data?.sys?.osArch ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="User Dir" span={2}>
+                <span className={styles.mono}>{data?.sys?.userDir ?? '-'}</span>
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
 
-        {/* Card 4: JVM Info */}
-        <Card className={styles.card} title={<span className={styles.cardTitle}>Java Virtual Machine</span>} bordered={false}>
-          <Descriptions size="small" column={2} bordered className={styles.desc}>
-            <Descriptions.Item label="JVM Name">{data?.jvm?.jvmName ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="Java Version">{data?.jvm?.version ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="Start Time">{data?.jvm?.startTime ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="Run Time">{data?.jvm?.runTime ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="Java Home" span={2}>
-              <span className={styles.mono}>{data?.jvm?.home ?? '-'}</span>
-            </Descriptions.Item>
-            <Descriptions.Item label="Input Args" span={2}>
-              <pre className={styles.pre}>{Array.isArray(data?.jvm?.inputArgs) ? data?.jvm?.inputArgs.join(' ') : data?.jvm?.inputArgs ?? ''}</pre>
-            </Descriptions.Item>
-          </Descriptions>
-        </Card>
+          <Card className={styles.card} title={<span className={styles.cardTitle}>Java Virtual Machine</span>} bordered={false}>
+            <Descriptions size="small" column={2} bordered className={styles.desc}>
+              <Descriptions.Item label="JVM Name">{data?.jvm?.jvmName ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="Java Version">{data?.jvm?.version ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="Start Time">{data?.jvm?.startTime ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="Run Time">{data?.jvm?.runTime ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="Java Home" span={2}>
+                <span className={styles.mono}>{data?.jvm?.home ?? '-'}</span>
+              </Descriptions.Item>
+              <Descriptions.Item label="Input Args" span={2}>
+                <pre className={styles.pre}>{Array.isArray(data?.jvm?.inputArgs) ? data?.jvm?.inputArgs.join(' ') : data?.jvm?.inputArgs ?? ''}</pre>
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
 
-        {/* Card 5: Disks */}
-        <Card className={styles.card} title={<span className={styles.cardTitle}>Disk Status</span>} bordered={false}>
-          <Table<ServerDisk>
-            size="small"
-            columns={diskColumns}
-            dataSource={data?.disks ?? []}
-            rowKey={(r) => `${r.dirName}-${r.typeName}`}
-            pagination={false}
-            className={styles.diskTable}
-          />
-        </Card>
+          <Card className={styles.card} title={<span className={styles.cardTitle}>Disk Status</span>} bordered={false}>
+            <Table<ServerDisk>
+              size="small"
+              columns={diskColumns}
+              dataSource={data?.disks ?? []}
+              rowKey={(r) => `${r.dirName}-${r.typeName}`}
+              pagination={false}
+              className={styles.diskTable}
+            />
+          </Card>
+        </div>
       </Spin>
     </main>
   );
