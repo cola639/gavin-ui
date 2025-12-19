@@ -41,13 +41,6 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
           hidden: false,
           component: '@/views/menu',
           meta: { title: 'menu management', icon: 'menu', link: null }
-        },
-        {
-          name: 'Configure',
-          path: 'configure',
-          hidden: false,
-          component: '@/views/user',
-          meta: { title: 'monitor user', icon: 'user', link: null }
         }
       ]
     },
@@ -61,7 +54,14 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
       meta: { title: 'system mnitor', icon: 'monitor', link: null },
       children: [
         {
-          name: 'Monitor',
+          name: 'Server',
+          path: 'server',
+          hidden: false,
+          component: '@/views/user',
+          meta: { title: 'monitor user', icon: 'monitor', link: null }
+        },
+        {
+          name: 'Online Users',
           path: 'online-user',
           hidden: false,
           component: '@/views/user',
