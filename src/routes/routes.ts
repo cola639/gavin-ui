@@ -25,7 +25,7 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
           name: 'Dept',
           path: 'dept',
           hidden: false,
-          component: '@/views/order',
+          component: '@/views/dept',
           meta: { title: 'monitor dept', icon: 'dept', link: null }
         },
         {

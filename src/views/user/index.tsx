@@ -1,6 +1,6 @@
 // src/views/user/index.tsx
 import { uploadAvatarApi } from '@/apis/common';
-import { getDeptApi } from '@/apis/dept';
+import { getDeptTreeApi } from '@/apis/dept';
 import { exportExcelApi } from '@/apis/export';
 import { addUserApi, deleteUserApi, getUserDetailApi, getUsersApi, updateUserApi } from '@/apis/user';
 import UserForm, { UserFormValues } from '@/views/user/UserForm';
@@ -145,7 +145,7 @@ const UsersPage: React.FC = () => {
   useEffect(() => {
     const loadDepts = async () => {
       try {
-        const res: any = await getDeptApi();
+        const res: any = await getDeptTreeApi();
         setDeptTree(res?.data ?? []);
         console.log('GET_DEPTS', res?.data);
       } catch (e) {
