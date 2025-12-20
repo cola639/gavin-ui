@@ -67,7 +67,7 @@ const JobsTable: React.FC<Props> = ({ data, loading, rowSelection, pagination, o
           return (
             <div className="flex items-center gap-2">
               <Button type="link" icon={<EditOutlined />} onClick={() => onModify(row)}>
-                Modify
+                Edit
               </Button>
               <Button type="link" danger icon={<DeleteOutlined />} onClick={() => onDelete(row)}>
                 Delete

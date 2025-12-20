@@ -56,7 +56,7 @@ const RolesTable: React.FC<Props> = ({ data, rowSelection, loading, pagination, 
         render: (_: any, row: RoleRow) => (
           <div className="flex items-center gap-2">
             <Button icon={<EditOutlined />} onClick={() => onModify(row)}>
-              Modify
+              Edit
             </Button>
             <Button danger icon={<DeleteOutlined />} onClick={() => onDelete(row)}>
               Delete

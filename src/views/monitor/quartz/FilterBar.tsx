@@ -15,7 +15,7 @@ export type LogFilters = {
   range?: any[] | null; // dayjs range (keep loose to avoid type friction)
 };
 
-const FILTER_WIDTH = 220;
+const FILTER_WIDTH = 160;
 const BUTTON_WIDTH = 90;
 
 const jobGroupOptions = [{ value: 'DEFAULT', label: 'DEFAULT' }];

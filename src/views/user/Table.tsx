@@ -96,7 +96,7 @@ const UsersTable: React.FC<Props> = ({
                 onModify(row);
               }}
             >
-              Modify
+              Edit
             </Button>
             <Button
               danger

@@ -30,7 +30,7 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
 
   return (
     <Modal
-      title={isEdit ? 'Modify Task' : 'New Task'}
+      title={isEdit ? 'Edit Task' : 'New Task'}
       open={open}
       onCancel={onCancel}
       onOk={() => form.submit()}
