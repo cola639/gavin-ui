@@ -1,17 +1,12 @@
 .chromeTabs {
-  /* top tab bar */
+  /* TAB BAR (top) */
   :global(.ant-tabs-nav) {
     margin: 0 !important;
-    padding: 10px 12px !important;
-
-    /* softer than pure --primary-light */
-    background: rgba(159, 226, 220, 0.32);
+    padding: 10px 12px 0 !important; /* ✅ bottom padding = 0 so tabs sit on the edge */
+    background: var(--primary-light);
     border: 1px solid var(--border);
-    border-bottom: none;
+    border-bottom: none; /* ✅ connect with content */
     border-radius: 14px 14px 0 0;
-
-    /* avoid weird clipping + keep chrome feel */
-    overflow: visible;
   }
 
   :global(.ant-tabs-nav::before) {
@@ -22,77 +17,74 @@
     display: none !important;
   }
 
-  /* tabs */
+  :global(.ant-tabs-nav-list) {
+    align-items: flex-end; /* ✅ tabs align to bottom, “stick” feeling */
+    gap: 8px;
+  }
+
+  /* TAB (default) */
   :global(.ant-tabs-tab) {
-    position: relative;
-    margin: 0 8px 0 0 !important;
-    padding: 8px 14px !important;
-
-    border-radius: 14px 14px 0 0;
-    background: rgba(255, 255, 255, 0.65);
-
-    border: 1px solid rgba(17, 24, 39, 0.08);
-    border-bottom: 1px solid var(--border);
-
+    margin: 0 !important;
+    padding: 9px 14px !important;
+    border-radius: 12px 12px 0 0;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid transparent;
     transition:
-      background 180ms ease,
-      transform 180ms ease,
-      box-shadow 180ms ease;
+      background 160ms ease,
+      transform 160ms ease,
+      box-shadow 160ms ease;
     user-select: none;
   }
 
   :global(.ant-tabs-tab:hover) {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.92);
   }
 
-  /* tab text + icon */
   :global(.ant-tabs-tab-btn) {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-
-    color: rgba(17, 24, 39, 0.78); /* ✅ more suitable */
-    font-weight: 600;
-  }
-
-  /* ✅ ACTIVE TAB: primary bg + white text */
-  :global(.ant-tabs-tab-active) {
-    background: var(--primary) !important;
-    border-color: var(--primary-strong) !important;
-
-    /* looks “connected” to content */
-    border-bottom-color: transparent !important;
-
-    transform: translateY(1px);
-    z-index: 3;
-    box-shadow: 0 10px 22px rgba(134, 214, 207, 0.25);
-  }
-
-  :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
-    color: #fff !important;
+    color: rgba(17, 24, 39, 0.78); /* ✅ nicer idle text */
     font-weight: 700;
   }
 
-  /* ✅ remove the connector blocks that create the weird extra corner */
-  :global(.ant-tabs-tab-active)::before,
-  :global(.ant-tabs-tab-active)::after {
-    display: none !important;
-    content: none !important;
+  :global(.ant-tabs-tab-btn .anticon) {
+    color: inherit;
   }
 
-  /* content area */
+  /* ACTIVE TAB */
+  :global(.ant-tabs-tab-active) {
+    background: var(--primary) !important; /* ✅ selected uses primary */
+    border-color: transparent !important;
+    transform: translateY(1px); /* ✅ visually connects to content */
+    box-shadow: 0 6px 16px rgba(134, 214, 207, 0.35);
+    z-index: 2;
+  }
+
+  :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+    color: #fff !important; /* ✅ selected text white */
+  }
+
+  /* CONTENT (bottom) */
   :global(.ant-tabs-content-holder) {
+    margin-top: -1px; /* ✅ removes the seam */
     border: 1px solid var(--border);
-    border-top: none; /* ✅ prevents double border line */
-    border-radius: 0 0 14px 14px; /* ✅ fixes the “extra corner” */
+    border-top: none; /* ✅ no double line, sticks to tab bar */
+    border-radius: 0 0 14px 14px; /* ✅ removes that “extra corner” */
     background: #fff;
-    padding: 16px;
+    padding: 0; /* ✅ let your inner card/control spacing */
     box-shadow: var(--shadow);
+    overflow: hidden; /* ✅ prevents any corner artifacts */
   }
 
   :global(.ant-tabs-content) {
     transition:
       opacity 180ms ease,
       transform 180ms ease;
+  }
+
+  /* Optional: give each tab pane padding (since content-holder is 0) */
+  :global(.ant-tabs-tabpane) {
+    padding: 16px;
   }
 }
