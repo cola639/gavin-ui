@@ -1,13 +1,17 @@
 .chromeTabs {
-  /* overall bar background like chrome */
+  /* top tab bar */
   :global(.ant-tabs-nav) {
     margin: 0 !important;
-    padding: 8px 12px !important;
-    background: #e9eef7; /* chrome-ish */
+    padding: 10px 12px !important;
+
+    /* softer than pure --primary-light */
+    background: rgba(159, 226, 220, 0.32);
     border: 1px solid var(--border);
     border-bottom: none;
     border-radius: 14px 14px 0 0;
-    overflow: hidden;
+
+    /* avoid weird clipping + keep chrome feel */
+    overflow: visible;
   }
 
   :global(.ant-tabs-nav::before) {
@@ -18,13 +22,18 @@
     display: none !important;
   }
 
+  /* tabs */
   :global(.ant-tabs-tab) {
     position: relative;
     margin: 0 8px 0 0 !important;
     padding: 8px 14px !important;
+
     border-radius: 14px 14px 0 0;
     background: rgba(255, 255, 255, 0.65);
-    border: 1px solid transparent;
+
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-bottom: 1px solid var(--border);
+
     transition:
       background 180ms ease,
       transform 180ms ease,
@@ -36,50 +45,46 @@
     background: rgba(255, 255, 255, 0.85);
   }
 
+  /* tab text + icon */
   :global(.ant-tabs-tab-btn) {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #111827;
+
+    color: rgba(17, 24, 39, 0.78); /* ✅ more suitable */
     font-weight: 600;
   }
 
-  /* active tab "connects" to content area */
+  /* ✅ ACTIVE TAB: primary bg + white text */
   :global(.ant-tabs-tab-active) {
-    background: #ffffff !important;
-    border-color: var(--border) !important;
+    background: var(--primary) !important;
+    border-color: var(--primary-strong) !important;
+
+    /* looks “connected” to content */
+    border-bottom-color: transparent !important;
+
     transform: translateY(1px);
-    z-index: 2;
-    box-shadow: 0 -1px 0 #fff inset;
+    z-index: 3;
+    box-shadow: 0 10px 22px rgba(134, 214, 207, 0.25);
   }
 
-  /* curved connectors */
+  :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+    color: #fff !important;
+    font-weight: 700;
+  }
+
+  /* ✅ remove the connector blocks that create the weird extra corner */
   :global(.ant-tabs-tab-active)::before,
   :global(.ant-tabs-tab-active)::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    width: 14px;
-    height: 14px;
-    background: #fff;
+    display: none !important;
+    content: none !important;
   }
 
-  :global(.ant-tabs-tab-active)::before {
-    left: -13px;
-    border-bottom-right-radius: 14px;
-    box-shadow: 1px 1px 0 var(--border);
-  }
-
-  :global(.ant-tabs-tab-active)::after {
-    right: -13px;
-    border-bottom-left-radius: 14px;
-    box-shadow: -1px 1px 0 var(--border);
-  }
-
-  /* content wrapper matches active tab */
+  /* content area */
   :global(.ant-tabs-content-holder) {
     border: 1px solid var(--border);
-    border-radius: 0 14px 14px 14px;
+    border-top: none; /* ✅ prevents double border line */
+    border-radius: 0 0 14px 14px; /* ✅ fixes the “extra corner” */
     background: #fff;
     padding: 16px;
     box-shadow: var(--shadow);
