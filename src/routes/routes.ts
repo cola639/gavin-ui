@@ -71,8 +71,8 @@ export async function fetchRoutes(): Promise<BackendRoute[]> {
           name: 'Quartz',
           path: 'quartz',
           hidden: false,
-          component: '@/views/user',
-          meta: { title: 'monitor user', icon: 'quartz', link: null }
+          component: '@/views/monitor/quartz',
+          meta: { title: 'monitor quartz', icon: 'quartz', link: null }
         }
       ]
     }
