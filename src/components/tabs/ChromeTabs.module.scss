@@ -40,7 +40,6 @@
     align-items: center;
     gap: 8px;
     color: rgba(17, 24, 39, 0.78); /* ✅ nicer idle text */
-    font-weight: 700;
   }
 
   :global(.ant-tabs-tab-btn .anticon) {
@@ -81,5 +80,22 @@
   /* Optional: give each tab pane padding (since content-holder is 0) */
   :global(.ant-tabs-tabpane) {
     padding: 16px;
+  }
+
+  /* ✅ INACTIVE text (default) */
+  :global(.ant-tabs-tab .ant-tabs-tab-btn) {
+    font-weight: 500 !important; /* inactive = 500 */
+    color: rgba(17, 24, 39, 0.78);
+  }
+
+  /* ✅ ACTIVE text (only active bold) */
+  :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+    font-weight: 700 !important; /* active = bold */
+    color: #fff !important; /* your active text white */
+  }
+
+  /* icon follows text */
+  :global(.ant-tabs-tab-active .ant-tabs-tab-btn .anticon) {
+    color: inherit !important;
   }
 }
