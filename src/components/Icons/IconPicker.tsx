@@ -62,7 +62,7 @@ const IconPicker: React.FC<Props> = ({ label, value, onChange, id, error, placeh
   const panel = (
     <div className={styles.panel} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}>
       <div className={styles.search}>
-        <input className={inputStyles.input} value={kw} onChange={(e) => setKw(e.target.value)} placeholder="请输入图标名称" autoFocus />
+        <input className={inputStyles.input} value={kw} onChange={(e) => setKw(e.target.value)} placeholder="Please input icon name..." autoFocus />
       </div>
 
       <div className={styles.scroll}>
