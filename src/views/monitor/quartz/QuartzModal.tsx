@@ -1,6 +1,16 @@
-import { Form, Input, InputNumber, Modal, Radio, Select } from 'antd';
-import React, { useEffect } from 'react';
+// src/views/monitor/quartz/QuartzModal.tsx
+import { Modal, message } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import Dropdown from '@/components/form/dropdown/Dropdown';
+import inputStyles from '@/components/form/input/input.module.scss';
+import TextInput from '@/components/form/input/TextInput';
+import RadioGroup from '@/components/form/radio/RadioGroup';
+
 import type { QuartzJobRow } from './type';
+
+type Errors = Partial<Record<'jobName' | 'jobGroup' | 'invokeTarget' | 'cronExpression', string>>;
+type Option = { label: string; value: string };
 
 type Props = {
   open: boolean;
@@ -10,73 +20,162 @@ type Props = {
   onSubmit: (values: any) => Promise<void>;
 };
 
+const JOB_GROUP_OPTIONS: Option[] = [
+  { label: 'DEFAULT', value: 'DEFAULT' },
+  { label: 'SYSTEM', value: 'SYSTEM' }
+];
+
+const MISFIRE_OPTIONS: Option[] = [
+  { label: 'Default ', value: '1' },
+  { label: 'Ignore Misfires ', value: '2' },
+  { label: 'Fire Once Now ', value: '3' }
+];
+
+const CONCURRENT_OPTIONS: Option[] = [
+  { label: 'Allow Concurrent ', value: '0' },
+  { label: 'Forbid Concurrent ', value: '1' }
+];
+
+const STATUS_OPTIONS: Option[] = [
+  { label: 'Normal', value: '0' },
+  { label: 'Paused', value: '1' }
+];
+
 const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit }) => {
-  const [form] = Form.useForm();
   const isEdit = mode === 'edit';
+
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
+
+  const [jobName, setJobName] = useState('');
+  const [jobGroup, setJobGroup] = useState('DEFAULT');
+  const [invokeTarget, setInvokeTarget] = useState('');
+  const [cronExpression, setCronExpression] = useState('');
+  const [misfirePolicy, setMisfirePolicy] = useState('1'); // dropdown
+  const [concurrent, setConcurrent] = useState('1'); // dropdown
+  const [status, setStatus] = useState<'0' | '1'>('0');
+  const [remark, setRemark] = useState('');
 
   useEffect(() => {
     if (!open) return;
-    form.resetFields();
-    form.setFieldsValue({
-      jobName: initial?.jobName ?? '',
-      jobGroup: initial?.jobGroup ?? 'DEFAULT',
-      invokeTarget: initial?.invokeTarget ?? '',
-      cronExpression: initial?.cronExpression ?? '',
-      misfirePolicy: initial?.misfirePolicy ?? 1,
-      concurrent: initial?.concurrent ?? 1,
-      status: initial?.status ?? '0'
-    });
-  }, [open, form, initial]);
+
+    setErrors({});
+
+    setJobName(initial?.jobName ?? '');
+    setJobGroup(initial?.jobGroup ?? 'DEFAULT');
+    setInvokeTarget(initial?.invokeTarget ?? '');
+    setCronExpression(initial?.cronExpression ?? '');
+    setMisfirePolicy(String(initial?.misfirePolicy ?? 1));
+    setConcurrent(String(initial?.concurrent ?? 1));
+    setStatus((initial?.status ?? '0') as any);
+    setRemark((initial as any)?.remark ?? '');
+  }, [open, initial]);
+
+  const title = useMemo(() => (isEdit ? 'Edit Task' : 'New Task'), [isEdit]);
+
+  const validate = (): Errors => {
+    const e: Errors = {};
+    if (!jobName.trim()) e.jobName = 'Please input task name.';
+    if (!jobGroup) e.jobGroup = 'Please choose task group.';
+    if (!invokeTarget.trim()) e.invokeTarget = 'Please input invoke target.';
+    if (!cronExpression.trim()) e.cronExpression = 'Please input cron expression.';
+    return e;
+  };
+
+  const submit = async () => {
+    const e = validate();
+    setErrors(e);
+    if (Object.values(e).some(Boolean)) return;
+
+    const payload = {
+      ...(initial?.jobId ? { jobId: initial.jobId } : {}),
+      jobName: jobName.trim(),
+      jobGroup,
+      invokeTarget: invokeTarget.trim(),
+      cronExpression: cronExpression.trim(),
+      misfirePolicy: Number(misfirePolicy),
+      concurrent: Number(concurrent),
+      status,
+      remark: remark.trim() || undefined
+    };
+
+    setLoading(true);
+    try {
+      await onSubmit(payload);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+      message.error(isEdit ? 'Update failed' : 'Create failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Modal
-      title={isEdit ? 'Edit Task' : 'New Task'}
-      open={open}
-      onCancel={onCancel}
-      onOk={() => form.submit()}
-      okText={isEdit ? 'Save' : 'Create'}
-      destroyOnClose
-    >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={async (vals) => {
-          await onSubmit(vals);
-        }}
-      >
-        <Form.Item label="Task Name" name="jobName" rules={[{ required: true, message: 'Please input task name' }]}>
-          <Input placeholder="Please input task name" />
-        </Form.Item>
+    <Modal title={title} open={open} onCancel={onCancel} onOk={submit} okText={isEdit ? 'Save' : 'Create'} confirmLoading={loading} destroyOnClose>
+      <div className="grid grid-cols-1 gap-4">
+        <Dropdown
+          label="Task Group"
+          value={jobGroup}
+          onChange={(v) => {
+            setJobGroup(v as string);
+            setErrors((prev) => ({ ...prev, jobGroup: undefined }));
+          }}
+          options={JOB_GROUP_OPTIONS}
+        />
 
-        <Form.Item label="Task Group" name="jobGroup" rules={[{ required: true }]}>
-          <Select options={[{ value: 'DEFAULT', label: 'DEFAULT' }]} />
-        </Form.Item>
+        <TextInput
+          label="Task Name"
+          value={jobName}
+          onChange={(e) => {
+            setJobName(e.target.value);
+            setErrors((prev) => ({ ...prev, jobName: undefined }));
+          }}
+          error={errors.jobName}
+          placeholder="Please input task name"
+        />
 
-        <Form.Item label="Invoke Target" name="invokeTarget" rules={[{ required: true, message: 'Please input invoke target' }]}>
-          <Input placeholder="ryTask.ryParams('testJob')" />
-        </Form.Item>
+        <TextInput
+          label="Invoke Target"
+          value={invokeTarget}
+          onChange={(e) => {
+            setInvokeTarget(e.target.value);
+            setErrors((prev) => ({ ...prev, invokeTarget: undefined }));
+          }}
+          error={errors.invokeTarget}
+          placeholder="ryTask.ryParams('testJob')"
+        />
 
-        <Form.Item label="Cron Expression" name="cronExpression" rules={[{ required: true, message: 'Please input cron expression' }]}>
-          <Input placeholder="0/15 * * * * ?" />
-        </Form.Item>
+        <TextInput
+          label="Cron Expression"
+          value={cronExpression}
+          onChange={(e) => {
+            setCronExpression(e.target.value);
+            setErrors((prev) => ({ ...prev, cronExpression: undefined }));
+          }}
+          error={errors.cronExpression}
+          placeholder="0/15 * * * * ?"
+        />
 
+        {/* ✅ both dropdowns */}
         <div className="grid grid-cols-2 gap-3">
-          <Form.Item label="Misfire Policy" name="misfirePolicy">
-            <InputNumber min={0} className="w-full" />
-          </Form.Item>
-
-          <Form.Item label="Concurrent" name="concurrent">
-            <InputNumber min={0} className="w-full" />
-          </Form.Item>
+          <Dropdown label="Misfire Policy" value={misfirePolicy} onChange={(v) => setMisfirePolicy(String(v))} options={MISFIRE_OPTIONS} />
+          <Dropdown label="Concurrent" value={concurrent} onChange={(v) => setConcurrent(String(v))} options={CONCURRENT_OPTIONS} />
         </div>
 
-        <Form.Item label="Status" name="status">
-          <Radio.Group>
-            <Radio value="0">Normal</Radio>
-            <Radio value="1">Paused</Radio>
-          </Radio.Group>
-        </Form.Item>
-      </Form>
+        <RadioGroup label="Status" value={status} onChange={(v) => setStatus(v as any)} options={STATUS_OPTIONS} />
+
+        <label className={inputStyles.field}>
+          <span className={inputStyles.label}>Remark</span>
+          <textarea
+            className={inputStyles.input}
+            value={remark}
+            onChange={(e) => setRemark(e.target.value)}
+            placeholder="Please enter remark..."
+            style={{ minHeight: 88, resize: 'vertical' }}
+          />
+        </label>
+      </div>
     </Modal>
   );
 };
