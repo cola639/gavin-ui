@@ -9,6 +9,19 @@ import RadioGroup from '@/components/form/radio/RadioGroup';
 
 import type { QuartzJobRow } from './type';
 
+// ✅ moved cron logic here
+import {
+  CRON_MODE_OPTIONS,
+  CronMode,
+  WEEKDAYS,
+  buildCronExpression,
+  buildHourOptions,
+  buildMinuteOptions,
+  buildMonthDayOptions,
+  detectCronMode,
+  getCronPreviewText
+} from './cron';
+
 type Errors = Partial<Record<'jobName' | 'jobGroup' | 'invokeTarget' | 'cronExpression', string>>;
 type Option = { label: string; value: string };
 
@@ -41,54 +54,6 @@ const STATUS_OPTIONS: Option[] = [
   { label: 'Paused', value: '1' }
 ];
 
-// ✅ removed “Every Minutes”
-type CronMode = 'daily' | 'weekly' | 'monthly' | 'custom';
-const CRON_MODE_OPTIONS: Option[] = [
-  { label: 'Daily', value: 'daily' },
-  { label: 'Weekly', value: 'weekly' },
-  { label: 'Monthly', value: 'monthly' },
-  { label: 'Custom', value: 'custom' }
-];
-
-const WEEKDAYS: Array<{ key: string; label: string }> = [
-  { key: 'MON', label: 'Mon' },
-  { key: 'TUE', label: 'Tue' },
-  { key: 'WED', label: 'Wed' },
-  { key: 'THU', label: 'Thu' },
-  { key: 'FRI', label: 'Fri' },
-  { key: 'SAT', label: 'Sat' },
-  { key: 'SUN', label: 'Sun' }
-];
-
-const pad2 = (n: string | number) => String(n).padStart(2, '0');
-
-const buildHourOptions = (): Option[] => Array.from({ length: 24 }).map((_, i) => ({ label: pad2(i), value: String(i) }));
-
-const buildMinuteOptions = (): Option[] => Array.from({ length: 60 }).map((_, i) => ({ label: pad2(i), value: String(i) }));
-
-const buildMonthDayOptions = (): Option[] =>
-  Array.from({ length: 31 }).map((_, i) => {
-    const d = i + 1;
-    return { label: String(d), value: String(d) };
-  });
-
-const detectCronMode = (cron?: string): { mode: CronMode; hh?: string; mm?: string; dom?: string; dows?: string[] } => {
-  const s = (cron ?? '').trim();
-  // daily: 0 mm HH * * ?
-  let m = s.match(/^0\s+(\d{1,2})\s+(\d{1,2})\s+\*\s+\*\s+\?$/);
-  if (m) return { mode: 'daily', mm: m[1], hh: m[2] };
-
-  // weekly: 0 mm HH ? * MON,TUE
-  m = s.match(/^0\s+(\d{1,2})\s+(\d{1,2})\s+\?\s+\*\s+([A-Z]{3}(?:,[A-Z]{3})*)$/);
-  if (m) return { mode: 'weekly', mm: m[1], hh: m[2], dows: m[3].split(',') };
-
-  // monthly: 0 mm HH DD * ?
-  m = s.match(/^0\s+(\d{1,2})\s+(\d{1,2})\s+(\d{1,2})\s+\*\s+\?$/);
-  if (m) return { mode: 'monthly', mm: m[1], hh: m[2], dom: m[3] };
-
-  return { mode: 'custom' };
-};
-
 const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit }) => {
   const isEdit = mode === 'edit';
 
@@ -115,42 +80,15 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
 
   const title = useMemo(() => (isEdit ? 'Edit Task' : 'New Task'), [isEdit]);
 
-  const buildCron = (): string => {
-    const H = Number(hh);
-    const M = Number(mm);
-
-    if (cronMode === 'daily') return `0 ${M} ${H} * * ?`;
-
-    if (cronMode === 'weekly') {
-      const dows = (weekdays?.length ? weekdays : ['MON']).join(',');
-      return `0 ${M} ${H} ? * ${dows}`;
-    }
-
-    if (cronMode === 'monthly') {
-      const D = Number(monthDay || '1');
-      return `0 ${M} ${H} ${D} * ?`;
-    }
-
-    return cronExpression.trim() || '';
-  };
-
   const previewText = useMemo(() => {
-    const time = `${pad2(hh)}:${pad2(mm)}`;
-
-    if (cronMode === 'daily') return `Runs every day at ${time}.`;
-
-    if (cronMode === 'weekly') {
-      const dows = (weekdays?.length ? weekdays : ['MON']).map((k) => WEEKDAYS.find((w) => w.key === k)?.label ?? k).join(', ');
-      return `Runs every week on ${dows} at ${time}.`;
-    }
-
-    if (cronMode === 'monthly') {
-      const d = Number(monthDay || '1');
-      return `Runs every month on day ${d} at ${time}.`;
-    }
-
-    if (cronExpression.trim()) return `Custom schedule: ${cronExpression.trim()}`;
-    return `Custom schedule: (empty)`;
+    return getCronPreviewText({
+      mode: cronMode,
+      hh,
+      mm,
+      weekdays,
+      monthDay,
+      custom: cronExpression
+    });
   }, [cronMode, hh, mm, weekdays, monthDay, cronExpression]);
 
   // init/reset when open
@@ -185,7 +123,15 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
     if (!open) return;
     if (cronMode === 'custom') return;
 
-    const next = buildCron();
+    const next = buildCronExpression({
+      mode: cronMode,
+      hh,
+      mm,
+      weekdays,
+      monthDay,
+      custom: cronExpression
+    });
+
     setCronExpression(next);
     setErrors((prev) => ({ ...prev, cronExpression: undefined }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -264,7 +210,7 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
           placeholder="ryTask.ryParams('testJob')"
         />
 
-        {/* ✅ 1) swapped position: builder first */}
+        {/* Cron Builder */}
         <div>
           <div className="text-sm font-semibold text-[var(--text-bold)] mb-1">Cron Builder</div>
           <div className="text-xs text-[var(--text-muted)] mb-3">
@@ -273,7 +219,6 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
 
           <RadioGroup label="" value={cronMode} onChange={(v) => setCronMode(v as CronMode)} options={CRON_MODE_OPTIONS} />
 
-          {/* builder fields */}
           <div className="mt-3">
             {(cronMode === 'daily' || cronMode === 'weekly' || cronMode === 'monthly') && (
               <div className="grid grid-cols-2 gap-3">
@@ -303,7 +248,6 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
               </div>
             )}
 
-            {/* ✅ 3) improved preview */}
             <div className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--bg-page)] p-3">
               <div className="text-[11px] font-semibold text-[var(--text-muted)] tracking-wide">SCHEDULE PREVIEW</div>
               <div className="mt-1 text-sm font-semibold text-[var(--text-bold)]">{previewText}</div>
@@ -314,7 +258,7 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
           </div>
         </div>
 
-        {/* cron expression (auto-generated unless custom) */}
+        {/* Cron Expression */}
         <TextInput
           label="Cron Expression"
           value={cronExpression}
