@@ -161,12 +161,8 @@ export const LogsFilterBar: React.FC<{
             Delete
           </Button>
 
-          <Button onClick={onClean} style={{ width: BUTTON_WIDTH }}>
-            Clean
-          </Button>
-
-          <Button onClick={onClose} style={{ width: BUTTON_WIDTH }}>
-            Close
+          <Button danger icon={<DeleteOutlined />} onClick={onClean} style={{ width: BUTTON_WIDTH }}>
+            Clean All
           </Button>
         </div>
       </div>
