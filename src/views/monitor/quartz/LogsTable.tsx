@@ -49,7 +49,7 @@ const LogsTable: React.FC<Props> = ({ data, loading, rowSelection, pagination, o
         key: 'action',
         width: 120,
         render: (_: any, row: QuartzLogRow) => (
-          <Button type="link" icon={<EyeOutlined />} onClick={() => onDetail(row)}>
+          <Button type="link" icon={<EyeOutlined />} onClick={() => onDetail(row)} style={{ color: 'var(--primary-strong)' }}>
             Detail
           </Button>
         )
