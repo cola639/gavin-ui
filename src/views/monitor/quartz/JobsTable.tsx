@@ -1,5 +1,7 @@
-import { DeleteOutlined, EditOutlined, EllipsisOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Table, Tag } from 'antd';
+// src/views/monitor/quartz/JobsTable.tsx
+import IconTextButton from '@/components/button/IconTextButton';
+import { DeleteOutlined, EditOutlined, EllipsisOutlined, FileTextOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { Dropdown, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TablePaginationConfig, TableRowSelection } from 'antd/es/table/interface';
 import React, { useMemo } from 'react';
@@ -48,9 +50,9 @@ const JobsTable: React.FC<Props> = ({ data, loading, rowSelection, pagination, o
       {
         title: 'ACTION',
         key: 'action',
-        width: 240,
+        width: 160,
         render: (_: any, row: QuartzJobRow) => {
-          const items = [
+          const items: any[] = [
             {
               key: 'run',
               label: 'Execute Once',
@@ -60,22 +62,20 @@ const JobsTable: React.FC<Props> = ({ data, loading, rowSelection, pagination, o
             {
               key: 'logs',
               label: 'Execution Logs',
+              icon: <FileTextOutlined />,
               onClick: () => onOpenLogs(row)
             }
           ];
 
           return (
-            <div className="flex items-center gap-2">
-              <Button type="link" icon={<EditOutlined />} onClick={() => onModify(row)}>
-                Edit
-              </Button>
-              <Button type="link" danger icon={<DeleteOutlined />} onClick={() => onDelete(row)}>
-                Delete
-              </Button>
+            <div className="flex items-center gap-1">
+              <IconTextButton className="!min-w-[40px]" size="small" icon={<EditOutlined />} label="" onClick={() => onModify(row)} />
+              <IconTextButton className="!min-w-[40px]" size="small" danger icon={<DeleteOutlined />} label="" onClick={() => onDelete(row)} />
+
               <Dropdown menu={{ items }} trigger={['click']}>
-                <Button type="link" icon={<EllipsisOutlined />}>
-                  More
-                </Button>
+                <span>
+                  <IconTextButton className="!min-w-[40px]" size="small" icon={<EllipsisOutlined />} label="" onClick={() => {}} />
+                </span>
               </Dropdown>
             </div>
           );
