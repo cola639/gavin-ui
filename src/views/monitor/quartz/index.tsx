@@ -389,7 +389,7 @@ const QuartzView: React.FC = () => {
   ];
 
   return (
-    <div className="p-6">
+    <main className="min-h-screen bg-[var(--bg-page)]">
       <h1 className="text-3xl font-bold mb-5">Quartz</h1>
 
       <ChromeTabs activeKey={activeKey} onChange={(k) => setActiveKey(k as any)} items={items as any} />
@@ -397,7 +397,7 @@ const QuartzView: React.FC = () => {
       <QuartzModal open={jobModalOpen} mode={jobModalMode} initial={jobEditInitial} onCancel={() => setJobModalOpen(false)} onSubmit={onJobSubmit} />
 
       <LogDetailModal open={logDetailOpen} row={logDetailRow} onClose={() => setLogDetailOpen(false)} />
-    </div>
+    </main>
   );
 };
 

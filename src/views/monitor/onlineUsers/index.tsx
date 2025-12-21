@@ -107,7 +107,7 @@ const OnlineUsersPage: React.FC = () => {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--bg-page)] p-5 lg:p-8">
+    <main className="min-h-screen bg-[var(--bg-page)]">
       <h1 className="mb-5 text-3xl font-semibold text-gray-900">Online Users</h1>
 
       <OnlineUsersFilterBar filters={filters} onFilters={handleFilters} onReset={onReset} />
