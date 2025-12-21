@@ -176,7 +176,17 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
   };
 
   return (
-    <Modal title={title} open={open} onCancel={onCancel} onOk={submit} okText={isEdit ? 'Save' : 'Create'} confirmLoading={loading} destroyOnClose>
+    <Modal
+      title={title}
+      open={open}
+      onCancel={onCancel}
+      onOk={submit}
+      okText={isEdit ? 'Save' : 'Create'}
+      confirmLoading={loading}
+      width={580}
+      style={{ maxWidth: '92vw' }}
+      destroyOnClose
+    >
       <div className="grid grid-cols-1 gap-4">
         {/* Row 1: Task Group + Task Name */}
         <div className="grid grid-cols-2 gap-3">
