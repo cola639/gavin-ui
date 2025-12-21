@@ -18,7 +18,10 @@ export type LogFilters = {
 const FILTER_WIDTH = 160;
 const BUTTON_WIDTH = 90;
 
-const jobGroupOptions = [{ value: 'DEFAULT', label: 'DEFAULT' }];
+const jobGroupOptions = [
+  { value: 'DEFAULT', label: 'DEFAULT' },
+  { label: 'SYSTEM', value: 'SYSTEM' }
+];
 
 export const JobsFilterBar: React.FC<{
   filters: JobFilters;

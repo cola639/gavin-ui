@@ -178,39 +178,53 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
   return (
     <Modal title={title} open={open} onCancel={onCancel} onOk={submit} okText={isEdit ? 'Save' : 'Create'} confirmLoading={loading} destroyOnClose>
       <div className="grid grid-cols-1 gap-4">
-        <Dropdown
-          label="Task Group"
-          value={jobGroup}
-          onChange={(v) => {
-            setJobGroup(v as string);
-            setErrors((prev) => ({ ...prev, jobGroup: undefined }));
-          }}
-          options={JOB_GROUP_OPTIONS}
-        />
+        {/* Row 1: Task Group + Task Name */}
+        <div className="grid grid-cols-2 gap-3">
+          <Dropdown
+            label="Task Group"
+            value={jobGroup}
+            onChange={(v) => {
+              setJobGroup(v as string);
+              setErrors((prev) => ({ ...prev, jobGroup: undefined }));
+            }}
+            options={JOB_GROUP_OPTIONS}
+          />
 
-        <TextInput
-          label="Task Name"
-          value={jobName}
-          onChange={(e) => {
-            setJobName(e.target.value);
-            setErrors((prev) => ({ ...prev, jobName: undefined }));
-          }}
-          error={errors.jobName}
-          placeholder="Please input task name"
-        />
+          <TextInput
+            label="Task Name"
+            value={jobName}
+            onChange={(e) => {
+              setJobName(e.target.value);
+              setErrors((prev) => ({ ...prev, jobName: undefined }));
+            }}
+            error={errors.jobName}
+            placeholder="Please input task name"
+          />
+        </div>
 
-        <TextInput
-          label="Invoke Target"
-          value={invokeTarget}
-          onChange={(e) => {
-            setInvokeTarget(e.target.value);
-            setErrors((prev) => ({ ...prev, invokeTarget: undefined }));
-          }}
-          error={errors.invokeTarget}
-          placeholder="ryTask.ryParams('testJob')"
-        />
+        {/* Row 2: Invoke Target + Status */}
+        <div className="grid grid-cols-2 gap-3">
+          <TextInput
+            label="Invoke Target"
+            value={invokeTarget}
+            onChange={(e) => {
+              setInvokeTarget(e.target.value);
+              setErrors((prev) => ({ ...prev, invokeTarget: undefined }));
+            }}
+            error={errors.invokeTarget}
+            placeholder="ryTask.ryParams('testJob')"
+          />
 
-        {/* Cron Builder */}
+          <RadioGroup label="Status" value={status} onChange={(v) => setStatus(v as any)} options={STATUS_OPTIONS} />
+        </div>
+
+        {/* Row 3: Misfire Policy + Concurrent */}
+        <div className="grid grid-cols-2 gap-3">
+          <Dropdown label="Misfire Policy" value={misfirePolicy} onChange={(v) => setMisfirePolicy(String(v))} options={MISFIRE_OPTIONS} />
+          <Dropdown label="Concurrent" value={concurrent} onChange={(v) => setConcurrent(String(v))} options={CONCURRENT_OPTIONS} />
+        </div>
+
+        {/* Row 4: Cron Builder */}
         <div>
           <div className="text-sm font-semibold text-[var(--text-bold)] mb-1">Cron Builder</div>
           <div className="text-xs text-[var(--text-muted)] mb-3">
@@ -258,7 +272,7 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
           </div>
         </div>
 
-        {/* Cron Expression */}
+        {/* Row 5: Cron Expression */}
         <TextInput
           label="Cron Expression"
           value={cronExpression}
@@ -271,13 +285,7 @@ const QuartzModal: React.FC<Props> = ({ open, mode, initial, onCancel, onSubmit 
           disabled={cronMode !== 'custom'}
         />
 
-        <div className="grid grid-cols-2 gap-3">
-          <Dropdown label="Misfire Policy" value={misfirePolicy} onChange={(v) => setMisfirePolicy(String(v))} options={MISFIRE_OPTIONS} />
-          <Dropdown label="Concurrent" value={concurrent} onChange={(v) => setConcurrent(String(v))} options={CONCURRENT_OPTIONS} />
-        </div>
-
-        <RadioGroup label="Status" value={status} onChange={(v) => setStatus(v as any)} options={STATUS_OPTIONS} />
-
+        {/* Row 6: Remark */}
         <label className={inputStyles.field}>
           <span className={inputStyles.label}>Remark</span>
           <textarea
