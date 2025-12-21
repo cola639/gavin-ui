@@ -56,13 +56,17 @@ service.interceptors.response.use(
         // to re login
         if (!isReLogin.show) {
           isReLogin.show = true;
-          // TODO:
-          // window.alert({
-          //   content: 'Account login timeout requires re login',
-          //   onConfirm: () => {
-          //     logoutUser();
-          //   }
-          // });
+          toast.error('Session expired, please log in again.', {
+            position: 'top-center',
+            autoClose: 2000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true
+          });
+          isReLogin.show = false;
+          // store.dispatch(logoutUser());
+          window.location.href = '/login';
         }
       }
       if (res.code === 500) {
