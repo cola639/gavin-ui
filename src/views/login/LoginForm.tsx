@@ -122,7 +122,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
       {/* Social */}
       <div className="mt-6 flex gap-3">
         <SocialButton provider="google" />
-        <SocialButton provider="facebook" />
+        <SocialButton provider="github" />
+        {/* <SocialButton provider="facebook" /> */}
       </div>
 
       {/* Divider */}
@@ -185,7 +186,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
 
         <p className="mt-4 text-sm text-gray-500">
           Don’t have an account?
-          <button type="button" onClick={onSwitchToSignup} className="ml-2 font-medium text-teal-600 hover:underline">
+          <button type="button" onClick={onSwitchToSignup} className="cursor-pointer ml-2 font-medium text-teal-600 hover:underline">
             Create one
           </button>
         </p>
