@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub OAuth2 Test (No React)</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial,
+          sans-serif;
+        margin: 24px;
+      }
+      .card {
+        max-width: 720px;
+        padding: 18px;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+      }
+      button {
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button.primary {
+        background: #111827;
+        color: white;
+        border-color: #111827;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      input {
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        width: min(520px, 100%);
+      }
+      pre {
+        background: #0b1020;
+        color: #e5e7eb;
+        padding: 12px;
+        border-radius: 12px;
+        overflow: auto;
+      }
+      .ok {
+        color: #059669;
+        font-weight: 600;
+      }
+      .err {
+        color: #dc2626;
+        font-weight: 600;
+      }
+      .muted {
+        color: #6b7280;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="card">
+      <h2>GitHub OAuth2 Test (No React)</h2>
+      <p class="muted">
+        Flow: <code>/auth/github</code> → GitHub → backend <code>/login/oauth2/code/github</code> → back here with <code>?code=...</code> →
+        <code>/auth/exchange</code> → save token.
+      </p>
+
+      <div class="row" style="margin: 12px 0 6px">
+        <label for="apiBase"><b>API Base</b></label>
+        <!-- 如果你后端是 /dev-api，就写 http://localhost:8989/dev-api -->
+        <input id="apiBase" value="http://localhost:8989" />
+        <button id="saveBase">Save</button>
+      </div>
+
+      <div class="row" style="margin: 12px 0">
+        <button class="primary" id="btnLogin">Login with GitHub</button>
+        <button id="btnClear">Clear localStorage token</button>
+      </div>
+
+      <div id="status" class="muted">Ready.</div>
+
+      <h3 style="margin-top: 16px">Result</h3>
+      <pre id="out">{}</pre>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      // 你希望最终地址栏固定显示这个（不带 ?code=...）
+      const KEEP_URL = 'http://127.0.0.1:5500/github.html';
+
+      function getApiBase() {
+        return (localStorage.getItem('apiBase') || $('apiBase').value || '').replace(/\/+$/, '');
+      }
+
+      function setStatus(msg, type = 'muted') {
+        const el = $('status');
+        el.className = type;
+        el.textContent = msg;
+      }
+
+      function readParam(name) {
+        return new URL(window.location.href).searchParams.get(name);
+      }
+
+      function writeOut(obj) {
+        $('out').textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+      }
+
+      function extractToken(payload) {
+        // AjaxResult 常见：{ code: 200, msg: "success", token: "..." }
+        return (
+          payload?.token ?? payload?.data?.token ?? payload?.data?.access_token ?? payload?.Authorization ?? payload?.data?.Authorization ?? null
+        );
+      }
+
+      async function exchangeCodeOnce(code) {
+        const apiBase = getApiBase();
+        const url = `${apiBase}/auth/exchange?code=${encodeURIComponent(code)}`;
+
+        setStatus('Exchanging code for token…', 'muted');
+
+        const resp = await fetch(url, {
+          method: 'GET',
+          headers: { Accept: 'application/json' }
+        });
+
+        const ct = resp.headers.get('content-type') || '';
+        const payload = ct.includes('application/json') ? await resp.json() : await resp.text();
+
+        if (!resp.ok) {
+          throw new Error(typeof payload === 'string' ? payload : payload?.msg || `HTTP ${resp.status}`);
+        }
+
+        if (typeof payload === 'string') {
+          throw new Error('Expected JSON AjaxResult, got text.');
+        }
+
+        const token = extractToken(payload);
+        if (!token) {
+          throw new Error(payload?.msg || 'No token found in response payload.');
+        }
+
+        localStorage.setItem('token', token);
+        return { token, payload };
+      }
+
+      // init UI base
+      const savedBase = localStorage.getItem('apiBase');
+      if (savedBase) $('apiBase').value = savedBase;
+
+      $('saveBase').onclick = () => {
+        localStorage.setItem('apiBase', $('apiBase').value.trim());
+        setStatus('Saved API base.', 'ok');
+      };
+
+      $('btnClear').onclick = () => {
+        localStorage.removeItem('token');
+        setStatus('Cleared token.', 'ok');
+        writeOut({});
+      };
+
+      $('btnLogin').onclick = () => {
+        const apiBase = getApiBase();
+        setStatus('Redirecting to backend /auth/github…', 'muted');
+        // OAuth 必须是顶层跳转，不要用 fetch
+        window.location.assign(`${apiBase}/auth/github`);
+      };
+
+      (async function onLoad() {
+        // OAuth2 标准会把 code 放在 redirect 的 query 里:contentReference[oaicite:2]{index=2}
+        const code = readParam('code');
+        if (!code) {
+          setStatus('No code in URL. Click "Login with GitHub".', 'muted');
+          return;
+        }
+
+        // 避免刷新时重复 exchange 同一个 code（code 是一次性的）
+        const last = sessionStorage.getItem('oauth_last_code');
+        if (last === code) {
+          setStatus("Code already exchanged in this tab. (refresh won't re-exchange)", 'ok');
+          writeOut({ note: 'Already exchanged', code });
+          // 仍然保持地址栏干净
+          window.history.replaceState({}, '', KEEP_URL);
+          return;
+        }
+
+        try {
+          const result = await exchangeCodeOnce(code);
+          sessionStorage.setItem('oauth_last_code', code);
+
+          setStatus('Success! Token saved to localStorage(token).', 'ok');
+          writeOut(result);
+
+          // ⭐ 把地址栏恢复成你想要的固定 URL（不带 query）
+          window.history.replaceState({}, '', KEEP_URL);
+        } catch (e) {
+          setStatus('Sign-in failed: ' + (e?.message || String(e)), 'err');
+          writeOut({ message: e?.message || String(e) });
+          // 失败也恢复 URL，避免卡在 ?code=...
+          window.history.replaceState({}, '', KEEP_URL);
+        }
+      })();
+    </script>
+  </body>
+</html>
