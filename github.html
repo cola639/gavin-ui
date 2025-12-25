@@ -173,7 +173,7 @@
         const apiBase = getApiBase();
         setStatus('Redirecting to backend /auth/github…', 'muted');
         // OAuth 必须是顶层跳转，不要用 fetch
-        window.location.assign(`${apiBase}/auth/github`);
+        window.location.assign(`${apiBase}/auth/github/start`);
       };
 
       (async function onLoad() {
