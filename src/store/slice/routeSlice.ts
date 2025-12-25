@@ -12,7 +12,6 @@ import { createBrowserRouter, redirect, type LoaderFunctionArgs } from 'react-ro
 import { getToken } from 'utils/auth';
 import { dispatch } from '../index';
 // MenuItem for your Sidebar
-import { set } from 'lodash';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlarmClockCheck,

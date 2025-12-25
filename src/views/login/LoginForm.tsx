@@ -95,7 +95,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
 
       // after login success
       const next = await buildAppRoutes(); // fetch backend & rebuild router (no reload)
-      next.navigate('/views/user', { replace: true }); // navigate using the new router instance
+      next.navigate('/dashboard', { replace: true }); // navigate using the new router instance
 
       setSubmitted(true);
     } catch (err: any) {

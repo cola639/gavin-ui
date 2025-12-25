@@ -2,10 +2,10 @@
 import NotFound from '@/views/404';
 import Dashboard from '@/views/dashboard';
 import Layout from '@/views/layout';
+import OAuth from '@/views/login/OAuth';
 import React, { lazy } from 'react';
 import { createBrowserRouter, Navigate, redirect, type LoaderFunctionArgs, type RouteObject } from 'react-router-dom';
 import { mergeRoutes, RouteMeta, withSuspense, type BackendRoute } from './RouteFactory';
-import { fetchRoutes } from './routes'; // your API mock or real call
 
 /** ---- whitelist (no fetch needed for these) ---- */
 const Login = lazy(() => import('@/views/login'));
@@ -15,6 +15,11 @@ export const whiteList: RouteObject[] = [
     path: 'login', // top-level data routes are relative
     element: withSuspense(<Login />),
     handle: { meta: { title: 'Login', icon: 'login', hidden: false } as RouteMeta }
+  },
+  {
+    path: 'oauth/callback',
+    element: withSuspense(<OAuth />),
+    handle: { meta: { title: 'OAuth Callback', icon: 'oauth', hidden: true } as RouteMeta }
   },
   {
     path: '404', // top-level data routes are relative

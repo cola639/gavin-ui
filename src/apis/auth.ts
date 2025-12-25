@@ -1,3 +1,4 @@
+// src/apis/auth.ts
 import request from 'utils/request';
 
 export function authUserApi(data) {
