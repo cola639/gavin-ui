@@ -91,7 +91,7 @@ export async function buildAppRouter(): Promise<RemixRouter> {
 
   menuItems.unshift({
     id: 'dashboard',
-    label: 'Dashboard',
+    label: 'Home',
     icon: 'dashboard', // string, matches assets/icons/dashboard.svg
     path: '/dashboard'
   });

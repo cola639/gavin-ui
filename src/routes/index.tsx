@@ -40,7 +40,7 @@ export const constRoutes: RouteObject[] = [
       {
         index: true,
         element: withSuspense(<Dashboard />),
-        handle: { meta: { title: 'Dashboard', icon: 'dashboard', hidden: false } as RouteMeta }
+        handle: { meta: { title: 'Home', icon: 'Home', hidden: false } as RouteMeta }
       }
     ]
   }

@@ -47,7 +47,6 @@ export default function Layout() {
   // ];
 
   const handleMenuClick = (menuId: string) => {
-    console.log('Menu clicked:', menuId);
     setActiveMenu(menuId);
     // Handle navigation here
   };
