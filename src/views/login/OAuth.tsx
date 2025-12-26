@@ -1,10 +1,11 @@
 // src/views/auth/OAuth2Callback.tsx
-import { exchangeOAuthCodeApi } from '@/apis/oauth2';
-import { buildAppRoutes } from '@/store/slice/routeSlice';
-import { getToken, setToken } from '@/utils/auth';
 import { Spin, message } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+
+import { exchangeOAuthCodeApi } from '@/apis/oauth2';
+import { buildAppRoutes } from '@/store/slice/routeSlice';
+import { getToken, setToken } from '@/utils/auth';
 
 function pickToken(res: any): string {
   return res?.token || res?.data?.token || res?.data?.data?.token || res?.data?.data?.data?.token || '';
@@ -39,8 +40,8 @@ function clearOAuthParamsFromUrl() {
   window.history.replaceState({}, '', url.pathname + url.search + url.hash);
 }
 
-const DASHBOARD_PATH = '/dashboard'; // change if your real dashboard route differs
-const LOCK_PREFIX = 'oauth2_exchange_lock:'; // sessionStorage lock key
+const DASHBOARD_PATH = '/dashboard';
+const LOCK_PREFIX = 'oauth2_exchange:'; // sessionStorage lock, survives StrictMode remount
 
 const OAuth2Callback: React.FC = () => {
   const location = useLocation();
@@ -50,78 +51,86 @@ const OAuth2Callback: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // ✅ do nothing if no code (prevents exchange?code=)
+    // already logged in
+    if (getToken()) {
+      clearOAuthParamsFromUrl();
+      navigate(DASHBOARD_PATH, { replace: true });
+      return;
+    }
+
     if (!code) {
-      //   message.error('Missing OAuth2 code.');
-      //   setLoading(false);
-      //   navigate('/login', { replace: true });
+      message.error('Missing OAuth2 code.');
+      navigate('/login', { replace: true });
       return;
     }
 
     const lockKey = `${LOCK_PREFIX}${code}`;
+    const lock = sessionStorage.getItem(lockKey);
 
-    // If StrictMode second mount happens while first request is in flight:
-    // - don't call exchange again
-    // - wait for token to appear, then navigate
-    if (sessionStorage.getItem(lockKey) === '1') {
+    // ✅ If exchange already running (React 18 dev StrictMode remount), DON'T call again.
+    if (lock === 'running') {
+      // wait for the first request to finish and token to appear
       const startedAt = Date.now();
-      const timer = window.setInterval(async () => {
-        const token = getToken();
-        if (token) {
+      const timer = window.setInterval(() => {
+        if (getToken()) {
           window.clearInterval(timer);
+          sessionStorage.setItem(lockKey, 'done');
           clearOAuthParamsFromUrl();
-          try {
-            const next = await buildAppRoutes();
-            next?.navigate?.(DASHBOARD_PATH, { replace: true }) ?? navigate(DASHBOARD_PATH, { replace: true });
-          } catch {
-            navigate(DASHBOARD_PATH, { replace: true });
-          } finally {
-            setLoading(false);
-          }
+          navigate(DASHBOARD_PATH, { replace: true });
           return;
         }
-
-        // timeout (avoid infinite spinner)
         if (Date.now() - startedAt > 6000) {
           window.clearInterval(timer);
           sessionStorage.removeItem(lockKey);
-          clearOAuthParamsFromUrl();
           message.error('GitHub login is taking too long. Please try again.');
-          setLoading(false);
           navigate('/login', { replace: true });
         }
-      }, 250);
+      }, 200);
 
       return () => window.clearInterval(timer);
     }
 
-    // ✅ acquire lock immediately so StrictMode second mount won't re-exchange
-    sessionStorage.setItem(lockKey, '1');
+    // ✅ If already exchanged before (same session), just go dashboard.
+    if (lock === 'done') {
+      clearOAuthParamsFromUrl();
+      navigate(DASHBOARD_PATH, { replace: true });
+      return;
+    }
+
+    // ✅ Mark running immediately so any StrictMode remount won't re-call exchange.
+    sessionStorage.setItem(lockKey, 'running');
 
     let cancelled = false;
 
     (async () => {
       try {
+        setLoading(true);
+
         const res: any = await exchangeOAuthCodeApi(code);
         const token = pickToken(res);
-
         if (!token) throw new Error('Token not found in exchange response');
 
         setToken(token);
-        clearOAuthParamsFromUrl();
-        message.success('Signed in with GitHub');
+        sessionStorage.setItem(lockKey, 'done');
 
-        // rebuild routes then navigate
-        const next = await buildAppRoutes();
-        next?.navigate?.(DASHBOARD_PATH, { replace: true }) ?? navigate(DASHBOARD_PATH, { replace: true });
+        clearOAuthParamsFromUrl();
+
+        // optional: rebuild routes after token
+        try {
+          await buildAppRoutes();
+        } catch {
+          // ignore
+        }
+
+        if (!cancelled) navigate(DASHBOARD_PATH, { replace: true });
       } catch (e) {
-        // if exchange fails, release lock so user can retry
+        // allow retry
         sessionStorage.removeItem(lockKey);
         clearOAuthParamsFromUrl();
         // eslint-disable-next-line no-console
         console.error(e);
         message.error('OAuth2 exchange failed');
-        navigate('/login', { replace: true });
+        if (!cancelled) navigate('/login', { replace: true });
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -131,6 +140,15 @@ const OAuth2Callback: React.FC = () => {
       cancelled = true;
     };
   }, [code, navigate]);
+
+  useEffect(() => {
+    console.log('OAuth2 exchange is disabled in this demo.');
+  }, []);
+
+  useEffect(() => {
+    console.log('MOUNT');
+    return () => console.log('UNMOUNT');
+  }, []);
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center">
