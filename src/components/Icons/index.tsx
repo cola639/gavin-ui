@@ -33,7 +33,7 @@ const Icon: React.FC<IconProps> = ({ name, size = 24, color, fill, className = '
     return null;
   }
 
-  return <Component width={size} height={size} fill={fill || color || 'currentColor'} className={className} {...rest} />;
+  return <Component width={size} height={size} className={className} {...rest} />;
 };
 
 export default Icon;

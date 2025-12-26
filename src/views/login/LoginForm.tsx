@@ -187,7 +187,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
         <p className="mt-4 text-sm text-gray-500">
           Don’t have an account?
           <button type="button" onClick={onSwitchToSignup} className="cursor-pointer ml-2 font-medium text-teal-600 hover:underline">
-            Create one
+            Sign up
           </button>
         </p>
       </form>

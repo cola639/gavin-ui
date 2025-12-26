@@ -1,5 +1,6 @@
 import { startGithubOAuth } from '@/apis/oauth2';
 import React from 'react';
+import { toast } from 'react-toastify';
 
 type Provider = 'google' | 'github' | 'facebook';
 
@@ -56,6 +57,7 @@ const SocialButton: React.FC<Props> = ({ provider, onClick, disabled }) => {
     if (provider === 'github') return startGithubOAuth();
 
     // others: do nothing by default
+    return toast.info(`Only GitHub is supported for social login.`);
   };
 
   return (
@@ -63,7 +65,7 @@ const SocialButton: React.FC<Props> = ({ provider, onClick, disabled }) => {
       type="button"
       onClick={handleClick}
       disabled={disabled}
-      className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700
+      className={`cursor-pointer flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700
         transition hover:bg-gray-50 active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-60`}
     >
       <span className={provider === 'github' ? 'text-gray-900' : ''}>{ICONS[provider]}</span>
