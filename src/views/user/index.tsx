@@ -96,7 +96,7 @@ const extractRolePostOptions = (res: any): { roles: Option[]; posts: Option[] } 
   const rawPosts = res?.posts ?? [];
 
   const roles: Option[] = rawRoles
-    .filter((r: any) => r.status === '0' && r.delFlag !== '2')
+    .filter((r: any) => r.status !== 'Deleted' && r.delFlag === 'Normal')
     .map((r: any) => ({
       label: r.roleName,
       value: String(r.roleId)
@@ -109,6 +109,7 @@ const extractRolePostOptions = (res: any): { roles: Option[]; posts: Option[] } 
       value: String(p.postId)
     }));
 
+  console.log('🚀 >> rawRoles roles:', rawRoles, roles);
   return { roles, posts };
 };
 

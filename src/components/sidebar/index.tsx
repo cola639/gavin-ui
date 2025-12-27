@@ -67,7 +67,6 @@ export default function Sidebar({ menuItems, isExpanded = true, onMenuClick, act
   const location = useLocation();
 
   const itemKey = (m: MenuItem) => m.id ?? m.path;
-  console.log('🚀 >> Sidebar >> menuItems:', menuItems);
 
   const urlActiveKey = useMemo(() => {
     const hit = menuItems.find((m) => location.pathname.startsWith(m.path));
