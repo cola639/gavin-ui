@@ -11,14 +11,14 @@ export function authUserApi(data) {
 
 export function getRoutesApi() {
   return request({
-    url: '/auth/getInfo',
+    url: '/auth/getRouters',
     method: 'get'
   });
 }
 
 export function getInfoApi() {
   return request({
-    url: '/auth/login',
+    url: '/auth/getInfo',
     method: 'get'
   });
 }
