@@ -49,11 +49,6 @@ type ResolvedElement = React.ReactNode;
 type ComponentResolver = (component: string, meta?: RouteMeta) => ResolvedElement;
 
 const defaultResolver: ComponentResolver = (component, meta) => {
-  if (component === '@/views/layout') {
-    // You can pass meta to SectionLayout if needed
-    return <SectionLayout />;
-  }
-
   // Explicit map first (fast + tree-shakable)
   const map: Record<string, () => Promise<{ default: React.ComponentType<any> }>> = {
     '@/views/user': () => import('@/views/user'),
@@ -66,15 +61,19 @@ const defaultResolver: ComponentResolver = (component, meta) => {
     '@/views/monitor/quartz': () => import('@/views/monitor/quartz')
   };
 
+  if (component === '@/views/layout') {
+    // You can pass meta to SectionLayout if needed
+    return <SectionLayout />;
+  }
+
   const importer = map[component];
   if (importer) {
     const Lazy = lazy(importer);
     return withSuspense(<Lazy />);
   }
 
-  // Fallback heuristic: "@/a/b" → "@/views/a/b"
   const guessed = component.replace(/^@\/?/, '');
-  const Lazy = lazy(() => import(`@/views/${guessed}`));
+  const Lazy = lazy(() => import(`${guessed}`));
   return withSuspense(<Lazy />);
 };
 
