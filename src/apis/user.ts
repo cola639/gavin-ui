@@ -51,11 +51,10 @@ export function logoutApi() {
   });
 }
 
-export function getUserInfoApi(params) {
+export function getUserInfoApi() {
   return request({
     url: '/system/user/info',
-    method: 'get',
-    params
+    method: 'get'
   });
 }
 

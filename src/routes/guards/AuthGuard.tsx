@@ -1,3 +1,4 @@
+// src/routes/guards/AuthGuard.tsx
 import { getUserInfo } from '@/store/slice/userSlice';
 import { ReactElement, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';

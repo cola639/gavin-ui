@@ -8,7 +8,7 @@ import { deleteMenu, fetchMenuList, updateMenuOrders, type RawMenu } from '@/api
 import MenuItemModal from './MenuItemModal';
 import NewModuleModal from './NewModuleModal';
 
-const normalizeStatus = (status?: string | null): MenuStatus => (status === 'Normal' ? 'Normal' : 'Disabled');
+const normalizeStatus = (status?: string | null): MenuStatus => (status === 'Enabled' ? 'Enabled' : 'Disabled');
 
 const normalizeType = (t?: string): UiMenuType => {
   if (t === 'M' || t === 'Module') return 'Module';

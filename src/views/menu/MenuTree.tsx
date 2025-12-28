@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, GripVertical, Pencil, Plus, Trash2 } from 'l
 import React, { useEffect, useState } from 'react';
 import styles from './MenuTree.module.scss';
 
-export type MenuStatus = 'Normal' | 'Disabled';
+export type MenuStatus = 'Enabled' | 'Disabled';
 export type UiMenuType = 'Module' | 'Menu' | 'Function';
 
 export type MenuNode = {
@@ -166,7 +166,7 @@ const MenuTree: React.FC<MenuTreeProps> = ({ data = [], onAddChild, onEdit, onDe
   }, [searchTerm, tree]);
 
   const renderStatusBadge = (status?: MenuStatus) => {
-    if (!status || status === 'Normal') return <span className={`${styles.statusBadge} ${styles.statusNormal}`}>Normal</span>;
+    if (!status || status === 'Enabled') return <span className={`${styles.statusBadge} ${styles.statusNormal}`}>Enabled</span>;
     return <span className={`${styles.statusBadge} ${styles.statusDisabled}`}>Disabled</span>;
   };
 
