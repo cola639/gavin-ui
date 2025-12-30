@@ -52,7 +52,7 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
   const [phone, setPhone] = useState(initial?.phone ?? '');
   const [email, setEmail] = useState(initial?.email ?? '');
   const [sex, setSex] = useState(initial?.sex ?? '');
-  const [status, setStatus] = useState<UserFormValues['status']>(initial?.status ?? 'Disabled');
+  const [status, setStatus] = useState<UserFormValues['status']>(initial?.status ?? 'Enabled');
 
   const [errors, setErrors] = useState<Errors>({});
   const fileRef = useRef<HTMLInputElement>(null);
