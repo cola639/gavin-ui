@@ -1,14 +1,17 @@
 // src/views/user/index.tsx
-import { uploadAvatarApi } from '@/apis/common';
-import { getDeptTreeApi } from '@/apis/dept';
-import { exportExcelApi } from '@/apis/export';
-import { addUserApi, deleteUserApi, getUserDetailApi, getUsersApi, updateUserApi } from '@/apis/user';
-import UserForm, { UserFormValues } from '@/views/user/UserForm';
 import { Modal, message } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
+
+import { getMinioImageSrc, uploadAvatarApi } from '@/apis/common';
+import { getDeptTreeApi } from '@/apis/dept';
+import { exportExcelApi } from '@/apis/export';
+import { addUserApi, deleteUserApi, getUserDetailApi, getUsersApi, updateUserApi } from '@/apis/user';
+
+import UserForm, { UserFormValues } from '@/views/user/UserForm';
 import FilterBar from './FilterBar';
 import UsersTable from './Table';
+
 import type { DeptNode } from './depTypes';
 import type { UserRow } from './types';
 
@@ -19,7 +22,7 @@ type ApiUser = {
   userName: string;
   nickName: string;
   email: string;
-  avatar: string;
+  avatar: string; // ✅ now we prefer storing URL, but old data may still be fileId
   phonenumber: string;
   status: 'Enabled' | 'Disabled';
   createTime: string;
@@ -45,11 +48,87 @@ const DEFAULT_FILTERS: Filters = {
   phonenumber: ''
 };
 
+// ---------- Avatar helpers ----------
+
+// old data compatibility: "6" or "/minio/image/6" or "http://.../minio/image/6"
+const isNumericId = (v: any) => typeof v === 'string' && /^\d+$/.test(v.trim());
+
+const extractAvatarId = (avatar?: string | null): string | null => {
+  if (!avatar) return null;
+  const s = String(avatar).trim();
+  if (!s) return null;
+
+  if (isNumericId(s)) return s;
+
+  const m = s.match(/\/minio\/image\/(\d+)/);
+  if (m?.[1]) return m[1];
+
+  return null;
+};
+
+/**
+ * For UI display:
+ * - if avatar is an absolute URL => use it
+ * - if avatar is /minio/image/... => use it
+ * - if avatar is numeric => treat as fileId and render via /minio/image/{id}
+ */
+const toAvatarSrc = (avatar?: string | null): string => {
+  if (!avatar) return '';
+  const s = String(avatar).trim();
+  if (!s) return '';
+
+  if (/^https?:\/\//i.test(s)) return s;
+  if (s.startsWith('/minio/image/')) return s;
+
+  const id = extractAvatarId(s);
+  return id ? getMinioImageSrc(id) : s;
+};
+
+/**
+ * ✅ Upload avatar to MinIO and return the URL to store in backend "avatar" field.
+ * Backend response example:
+ *   { code: 200, data: { fileId: 7, url: "https://minio...jpg" } }
+ *
+ * We store ONLY url (not fileId).
+ */
+const resolveAvatarUrl = async (values: UserFormValues, bizId?: number): Promise<string | null> => {
+  // support both fields: avatarFile (preferred) or avatar (if your form passes File there)
+  const avatarFile =
+    ((values as any).avatarFile as File | undefined | null) ||
+    (((values as any).avatar as any) instanceof File ? ((values as any).avatar as any as File) : null);
+
+  // ✅ New upload
+  if (avatarFile) {
+    const fd = new FormData();
+    fd.append('category', 'AVATAR');
+    fd.append('bizType', 'USER');
+    fd.append('bizId', String(bizId ?? 0));
+    fd.append('file', avatarFile);
+
+    const res: any = await uploadAvatarApi(fd);
+
+    // prefer MinIO public url
+    const url = res?.data?.url || res?.data?.data?.url || res?.url || res?.data?.data?.data?.url || '';
+
+    if (!url) {
+      // fallback (if backend didn’t return url for some reason)
+      // NOTE: we still do NOT store fileId; we just keep existing avatar if present
+      console.warn('Upload success but url missing:', res);
+      return values.avatar ? String(values.avatar) : null;
+    }
+
+    return String(url);
+  }
+
+  // ✅ No upload: keep existing avatar string (already URL or old fileId)
+  return values.avatar ? String(values.avatar) : null;
+};
+
 const toRow = (u: ApiUser): UserRow => ({
   id: String(u.userId ?? ''),
   username: u.userName ?? '',
   email: u.email ?? '',
-  avatar: u.avatar ?? '',
+  avatar: toAvatarSrc(u.avatar ?? ''),
   department: u.deptName ?? '',
   phone: String(u.phonenumber ?? ''),
   status: u.status,
@@ -74,22 +153,6 @@ const buildUserQueryParams = (filters: Filters, pageNum: number, pageSize: numbe
   };
 };
 
-/** Resolve final avatar URL: keep existing string or upload a new file if present. */
-const resolveAvatarUrl = async (values: UserFormValues): Promise<string | null> => {
-  let avatarUrl: string | null = values.avatar ?? null;
-  const avatarFile = (values as any).avatarFile as File | undefined | null;
-
-  if (avatarFile) {
-    const fd = new FormData();
-    fd.append('file', avatarFile);
-    const res: any = await uploadAvatarApi(fd);
-    avatarUrl = res.url || res.fileName || res.data?.url || null;
-    console.log('UPLOAD_AVATAR_RESULT', res, 'chosenUrl=', avatarUrl);
-  }
-
-  return avatarUrl;
-};
-
 /** Normalize roles/posts payload from /system/user/info */
 const extractRolePostOptions = (res: any): { roles: Option[]; posts: Option[] } => {
   const rawRoles = res?.roles ?? [];
@@ -109,7 +172,6 @@ const extractRolePostOptions = (res: any): { roles: Option[]; posts: Option[] } 
       value: String(p.postId)
     }));
 
-  console.log('🚀 >> rawRoles roles:', rawRoles, roles);
   return { roles, posts };
 };
 
@@ -148,7 +210,6 @@ const UsersPage: React.FC = () => {
       try {
         const res: any = await getDeptTreeApi();
         setDeptTree(res?.data ?? []);
-        console.log('GET_DEPTS', res?.data);
       } catch (e) {
         console.error(e);
       }
@@ -157,12 +218,8 @@ const UsersPage: React.FC = () => {
     loadDepts();
   }, []);
 
-  // ---------- table data loading (always from backend, no local filtering) ----------
+  // ---------- table data loading ----------
 
-  /**
-   * Centralized fetch; **single place** that hits /system/user/list.
-   * - If pageNum/pageSize/filters are not provided, current state is used.
-   */
   const fetchUsers = async (opts?: { pageNum?: number; pageSize?: number; filters?: Filters }) => {
     const nextPageNum = opts?.pageNum ?? pageNum;
     const nextPageSize = opts?.pageSize ?? pageSize;
@@ -178,7 +235,6 @@ const UsersPage: React.FC = () => {
       setPageNum(nextPageNum);
       setPageSize(nextPageSize);
       setTotal(Number(res?.total ?? list.length));
-      console.log('GET_USERS', params, res);
     } catch (e) {
       console.error(e);
       message.error('Failed to load users');
@@ -187,7 +243,6 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  // first load
   useEffect(() => {
     fetchUsers({ pageNum: 1, pageSize, filters: DEFAULT_FILTERS });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -195,7 +250,6 @@ const UsersPage: React.FC = () => {
 
   const handleFiltersChange = (next: Filters) => {
     setFilters(next);
-    // reset to page 1 whenever filters change; ONLY ONE REQUEST here
     fetchUsers({ pageNum: 1, filters: next });
   };
 
@@ -220,11 +274,10 @@ const UsersPage: React.FC = () => {
 
   // ---------- CRUD handlers ----------
 
-  // ADD: open modal, then load role/post meta with NO userId
   const handleOpenAdd = async () => {
     setOpenAdd(true);
     try {
-      await loadRolePostMeta(); // no userId → backend returns global roles/posts
+      await loadRolePostMeta();
     } catch (e) {
       console.error(e);
       message.error('Failed to load role/post options');
@@ -233,7 +286,8 @@ const UsersPage: React.FC = () => {
 
   const handleAdd = async (values: UserFormValues) => {
     try {
-      const avatarUrl = await resolveAvatarUrl(values);
+      // ✅ store URL only
+      const avatarUrl = await resolveAvatarUrl(values, 0);
 
       const payload = {
         nickName: values.nick,
@@ -244,14 +298,12 @@ const UsersPage: React.FC = () => {
         deptId: values.deptId ? Number(values.deptId) : undefined,
         roleIds: values.role ? [Number(values.role)] : [],
         postIds: values.post ? [Number(values.post)] : [],
-        avatar: avatarUrl ?? undefined,
-        password: '123456' // default password for new user
+        avatar: avatarUrl ?? undefined
       };
 
       await addUserApi(payload);
       message.success('User added');
       setOpenAdd(false);
-      // reload current page with current filters
       fetchUsers();
     } catch (e) {
       console.error(e);
@@ -261,7 +313,8 @@ const UsersPage: React.FC = () => {
 
   const handleEdit = async (userId: number, values: UserFormValues) => {
     try {
-      const avatarUrl = await resolveAvatarUrl(values);
+      // ✅ store URL only
+      const avatarUrl = await resolveAvatarUrl(values, userId);
 
       const payload = {
         userId,
@@ -299,14 +352,12 @@ const UsersPage: React.FC = () => {
   };
 
   const handleExport = async () => {
-    // For export, pagination doesn't matter – backend uses Pageable.unpaged()
     const criteria = buildUserQueryParams(filters, pageNum, pageSize);
     await exportExcelApi('/system/user/export', 'users.xlsx', criteria);
   };
 
   // ---------- row actions ----------
 
-  // EDIT: pass current row userId → get roles, posts AND user info
   const openEditModal = async (row: UserRow) => {
     const userId = Number(row.id);
     setEditUserId(userId);
@@ -314,7 +365,7 @@ const UsersPage: React.FC = () => {
     setEditInitial(null);
 
     try {
-      const res: any = await loadRolePostMeta(userId); // ← userId passed here
+      const res: any = await loadRolePostMeta(userId);
       const u = res?.data;
       if (!u) {
         message.error('User not found');
@@ -326,7 +377,8 @@ const UsersPage: React.FC = () => {
       const postIds: number[] = res?.postIds ?? [];
 
       setEditInitial({
-        avatar: u.avatar ?? null,
+        // ✅ show avatar correctly for both URL and legacy fileId
+        avatar: toAvatarSrc(u.avatar ?? null),
         nick: u.nickName ?? '',
         phone: u.phonenumber ?? '',
         email: u.email ?? '',
@@ -367,7 +419,6 @@ const UsersPage: React.FC = () => {
   };
 
   const onToggleVisible = (row: UserRow) => {
-    console.log('TOGGLE_VISIBLE (client-only)', row.id);
     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, visible: !r.visible } : r)));
   };
 
@@ -399,11 +450,7 @@ const UsersPage: React.FC = () => {
         onToggleVisible={onToggleVisible}
         onResetPass={onResetPass}
         onAssignRole={onAssignRole}
-        pagination={{
-          current: pageNum,
-          pageSize,
-          total
-        }}
+        pagination={{ current: pageNum, pageSize, total }}
         onChangePage={handlePageChange}
       />
 
