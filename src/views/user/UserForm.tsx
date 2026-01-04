@@ -218,7 +218,10 @@ const UserForm: React.FC<UserFormProps> = ({ initial, submitLabel = 'Submit', on
       </div>
 
       <div className="mt-5">
-        <button type="submit" className="w-full rounded-xl px-4 py-3 bg-[var(--primary)] hover:bg-[var(--primary-strong)] text-white font-semibold">
+        <button
+          type="submit"
+          className="cursor-pointer w-full rounded-xl px-4 py-3 bg-[var(--primary)] hover:bg-[var(--primary-strong)] text-white font-semibold"
+        >
           {submitLabel}
         </button>
       </div>
