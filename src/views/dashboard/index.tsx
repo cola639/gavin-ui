@@ -72,7 +72,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-2xl font-semibold text-[var(--text-bold)]">Sales Details</h2>
 
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <select
               value={month}
               onChange={(e) => setMonth(e.target.value)}
@@ -84,7 +84,7 @@ export default function DashboardPage() {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-5">
