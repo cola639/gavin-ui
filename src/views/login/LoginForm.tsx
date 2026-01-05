@@ -121,8 +121,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
 
       {/* Social */}
       <div className="mt-6 flex gap-3">
-        <SocialButton provider="google" />
         <SocialButton provider="github" />
+        <SocialButton provider="google" />
         {/* <SocialButton provider="facebook" /> */}
       </div>
 
