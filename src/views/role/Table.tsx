@@ -53,19 +53,20 @@ const RolesTable: React.FC<Props> = ({ data, rowSelection, loading, pagination, 
         key: 'action',
         fixed: 'right',
         width: 300,
-        render: (_: any, row: RoleRow) => (
-          <div className="flex items-center gap-2">
-            <Button icon={<EditOutlined />} onClick={() => onModify(row)}>
-              Edit
-            </Button>
-            <Button danger icon={<DeleteOutlined />} onClick={() => onDelete(row)}>
-              Delete
-            </Button>
-            <Button icon={<TeamOutlined />} onClick={() => onAssignUser(row)}>
-              Assign User
-            </Button>
-          </div>
-        )
+        render: (_: any, row: RoleRow) =>
+          row.id !== '1' && (
+            <div className="flex items-center gap-2">
+              <Button icon={<EditOutlined />} onClick={() => onModify(row)}>
+                Edit
+              </Button>
+              <Button danger icon={<DeleteOutlined />} onClick={() => onDelete(row)}>
+                Delete
+              </Button>
+              <Button icon={<TeamOutlined />} onClick={() => onAssignUser(row)}>
+                Assign User
+              </Button>
+            </div>
+          )
       }
     ],
     [onAssignUser, onDelete, onModify]

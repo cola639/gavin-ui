@@ -87,29 +87,30 @@ const UsersTable: React.FC<Props> = ({
         key: 'action',
         fixed: 'right',
         width: 260,
-        render: (_: any, row: UserRow) => (
-          <div className="flex items-center gap-2">
-            <Button
-              icon={<EditOutlined />}
-              onClick={() => {
-                console.log('MODIFY', row.id);
-                onModify(row);
-              }}
-            >
-              Edit
-            </Button>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => {
-                console.log('DELETE', row.id);
-                onDelete(row);
-              }}
-            >
-              Delete
-            </Button>
-          </div>
-        )
+        render: (_: any, row: UserRow) =>
+          row.id !== '1' && (
+            <div className="flex items-center gap-2">
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => {
+                  console.log('MODIFY', row.id);
+                  onModify(row);
+                }}
+              >
+                Edit
+              </Button>
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => {
+                  console.log('DELETE', row.id);
+                  onDelete(row);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          )
       }
     ],
     [onModify, onDelete, onToggleVisible, onResetPass, onAssignRole]
