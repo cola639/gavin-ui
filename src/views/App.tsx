@@ -1,7 +1,7 @@
 // src/App.tsx
 import type { AppDispatch, RootState } from '@/store';
 import { buildFirstRoutes } from '@/store/slice/routeSlice';
-import { fetchUserInfo } from '@/store/slice/userSlice'; // <-- if you refactored to thunk
+import { fetchUserInfo } from '@/store/slice/userSlice';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RouterProvider } from 'react-router-dom';
@@ -17,7 +17,7 @@ function App() {
     buildFirstRoutes();
     // then load user info if logged in
     if (getToken()) {
-      dispatch(fetchUserInfo()).unwrap?.();
+      dispatch(fetchUserInfo());
     }
   }, []);
 

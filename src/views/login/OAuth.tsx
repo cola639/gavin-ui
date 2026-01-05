@@ -4,7 +4,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { exchangeOAuthCodeApi } from '@/apis/oauth2';
+import { dispatch } from '@/store';
 import { buildAppRoutes } from '@/store/slice/routeSlice';
+import { fetchUserInfo } from '@/store/slice/userSlice';
 import { getToken, setToken } from '@/utils/auth';
 
 function pickToken(res: any): string {
@@ -117,6 +119,7 @@ const OAuth2Callback: React.FC = () => {
 
         // optional: rebuild routes after token
         try {
+          dispatch(fetchUserInfo());
           await buildAppRoutes();
         } catch {
           // ignore

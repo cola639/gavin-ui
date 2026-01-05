@@ -1,5 +1,7 @@
 import { authUserApi } from '@/apis/auth'; // << use the user API you asked for
+import { dispatch } from '@/store';
 import { buildAppRoutes } from '@/store/slice/routeSlice';
+import { fetchUserInfo } from '@/store/slice/userSlice';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -92,7 +94,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
 
       localStorage.setItem('token', token);
       toast.success('Logged in successfully', { autoClose: 1500 });
-
+      dispatch(fetchUserInfo());
       // after login success
       const next = await buildAppRoutes(); // fetch backend & rebuild router (no reload)
       next.navigate('/dashboard', { replace: true }); // navigate using the new router instance
