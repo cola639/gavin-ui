@@ -108,15 +108,6 @@ const UsersTable: React.FC<Props> = ({
             >
               Delete
             </Button>
-            <Button
-              icon={<TeamOutlined />}
-              onClick={() => {
-                console.log('Assign', row.id);
-                onAssignRole(row);
-              }}
-            >
-              Assign Role
-            </Button>
           </div>
         )
       }
