@@ -89,13 +89,27 @@ export async function buildAppRouter(): Promise<RemixRouter> {
     sectionMode: 'first' // <= only the first child gets section
   });
 
-  menuItems.unshift({
+  const addIfMissing = (items: MenuItem[], item: MenuItem) => {
+    const exists = items.some((m) => m.id === item.id || m.path === item.path);
+    if (!exists) items.push(item);
+  };
+
+  addIfMissing(menuItems, {
     id: 'dashboard',
     label: 'Home',
     icon: 'dashboard', // string, matches assets/icons/dashboard.svg
     path: '/dashboard'
   });
-  menuItems.push({
+
+  // keep profile near the bottom, right before logout
+  addIfMissing(menuItems, {
+    id: 'profile',
+    label: 'Profile',
+    icon: 'user',
+    path: '/profile'
+  });
+
+  addIfMissing(menuItems, {
     id: 'logout',
     label: 'Logout',
     icon: 'logout',
@@ -105,6 +119,20 @@ export async function buildAppRouter(): Promise<RemixRouter> {
       window.location.href = '/login';
     }
   });
+
+  // Ensure logout is last, profile sits right before it.
+  const order = (id: string) => {
+    if (id === 'dashboard') return 0;
+    if (id === 'logout') return 3;
+    if (id === 'profile') return 2;
+    return 1;
+  };
+  const withIndex = menuItems.map((item, idx) => ({ item, idx }));
+  withIndex.sort((a, b) => {
+    const diff = order(a.item.id) - order(b.item.id);
+    return diff === 0 ? a.idx - b.idx : diff;
+  });
+  menuItems.splice(0, menuItems.length, ...withIndex.map((w) => w.item));
   dispatch(setMenus(menuItems));
 
   const merged = mergeRoutes(whiteList, constRoutes, backend);

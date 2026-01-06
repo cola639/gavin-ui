@@ -16,6 +16,10 @@ export interface UserInfo {
   userId: number;
   userName: string;
   nickName?: string;
+  email?: string;
+  phonenumber?: string;
+  sex?: string;
+  deptId?: number;
   avatar?: string;
   roles?: Role[];
   admin?: boolean;

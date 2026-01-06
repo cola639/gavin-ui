@@ -9,6 +9,7 @@ import { mergeRoutes, RouteMeta, withSuspense, type BackendRoute } from './Route
 
 /** ---- whitelist (no fetch needed for these) ---- */
 const Login = lazy(() => import('@/views/login'));
+const Profile = lazy(() => import('@/views/profile'));
 
 export const whiteList: RouteObject[] = [
   {
@@ -41,6 +42,17 @@ export const constRoutes: RouteObject[] = [
         index: true,
         element: withSuspense(<Dashboard />),
         handle: { meta: { title: 'Home', icon: 'Home', hidden: false } as RouteMeta }
+      }
+    ]
+  },
+  {
+    path: '/profile',
+    element: withSuspense(<Layout />),
+    children: [
+      {
+        index: true,
+        element: withSuspense(<Profile />),
+        handle: { meta: { title: 'Profile', icon: 'user', hidden: false } as RouteMeta }
       }
     ]
   }
