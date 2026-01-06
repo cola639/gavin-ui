@@ -1,8 +1,8 @@
 // src/views/dashboard/index.tsx
 import { ChevronLeft, ChevronRight, Clock, Package, TrendingUp, Users } from 'lucide-react';
 import CustomerDonutChart from './CustomerDonutChart';
-import SalesComparisonChart from './SalesComparisonChart';
 import SalesAreaChart from './SalesAreaChart';
+import SalesComparisonChart from './SalesComparisonChart';
 import StatCard from './StatCard';
 import { useDashboard } from './useDashboard';
 
@@ -25,8 +25,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--bg-page)] ">
-      <h1 className="mb-4 text-3xl font-semibold text-gray-900">Dashboard</h1>
+    <main className="">
+      <h1 className="mb-5 text-3xl font-semibold text-gray-900">Dashboard</h1>
       {/* KPI Cards */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
@@ -149,10 +149,17 @@ export default function DashboardPage() {
         <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--bg-card)] shadow-[var(--shadow-sm)] p-5">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-semibold text-[var(--text-bold)]">Featured Product</h3>
-            {featuredProduct.badge && <span className="rounded-full bg-[var(--bg-muted)] px-3 py-1 text-xs font-semibold text-[var(--text-subtle)]">{featuredProduct.badge}</span>}
+            {featuredProduct.badge && (
+              <span className="rounded-full bg-[var(--bg-muted)] px-3 py-1 text-xs font-semibold text-[var(--text-subtle)]">
+                {featuredProduct.badge}
+              </span>
+            )}
           </div>
           <div className="mt-4 flex items-center gap-3">
-            <button className="h-10 w-10 rounded-full bg-[var(--bg-muted)] text-[var(--text-subtle)] transition hover:bg-[var(--bg-hover)]" aria-label="Previous product">
+            <button
+              className="h-10 w-10 rounded-full bg-[var(--bg-muted)] text-[var(--text-subtle)] transition hover:bg-[var(--bg-hover)]"
+              aria-label="Previous product"
+            >
               <ChevronLeft className="mx-auto h-5 w-5" />
             </button>
             <div className="flex-1 text-center">
@@ -165,7 +172,10 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
-            <button className="h-10 w-10 rounded-full bg-[var(--bg-muted)] text-[var(--text-subtle)] transition hover:bg-[var(--bg-hover)]" aria-label="Next product">
+            <button
+              className="h-10 w-10 rounded-full bg-[var(--bg-muted)] text-[var(--text-subtle)] transition hover:bg-[var(--bg-hover)]"
+              aria-label="Next product"
+            >
               <ChevronRight className="mx-auto h-5 w-5" />
             </button>
           </div>
