@@ -129,11 +129,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--bg-page)]">
-      <div className="w-full px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-semibold text-gray-900">Profile Settings</h1>
-        </div>
+    <main className="">
+      <div className="w-full">
+        <h1 className="mb-5 text-3xl font-semibold text-gray-900">Profile Settings</h1>
 
         <div className="w-full rounded-[20px] border border-[var(--card-border)] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.04)] p-6 md:p-10">
           <Spin spinning={loading}>

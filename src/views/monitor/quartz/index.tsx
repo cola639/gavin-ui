@@ -389,7 +389,7 @@ const QuartzView: React.FC = () => {
   ];
 
   return (
-    <main className="min-h-screen bg-[var(--bg-page)]">
+    <main className="">
       <h1 className="text-3xl font-bold mb-5">Quartz</h1>
 
       <ChromeTabs activeKey={activeKey} onChange={(k) => setActiveKey(k as any)} items={items as any} />
