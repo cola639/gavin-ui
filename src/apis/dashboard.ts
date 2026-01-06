@@ -40,6 +40,23 @@ export async function getDashboardApi(month: string): Promise<DashboardResponse>
     }
   ];
 
+  const customers = { new: 34249, repeat: 1420 };
+
+  const featuredProduct = {
+    name: 'Beats Headphone 2019',
+    price: 89,
+    subtitle: 'Wireless · Noise cancelling',
+    badge: 'Top seller'
+  };
+
+  const salesComparison = {
+    categories: ['2015', '2016', '2017', '2018', '2019'],
+    series: [
+      { name: 'New Customers', data: [25, 66, 58, 44, 100] },
+      { name: 'Repeated', data: [0, 55, 42, 26, 92] }
+    ]
+  };
+
   // mock series that “looks like” the screenshot
   const sales: SalesPoint[] = [
     { x: '5k', value: 20 },
@@ -68,5 +85,5 @@ export async function getDashboardApi(month: string): Promise<DashboardResponse>
     { x: '62k', value: 55 }
   ];
 
-  return { stats, sales };
+  return { stats, sales, customers, featuredProduct, salesComparison };
 }

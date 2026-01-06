@@ -18,7 +18,33 @@ export type SalesPoint = {
   value: number; // numeric value
 };
 
+export type CustomerBreakdown = {
+  new: number;
+  repeat: number;
+};
+
+export type FeaturedProduct = {
+  name: string;
+  price: number;
+  subtitle?: string;
+  badge?: string;
+};
+
+export type ComparisonSeries = {
+  name: string;
+  data: number[];
+  color?: string;
+};
+
+export type SalesComparison = {
+  categories: string[];
+  series: ComparisonSeries[];
+};
+
 export type DashboardResponse = {
   stats: StatCard[];
   sales: SalesPoint[];
+  customers?: CustomerBreakdown;
+  featuredProduct?: FeaturedProduct;
+  salesComparison?: SalesComparison;
 };

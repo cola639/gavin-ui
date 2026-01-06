@@ -27,8 +27,8 @@ export default function StatCard({ item, icon, iconVariant }: Props) {
   const isUp = item.trend.direction === 'up';
 
   return (
-    <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--bg-card)] shadow-[var(--shadow-sm)] px-6 py-5">
-      <div className="flex items-start justify-between gap-4">
+    <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--bg-card)] shadow-[var(--shadow-sm)] px-5 py-4">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[var(--text-muted)] text-sm font-medium">{item.title}</div>
           <div className="mt-2 text-3xl font-semibold text-[var(--text-bold)]">{formatValue(item.value, item.valueFormat)}</div>
@@ -37,7 +37,7 @@ export default function StatCard({ item, icon, iconVariant }: Props) {
         <div className={`h-12 w-12 rounded-full flex items-center justify-center ${variantClass[iconVariant]}`}>{icon}</div>
       </div>
 
-      <div className="mt-6 flex items-center gap-2 text-sm">
+      <div className="mt-5 flex items-center gap-2 text-sm">
         <span className={`inline-flex items-center gap-1 font-semibold ${isUp ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
           {isUp ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
           {item.trend.percent.toFixed(1)}%
