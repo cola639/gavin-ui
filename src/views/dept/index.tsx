@@ -136,7 +136,7 @@ const DeptPage: React.FC = () => {
   };
 
   return (
-    <main className="bg-[var(--bg-page)]">
+    <main className="">
       <h1 className="mb-5 text-3xl font-semibold text-gray-900">Dept</h1>
 
       <DeptLayout

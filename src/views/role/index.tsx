@@ -220,7 +220,7 @@ const RolesPage: React.FC = () => {
   };
 
   return (
-    <main className="bg-[var(--bg-page)]">
+    <main className="">
       <h1 className="mb-5 text-3xl font-semibold text-gray-900">Role Lists</h1>
 
       <RoleFilterBar

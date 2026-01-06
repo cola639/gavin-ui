@@ -221,7 +221,7 @@ const MenuPage: React.FC = () => {
     : undefined;
 
   return (
-    <main className="bg-[var(--bg-page)]">
+    <main className="">
       <h1 className="mb-5 text-3xl font-semibold text-gray-900">Menu Management</h1>
 
       <MenuLayout name={nameInput} onNameChange={setNameInput} onSearch={handleSearch} onReset={handleReset} onNew={handleOpenNew}>
