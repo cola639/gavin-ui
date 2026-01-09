@@ -1,22 +1,14 @@
+import StatusPill from '@/components/Status/StatusPill';
 import { EyeOutlined } from '@ant-design/icons';
-import { Button, Table, Tag } from 'antd';
+import { Button, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TablePaginationConfig, TableRowSelection } from 'antd/es/table/interface';
 import React, { useMemo } from 'react';
 import type { QuartzLogRow } from './type';
 
 const statusTag = (s: QuartzLogRow['status']) => {
-  if (s === '0')
-    return (
-      <Tag color="#9fe2dc" className="text-[#065f5b] font-semibold rounded-full px-3 py-[2px]">
-        Success
-      </Tag>
-    );
-  return (
-    <Tag color="#fde68a" className="text-[#92400e] font-semibold rounded-full px-3 py-[2px]">
-      Fail
-    </Tag>
-  );
+  if (s === '0') return <StatusPill label="Success" tone="success" />;
+  return <StatusPill label="Fail" tone="danger" />;
 };
 
 const fmtTime = (v?: string | number) => {

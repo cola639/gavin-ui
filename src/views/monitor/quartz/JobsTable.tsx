@@ -1,7 +1,8 @@
 // src/views/monitor/quartz/JobsTable.tsx
 import IconTextButton from '@/components/button/IconTextButton';
+import StatusPill from '@/components/Status/StatusPill';
 import { DeleteOutlined, EditOutlined, EllipsisOutlined, FileTextOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Table, Tag } from 'antd';
+import { Dropdown, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TablePaginationConfig, TableRowSelection } from 'antd/es/table/interface';
 import React, { useMemo } from 'react';
@@ -9,17 +10,9 @@ import type { QuartzJobRow } from './type';
 
 const statusTag = (s: QuartzJobRow['status']) => {
   if (s === '0') {
-    return (
-      <Tag color="#9fe2dc" className="text-[#065f5b] font-semibold rounded-full px-3 py-[2px]">
-        Normal
-      </Tag>
-    );
+    return <StatusPill label="Normal" tone="success" />;
   }
-  return (
-    <Tag color="#fde68a" className="text-[#92400e] font-semibold rounded-full px-3 py-[2px]">
-      Paused
-    </Tag>
-  );
+  return <StatusPill label="Paused" tone="warning" />;
 };
 
 const fmtTime = (v?: string) => (v ? v : '-');

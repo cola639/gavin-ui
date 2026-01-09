@@ -1,6 +1,7 @@
 import AvatarCell from '@/components/avatarCell';
+import StatusPill from '@/components/Status/StatusPill';
 import { DeleteOutlined, EditOutlined, TeamOutlined } from '@ant-design/icons';
-import { Button, Table, Tag } from 'antd';
+import { Button, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TablePaginationConfig, TableRowSelection } from 'antd/es/table/interface';
 import React, { useMemo } from 'react';
@@ -60,15 +61,7 @@ const UsersTable: React.FC<Props> = ({
         key: 'status',
         width: 120,
         render: (s: UserRow['status']) =>
-          s === 'Enabled' ? (
-            <Tag color="#9fe2dc" className="text-[#065f5b] font-semibold rounded-full px-3 py-[2px]">
-              Enabled
-            </Tag>
-          ) : (
-            <Tag color="#fde68a" className="text-[#92400e] font-semibold rounded-full px-3 py-[2px]">
-              {s}
-            </Tag>
-          )
+          s === 'Enabled' ? <StatusPill label="Enabled" tone="success" /> : <StatusPill label="Disabled" tone="danger" />
       },
       {
         title: 'CREATETIME',
