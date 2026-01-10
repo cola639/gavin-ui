@@ -1,6 +1,8 @@
 // src/views/user/FilterBar.tsx
+import IconTextButton from '@/components/button/IconTextButton';
 import { DeleteOutlined, FileExcelOutlined, FilterOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Button, Input, Select } from 'antd';
+import { Icon } from 'lucide-react';
 import React from 'react';
 
 type Filters = {
@@ -83,18 +85,14 @@ const FilterBar: React.FC<Props> = ({ filters, onFilters, onReset, selectedCount
           <Button icon={<ReloadOutlined />} onClick={onReset} style={{ width: BUTTON_WIDTH }}>
             Reset
           </Button>
-
-          <Button
+          <IconTextButton
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => {
-              console.log('ADD_USER_CLICK');
-              onAdd();
-            }}
+            label="Add"
+            onClick={onAdd}
             style={{ width: BUTTON_WIDTH }}
-          >
-            Add
-          </Button>
+            requiredPermission={'system:user:edit'}
+          ></IconTextButton>
 
           <Button
             danger
