@@ -162,7 +162,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
             type="button"
             aria-label={show ? 'Hide password' : 'Show password'}
             onClick={() => setShow((s) => !s)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 transition hover:text-gray-600 active:scale-95"
+            className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 transition hover:text-gray-600 active:scale-95"
           >
             {show ? (
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -180,7 +180,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
         <button
           type="submit"
           disabled={loading}
-          className={`mt-2 w-full rounded-xl px-6 py-3 text-center text-base font-semibold text-white transition
+          className={`cursor-pointer mt-2 w-full rounded-xl px-6 py-3 text-center text-base font-semibold text-white transition
             ${loading ? 'bg-teal-200 cursor-not-allowed' : 'bg-teal-300 hover:brightness-95 active:scale-[.99] active:brightness-90'}`}
         >
           {loading ? 'Logging in…' : 'Log in'}
