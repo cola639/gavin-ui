@@ -7,6 +7,9 @@
     "dev": "vite --host",
     "build": "vite build",
     "build:prod": "vite build",
+    "build:debug": "vite build --mode debug",
+    "preview": "vite preview",
+    "preview:debug": "npm run build:debug && vite preview",
     "serve": "vite preview",
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --project tsconfig.json --noEmit"

@@ -1,6 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { setAutoFreeze } from 'immer';
 import { TypedUseSelectorHook, useDispatch as useAppDispatch, useSelector as useAppSelector } from 'react-redux';
 import rootReducer from './slice';
+
+// Allow mutable objects (e.g., Remix router) inside store without Immer freezing them.
+setAutoFreeze(false);
 
 // 配置 Redux store
 const store = configureStore({
