@@ -8,6 +8,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig(({ command, mode }) => {
   // 根据当前工作員录中的`mode`加载.env 设置第三个参数为'’来加载所有环境变量，而不管是否有VITE ” 前绿。const env=loadEnv(mode,process.cwd()，
   const env = loadEnv(mode, process.cwd(), '');
+  const enableSourcemap = mode === 'debug' || env.VITE_SOURCEMAP === 'true';
   // console.log('env ->', env.VITE_BASE_API);
   // console.log('mode', mode, { ...env }); // current environment variables
 
@@ -27,18 +28,16 @@ export default defineConfig(({ command, mode }) => {
         }
       }
     },
+
     build: {
-      sourcemap: true
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_debugger: true,
+          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.trace']
+        }
+      }
     },
-    // build: {
-    //   minify: 'terser',
-    //   terserOptions: {
-    //     compress: {
-    //       drop_debugger: true,
-    //       pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.trace']
-    //     }
-    //   }
-    // },
     plugins: [
       react(),
       svgr({
