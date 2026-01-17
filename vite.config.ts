@@ -28,14 +28,17 @@ export default defineConfig(({ command, mode }) => {
       }
     },
     build: {
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_debugger: true,
-          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.trace']
-        }
-      }
+      sourcemap: true
     },
+    // build: {
+    //   minify: 'terser',
+    //   terserOptions: {
+    //     compress: {
+    //       drop_debugger: true,
+    //       pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.trace']
+    //     }
+    //   }
+    // },
     plugins: [
       react(),
       svgr({
@@ -52,6 +55,7 @@ export default defineConfig(({ command, mode }) => {
     css: {
       preprocessorOptions: {
         scss: {
+          api: 'modern-compiler',
           additionalData: `@use "@/styles/variables" as *;`
         }
       }
