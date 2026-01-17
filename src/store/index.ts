@@ -4,7 +4,7 @@ import { TypedUseSelectorHook, useDispatch as useAppDispatch, useSelector as use
 import rootReducer from './slice';
 
 // Router and React.lazy objects are mutable; avoid freezing them in state.
-setAutoFreeze(false);
+// setAutoFreeze(false);
 
 // 配置 Redux store
 const store = configureStore({
